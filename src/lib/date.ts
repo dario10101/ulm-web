@@ -21,17 +21,44 @@ export function isoWeekday(date: Date = new Date()): number {
   return day === 0 ? 7 : day
 }
 
-/**
- * Rango por defecto para crear la semana del checklist: sabado a viernes.
- * Si hoy es sabado, arranca hoy; si no, retrocede hasta el sabado anterior.
- */
-export function defaultWeekRange(today: Date = new Date()): { firstDay: string; lastDay: string } {
-  const daysSinceSaturday = (today.getDay() - 6 + 7) % 7
-  const firstDay = new Date(today)
-  firstDay.setDate(today.getDate() - daysSinceSaturday)
-  const lastDay = new Date(firstDay)
-  lastDay.setDate(firstDay.getDate() + 6)
-  return { firstDay: formatIsoDate(firstDay), lastDay: formatIsoDate(lastDay) }
+/** Nueva fecha (hora local) desplazada `days` dias respecto a `date`. */
+export function addDays(date: Date, days: number): Date {
+  const result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}
+
+/** Parsea un "YYYY-MM-DD" como fecha local a medianoche (evita el corrimiento de un dia que da `new Date(str)`, que lo interpreta en UTC). */
+export function parseIsoDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+export const MONTH_NAMES_EN = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+
+const MONTH_SHORT_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** Formatea una fecha como "March 21, 2026" (fijo, sin depender del locale del navegador). */
+export function formatDateLong(date: Date): string {
+  return `${MONTH_NAMES_EN[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+}
+
+/** Formatea una fecha como "Mar 21" (fijo, sin anio: para labels compactos de grafico). */
+export function formatShortDate(date: Date): string {
+  return `${MONTH_SHORT_EN[date.getMonth()]} ${date.getDate()}`
 }
 
 /**

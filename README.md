@@ -8,9 +8,9 @@ Esqueleto navegable (sidebar + topbar del area privada, sitio publico /blog, flu
 
 - **Records → Weight**: alta y listado paginado con filtro de fechas (edicion/borrado aun no conectados).
 - **Checklist**: seccion completa.
-  - `/admin/checklists`: checklist de la semana en curso, organizado por pestanas de dia y columnas por categoria. Cada tarea se marca como completada o no lograda con un tap (resaltado verde/rojo), y si no hay semana creada permite generarla a partir del template eligiendo el rango de fechas. Incluye boton para cerrar la semana en curso.
+  - `/admin/checklists`: checklist de la semana en curso, organizado por pestanas de dia y columnas por categoria (divididas en alta/estandar prioridad). Switch "Track/Edit" (como un interruptor, cambia con un solo click): **Track** (default) marca tareas como completadas/no logradas con un tap (resaltado verde/rojo, se reordena al final de su seccion) y, al tocar el nombre de la tarea, muestra su detalle en un cuadro con boton de copiar y OK; **Edit** cambia esos botones por editar (reabre el mismo modal de alta, precargado) y eliminar (sin confirmacion). Las tareas con detalle no vacio muestran un punto azul junto al nombre. Si no hay semana creada, permite generarla a partir del template eligiendo el rango de fechas. Permite agregar tareas puntuales directo a la semana sin tocar el template. Incluye boton para cerrar la semana en curso (bloqueado mientras queden tareas sin marcar).
   - `/admin/checklists/categories`: alta, edicion, reordenamiento y borrado de categorias (guardado en bloque con Guardar/Cancelar).
-  - `/admin/checklists/template`: template semanal fijo por dia y categoria, con tareas de alta/estandar prioridad que pueden aplicarse a varios dias a la vez.
+  - `/admin/checklists/template`: template semanal fijo por dia y categoria, con tareas de alta/estandar prioridad que pueden aplicarse a varios dias a la vez. Los botones de editar/eliminar de cada tarea son siempre visibles (no solo al pasar el mouse); editar es la unica forma de ver/cambiar el detalle de una tarea, y un punto azul marca las que tienen detalle.
 
 El resto de las secciones del admin (Dashboard, Calendar, Analytics, etc.) siguen siendo prototipos de navegacion sin datos reales.
 

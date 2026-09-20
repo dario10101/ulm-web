@@ -50,9 +50,14 @@ export const adminRoutes: RouteRecordRaw[] = [
     path: 'analytics',
     name: 'admin-analytics',
     component: () => import('@/views/admin/AnalyticsPage.vue'),
+  },
+  {
+    path: 'analytics/checklists',
+    name: 'admin-analytics-checklists',
+    component: () => import('@/views/admin/analytics/ChecklistScoreTrendsPage.vue'),
     meta: {
       hasFilters: true,
-      filterLabels: ['Last 30 days', 'Last 90 days', 'This year', 'Finance', 'Health', 'Habits'],
+      filterLabels: ['Last 30 days', 'Last 90 days', 'This year'],
     },
   },
   {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    variant?: 'primary' | 'secondary' | 'ghost'
+    variant?: 'primary' | 'secondary' | 'ghost' | 'success'
     type?: 'button' | 'submit'
   }>(),
   { variant: 'primary', type: 'button' },
@@ -14,6 +14,7 @@ const variants = {
   primary: 'bg-cta text-white hover:bg-cta-hover',
   secondary: 'bg-surface text-foreground hover:bg-surface-hover',
   ghost: 'text-muted hover:bg-surface hover:text-foreground',
+  success: 'bg-success text-white hover:bg-success/90',
 }
 </script>
 

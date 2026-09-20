@@ -81,6 +81,7 @@ interface TaskFormState {
   importance: Importance
   categoryId: number | null
   days: number[]
+  detail: string
 }
 
 const formOpen = ref(false)
@@ -93,6 +94,7 @@ const form = ref<TaskFormState>({
   importance: 'STANDARD',
   categoryId: null,
   days: [],
+  detail: '',
 })
 
 function openCreateForm(categoryId: number, importance: Importance) {
@@ -103,6 +105,7 @@ function openCreateForm(categoryId: number, importance: Importance) {
     importance,
     categoryId,
     days: [activeDay.value],
+    detail: '',
   }
   formError.value = null
   formOpen.value = true
@@ -116,6 +119,7 @@ function openEditForm(task: TemplateTask) {
     importance: task.importance,
     categoryId: task.category_id,
     days: [],
+    detail: task.detail ?? '',
   }
   formError.value = null
   formOpen.value = true
@@ -145,18 +149,21 @@ async function submitForm() {
   formSaving.value = true
   formError.value = null
   try {
+    const detail = form.value.detail.trim() || null
     if (form.value.mode === 'create') {
       await createTemplateTask({
         name,
         importance: form.value.importance,
         category_id: form.value.categoryId,
         days: form.value.days,
+        detail,
       })
     } else if (form.value.taskId !== null) {
       await updateTemplateTaskForDay(form.value.taskId, activeDay.value, {
         name,
         importance: form.value.importance,
         category_id: form.value.categoryId,
+        detail,
       })
     }
     await reloadTasks()
@@ -239,21 +246,25 @@ onMounted(load)
           <h3 class="mb-3 text-sm font-semibold text-foreground">{{ category.name }}</h3>
 
           <div v-for="importance in (['HIGH', 'STANDARD'] as Importance[])" :key="importance" class="mb-4">
-            <p class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+            <p class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-accent-text">
               {{ importance === 'HIGH' ? 'High priority (2 pts)' : 'Standard (1 pt)' }}
             </p>
             <ul class="space-y-1">
               <li
                 v-for="task in tasksFor(category.id, importance)"
                 :key="task.id"
-                class="group flex items-center justify-between gap-1 rounded-md px-1.5 py-1 text-sm hover:bg-surface-hover"
+                class="flex items-center justify-between gap-1 rounded-md px-1.5 py-1 text-sm hover:bg-surface-hover"
               >
+                <span
+                  v-if="task.detail"
+                  class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-text"
+                  title="Has details"
+                />
                 <span class="truncate text-foreground" :title="task.name">{{ task.name }}</span>
                 <span class="flex items-center gap-1 text-muted">
-                  <span class="text-xs">{{ task.points }}</span>
                   <button
                     type="button"
-                    class="rounded p-1 opacity-0 hover:bg-surface-hover hover:text-foreground group-hover:opacity-100"
+                    class="rounded p-1 hover:bg-surface-hover hover:text-foreground"
                     title="Edit"
                     @click="openEditForm(task)"
                   >
@@ -261,7 +272,7 @@ onMounted(load)
                   </button>
                   <button
                     type="button"
-                    class="rounded p-1 opacity-0 hover:bg-surface-hover hover:text-ruby-text group-hover:opacity-100"
+                    class="rounded p-1 hover:bg-surface-hover hover:text-ruby-text"
                     title="Remove"
                     @click="removeTask(task)"
                   >
@@ -330,6 +341,15 @@ onMounted(load)
               <option value="HIGH">High priority (2 pts)</option>
               <option value="STANDARD">Standard (1 pt)</option>
             </select>
+          </label>
+
+          <label class="block text-sm">
+            <span class="mb-1 block text-muted">Details (optional)</span>
+            <textarea
+              v-model="form.detail"
+              rows="3"
+              class="w-full rounded-lg border border-subtle bg-background px-3 py-2 text-sm"
+            />
           </label>
 
           <div v-if="form.mode === 'create'" class="text-sm">

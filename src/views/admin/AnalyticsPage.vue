@@ -1,60 +1,31 @@
 <script setup lang="ts">
-import BaseCard from '@/components/ui/BaseCard.vue'
-import MiniBarChart from '@/components/ui/MiniBarChart.vue'
-
-const expenses = [
-  { label: 'Apr', value: 620 },
-  { label: 'May', value: 780 },
-  { label: 'Jun', value: 540 },
-  { label: 'Jul', value: 910 },
-  { label: 'Aug', value: 842 },
-]
-
-const habitCompletion = [
-  { label: 'Mon', value: 4 },
-  { label: 'Tue', value: 3 },
-  { label: 'Wed', value: 5 },
-  { label: 'Thu', value: 2 },
-  { label: 'Fri', value: 4 },
-  { label: 'Sat', value: 5 },
-  { label: 'Sun', value: 3 },
-]
-
-const studyHours = [
-  { label: 'W1', value: 3 },
-  { label: 'W2', value: 5 },
-  { label: 'W3', value: 2 },
-  { label: 'W4', value: 4.5 },
-]
+import { analyticsTypes } from '@/config/analyticsTypes'
 </script>
 
 <template>
   <div class="space-y-6">
     <div>
       <h1 class="text-xl font-semibold text-foreground">Analytics</h1>
-      <p class="text-sm text-muted">
-        Sample data — this is a preview of how trends will look once records are real.
-      </p>
+      <p class="text-sm text-muted">Pick what you want to analyze.</p>
     </div>
 
-    <div class="grid gap-4 lg:grid-cols-2">
-      <BaseCard title="Monthly expenses">
-        <MiniBarChart :data="expenses" />
-      </BaseCard>
-      <BaseCard title="Habit completion this week">
-        <MiniBarChart :data="habitCompletion" />
-      </BaseCard>
-      <BaseCard title="Study hours per week">
-        <MiniBarChart :data="studyHours" />
-      </BaseCard>
-      <BaseCard title="Weight trend">
-        <MiniBarChart :data="[
-          { label: 'W1', value: 74.2 },
-          { label: 'W2', value: 73.8 },
-          { label: 'W3', value: 73.9 },
-          { label: 'W4', value: 73.1 },
-        ]" />
-      </BaseCard>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <component
+        :is="type.implemented ? 'RouterLink' : 'div'"
+        v-for="type in analyticsTypes"
+        :key="type.id"
+        :to="type.implemented ? type.to : undefined"
+        :title="type.implemented ? undefined : 'Coming soon'"
+        class="flex flex-col items-center gap-2 rounded-xl border p-4 text-sm font-medium transition-colors"
+        :class="
+          type.implemented
+            ? 'border-subtle text-muted hover:border-accent-text/50 hover:text-foreground'
+            : 'pointer-events-none border-subtle text-muted opacity-40'
+        "
+      >
+        <component :is="type.icon" class="h-5 w-5" />
+        {{ type.label }}
+      </component>
     </div>
   </div>
 </template>

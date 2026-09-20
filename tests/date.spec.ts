@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { defaultWeekRange, isoWeekday, parseDecimal, todayIsoDate } from '../src/lib/date'
+import {
+  addDays,
+  formatDateLong,
+  formatIsoDate,
+  isoWeekday,
+  parseDecimal,
+  parseIsoDate,
+  todayIsoDate,
+} from '../src/lib/date'
 
 describe('todayIsoDate', () => {
   it('devuelve la fecha local en formato YYYY-MM-DD', () => {
@@ -37,19 +45,32 @@ describe('isoWeekday', () => {
   })
 })
 
-describe('defaultWeekRange', () => {
-  it('si hoy es sabado, arranca hoy mismo', () => {
-    const saturday = new Date(2026, 8, 19)
-    expect(defaultWeekRange(saturday)).toEqual({ firstDay: '2026-09-19', lastDay: '2026-09-25' })
+describe('addDays', () => {
+  it('suma dias respetando cambios de mes', () => {
+    expect(formatIsoDate(addDays(new Date(2026, 8, 19), 6))).toBe('2026-09-25')
   })
 
-  it('si hoy no es sabado, retrocede hasta el sabado anterior', () => {
-    const wednesday = new Date(2026, 8, 23)
-    expect(defaultWeekRange(wednesday)).toEqual({ firstDay: '2026-09-19', lastDay: '2026-09-25' })
+  it('acepta desplazamientos negativos', () => {
+    expect(formatIsoDate(addDays(new Date(2026, 8, 19), -1))).toBe('2026-09-18')
+  })
+})
+
+describe('parseIsoDate', () => {
+  it('interpreta el string como fecha local, sin corrimiento por UTC', () => {
+    const parsed = parseIsoDate('2026-09-19')
+    expect(parsed.getFullYear()).toBe(2026)
+    expect(parsed.getMonth()).toBe(8)
+    expect(parsed.getDate()).toBe(19)
+  })
+})
+
+describe('formatDateLong', () => {
+  it('formatea como "March 21, 2026"', () => {
+    expect(formatDateLong(new Date(2026, 2, 21))).toBe('March 21, 2026')
   })
 
-  it('si hoy es domingo, el sabado anterior fue ayer', () => {
-    const sunday = new Date(2026, 8, 20)
-    expect(defaultWeekRange(sunday)).toEqual({ firstDay: '2026-09-19', lastDay: '2026-09-25' })
+  it('no depende del locale del entorno (nombres fijos)', () => {
+    expect(formatDateLong(new Date(2026, 0, 1))).toBe('January 1, 2026')
+    expect(formatDateLong(new Date(2026, 11, 31))).toBe('December 31, 2026')
   })
 })
