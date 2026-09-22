@@ -6,6 +6,7 @@ import BaseCard from '@/components/ui/BaseCard.vue'
 import { recordTypes, type RecordType } from '@/config/recordTypes'
 import { addDays, formatIsoDate, isoWeekday, parseDecimal, parseIsoDate, todayIsoDate } from '@/lib/date'
 import { ApiError } from '@/lib/http'
+import { formatLocalDateTime } from '@/lib/time'
 import { createCalendarTask } from '@/services/calendarTasksApi'
 import { listCategories } from '@/services/checklistsApi'
 import { createWeight } from '@/services/weightsApi'
@@ -208,8 +209,8 @@ async function handleTaskSubmit() {
       category_id: taskCategoryId.value,
       notify: taskNotify.value,
       repeat_mode: taskRepeatEnabled.value ? taskRepeatMode.value : null,
-      scheduled_date: taskRepeatEnabled.value ? null : dateTime.toISOString(),
-      repeat_date: taskRepeatEnabled.value ? dateTime.toISOString() : null,
+      scheduled_date: taskRepeatEnabled.value ? null : formatLocalDateTime(dateTime),
+      repeat_date: taskRepeatEnabled.value ? formatLocalDateTime(dateTime) : null,
       duration_minutes: endMinutes - startMinutes,
       add_to_checklist: taskAddToChecklist.value,
       detail: taskDetail.value.trim() || null,

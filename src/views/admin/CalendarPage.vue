@@ -5,6 +5,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { addDays, formatDateLong, formatIsoDate, isoWeekday, parseIsoDate, todayIsoDate } from '@/lib/date'
 import { ApiError } from '@/lib/http'
+import { formatLocalDateTime } from '@/lib/time'
 import { listCalendarEventRanges, listCalendarEvents } from '@/services/calendarEventsApi'
 import {
   createCalendarTask,
@@ -52,8 +53,7 @@ function hourLabel(hour: number): string {
   return `${hour12}:00 ${period}`
 }
 
-function timeLabel(isoDateTime: string): string {
-  const date = new Date(isoDateTime)
+function timeLabel(date: Date): string {
   const period = date.getHours() < 12 ? 'AM' : 'PM'
   const hour12 = date.getHours() % 12 === 0 ? 12 : date.getHours() % 12
   return `${hour12}:${String(date.getMinutes()).padStart(2, '0')} ${period}`
@@ -63,9 +63,9 @@ function timeLabel(isoDateTime: string): string {
 // (impacto puramente informativo) y en los chips de Daily/Weekly, ahora que
 // tienen una duracion real y no solo una hora de inicio.
 function timeRangeLabel(occurrence: CalendarTaskOccurrence): string {
-  const start = new Date(occurrence.occurrence_at)
+  const start = new Date(occurrence.occurrence_local)
   const end = new Date(start.getTime() + occurrence.duration_minutes * 60000)
-  return `${timeLabel(start.toISOString())} – ${timeLabel(end.toISOString())}`
+  return `${timeLabel(start)} – ${timeLabel(end)}`
 }
 
 // --- Linea de tiempo continua (Daily/Weekly, grilla de escritorio): cada
@@ -106,7 +106,9 @@ interface TimelineItem {
 function computeTimelineBlocks(occurrences: CalendarTaskOccurrence[]): TimelineBlock[] {
   const items: TimelineItem[] = []
   for (const occurrence of occurrences) {
-    const start = new Date(occurrence.occurrence_at)
+    // occurrence_local, no occurrence_at: hay que ubicarla en la hora de
+    // pared del usuario, no en la zona del navegador (ver lib/time.ts).
+    const start = new Date(occurrence.occurrence_local)
     if (!HOURS.includes(start.getHours())) continue
     const startMin = minutesFromTimelineStart(start)
     const endMin = Math.min(startMin + occurrence.duration_minutes, TIMELINE_TOTAL_MINUTES)
@@ -198,7 +200,7 @@ function dayTimelineBlocks(categoryId: number): TimelineBlock[] {
 function mobileOccurrencesFor(hour: number): CalendarTaskOccurrence[] {
   const visibleIds = new Set(visibleCategories.value.map((c) => c.id))
   return occurrences.value.filter(
-    (o) => visibleIds.has(o.category_id) && new Date(o.occurrence_at).getHours() === hour,
+    (o) => visibleIds.has(o.category_id) && new Date(o.occurrence_local).getHours() === hour,
   )
 }
 
@@ -332,7 +334,7 @@ function goToNextWeek() {
 
 function weekTimelineBlocks(dayIso: string): TimelineBlock[] {
   return computeTimelineBlocks(
-    weekOccurrences.value.filter((o) => formatIsoDate(new Date(o.occurrence_at)) === dayIso),
+    weekOccurrences.value.filter((o) => formatIsoDate(new Date(o.occurrence_local)) === dayIso),
   )
 }
 
@@ -468,8 +470,8 @@ function goToNextMonth() {
 
 function monthOccurrencesFor(dayIso: string): CalendarTaskOccurrence[] {
   return monthOccurrences.value
-    .filter((o) => formatIsoDate(new Date(o.occurrence_at)) === dayIso)
-    .sort((a, b) => new Date(a.occurrence_at).getTime() - new Date(b.occurrence_at).getTime())
+    .filter((o) => formatIsoDate(new Date(o.occurrence_local)) === dayIso)
+    .sort((a, b) => new Date(a.occurrence_local).getTime() - new Date(b.occurrence_local).getTime())
 }
 
 interface MonthDayEvent {
@@ -855,8 +857,8 @@ async function submitAddTask() {
       category_id: form.categoryId,
       notify: form.notify,
       repeat_mode: form.repeatEnabled ? form.repeatMode : null,
-      scheduled_date: form.repeatEnabled ? null : dateTime.toISOString(),
-      repeat_date: form.repeatEnabled ? dateTime.toISOString() : null,
+      scheduled_date: form.repeatEnabled ? null : formatLocalDateTime(dateTime),
+      repeat_date: form.repeatEnabled ? formatLocalDateTime(dateTime) : null,
       duration_minutes: endMinutes - startMinutes,
       add_to_checklist: form.addToChecklist,
       detail: form.detail.trim() || null,
@@ -986,7 +988,7 @@ function buildDateTime(anchorDate: Date, hour12: number, minute: number, ampm: '
 }
 
 function openEdit(occurrence: CalendarTaskOccurrence) {
-  const anchorIso = occurrence.repeat_date ?? occurrence.scheduled_date ?? occurrence.occurrence_at
+  const anchorIso = occurrence.repeat_date ?? occurrence.scheduled_date ?? occurrence.occurrence_local
   const anchor = new Date(anchorIso)
   const { hour, minute, ampm } = to12Hour(anchor)
   const endMinutes = minutesOfDay(hour, minute, ampm) + occurrence.duration_minutes
@@ -1049,8 +1051,8 @@ async function submitEdit() {
       category_id: form.categoryId,
       notify: form.notify,
       detail: form.detail.trim() || null,
-      scheduled_date: form.repeatMode ? null : dateTime.toISOString(),
-      repeat_date: form.repeatMode ? dateTime.toISOString() : null,
+      scheduled_date: form.repeatMode ? null : formatLocalDateTime(dateTime),
+      repeat_date: form.repeatMode ? formatLocalDateTime(dateTime) : null,
       duration_minutes: endMinutes - startMinutes,
     })
     closeEdit()
@@ -1085,7 +1087,7 @@ async function confirmDelete() {
   const target = deleteTarget.value
   const occurrenceDate =
     target.repeat_mode && deleteOnlyThisOccurrence.value
-      ? formatIsoDate(new Date(target.occurrence_at))
+      ? formatIsoDate(new Date(target.occurrence_local))
       : undefined
 
   deleteSaving.value = true
@@ -1109,7 +1111,7 @@ const syncResults = ref<Record<number, { message: string; isError: boolean }>>({
 async function addToChecklist(occurrence: CalendarTaskOccurrence) {
   syncingTaskId.value = occurrence.id
   try {
-    const occurrenceDate = formatIsoDate(new Date(occurrence.occurrence_at))
+    const occurrenceDate = formatIsoDate(new Date(occurrence.occurrence_local))
     const result = await enableCalendarTaskChecklistSync(occurrence.id, occurrenceDate)
     occurrence.add_to_checklist = true
     syncResults.value[occurrence.id] = {
@@ -1757,7 +1759,7 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
       <div class="w-full max-w-sm rounded-xl border border-subtle bg-surface p-5">
         <h3 class="mb-1 text-sm font-semibold text-foreground">{{ detailTask.name }}</h3>
         <p class="mb-3 text-xs text-muted">
-          {{ categoryName(detailTask.category_id) }} · {{ formatDateLong(new Date(detailTask.occurrence_at)) }} ·
+          {{ categoryName(detailTask.category_id) }} · {{ formatDateLong(new Date(detailTask.occurrence_local)) }} ·
           {{ timeRangeLabel(detailTask) }}
         </p>
         <p class="whitespace-pre-wrap text-sm text-muted">
