@@ -17,7 +17,9 @@ import type {
 } from '@/types/checklist'
 
 export function listCategories(includeDisabled = false): Promise<Category[]> {
-  return getJson<Category[]>(`/checklists/categories${includeDisabled ? '?include_disabled=true' : ''}`)
+  return getJson<Category[]>(
+    `/checklists/categories${includeDisabled ? '?include_disabled=true' : ''}`,
+  )
 }
 
 export function replaceCategories(items: CategoryWrite[]): Promise<Category[]> {

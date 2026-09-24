@@ -1,5 +1,17 @@
 <script setup lang="ts">
-import { BarChart3, Check, Copy, ListChecks, Lock, Pencil, Plus, Settings, Table2, Trash2, X } from '@lucide/vue'
+import {
+  BarChart3,
+  Check,
+  Copy,
+  ListChecks,
+  Lock,
+  Pencil,
+  Plus,
+  Settings,
+  Table2,
+  Trash2,
+  X,
+} from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -16,7 +28,14 @@ import {
   updateTask,
   updateTaskStatus,
 } from '@/services/checklistsApi'
-import { addDays, formatDateLong, formatIsoDate, isoWeekday, parseIsoDate, todayIsoDate } from '@/lib/date'
+import {
+  addDays,
+  formatDateLong,
+  formatIsoDate,
+  isoWeekday,
+  parseIsoDate,
+  todayIsoDate,
+} from '@/lib/date'
 import { ApiError } from '@/lib/http'
 import type { Category, Importance, Task, TaskStatus, Week, WeekRange } from '@/types/checklist'
 
@@ -51,7 +70,9 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const closing = ref(false)
 
-const tasksForActiveDay = computed(() => tasks.value.filter((t) => t.day_of_week === activeDay.value))
+const tasksForActiveDay = computed(() =>
+  tasks.value.filter((t) => t.day_of_week === activeDay.value),
+)
 const activeDayLabel = computed(() => DAYS.find((d) => d.value === activeDay.value)?.label ?? '')
 
 // Las pestanas arrancan en el dia en que empieza la semana (first_day), no
@@ -104,7 +125,10 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    const [categoriesResponse, weekResponse] = await Promise.all([listCategories(), getCurrentWeek()])
+    const [categoriesResponse, weekResponse] = await Promise.all([
+      listCategories(),
+      getCurrentWeek(),
+    ])
     categories.value = categoriesResponse
     week.value = weekResponse
     tasks.value = weekResponse ? await listWeekTasks(weekResponse.id) : []
@@ -152,7 +176,14 @@ const taskForm = ref<TaskFormState>({
 })
 
 function openCreateTaskForm(categoryId: number, importance: Importance) {
-  taskForm.value = { formMode: 'create', taskId: null, name: '', importance, categoryId, detail: '' }
+  taskForm.value = {
+    formMode: 'create',
+    taskId: null,
+    name: '',
+    importance,
+    categoryId,
+    detail: '',
+  }
   taskFormError.value = null
   taskFormOpen.value = true
 }
@@ -254,7 +285,9 @@ async function handleCloseWeek() {
     error.value = `You still have ${pendingCount.value} pending task(s). Mark them completed or not achieved before closing the week.`
     return
   }
-  if (!window.confirm('Close this week? Its score will be locked in and tasks can no longer change.')) {
+  if (
+    !window.confirm('Close this week? Its score will be locked in and tasks can no longer change.')
+  ) {
     return
   }
   closing.value = true
@@ -362,10 +395,16 @@ onMounted(load)
             class="absolute inset-y-1 w-[calc(50%-0.25rem)] rounded-full bg-accent transition-transform duration-200"
             :class="mode === 'EDIT' ? 'translate-x-[calc(100%+0.25rem)]' : 'translate-x-0'"
           />
-          <span class="z-10 flex-1 text-center" :class="mode === 'TRACK' ? 'text-white' : 'text-muted'">
+          <span
+            class="z-10 flex-1 text-center"
+            :class="mode === 'TRACK' ? 'text-white' : 'text-muted'"
+          >
             Track
           </span>
-          <span class="z-10 flex-1 text-center" :class="mode === 'EDIT' ? 'text-white' : 'text-muted'">
+          <span
+            class="z-10 flex-1 text-center"
+            :class="mode === 'EDIT' ? 'text-white' : 'text-muted'"
+          >
             Edit
           </span>
         </button>
@@ -425,7 +464,9 @@ onMounted(load)
           :title="dayTabDate(index)"
           class="relative shrink-0 rounded-t-lg px-4 py-2.5 text-sm font-medium transition-colors"
           :class="[
-            activeDay === day.value ? 'border border-b-0 border-subtle bg-surface' : 'hover:text-foreground',
+            activeDay === day.value
+              ? 'border border-b-0 border-subtle bg-surface'
+              : 'hover:text-foreground',
             dayTabTextClass(day),
           ]"
           @click="activeDay = day.value"
@@ -453,12 +494,14 @@ onMounted(load)
           <h3 class="mb-2 shrink-0 text-sm font-semibold text-foreground">{{ category.name }}</h3>
 
           <div class="space-y-3 sm:min-h-0 sm:flex-1 sm:overflow-y-auto">
-            <div v-for="importance in (['HIGH', 'STANDARD'] as Importance[])" :key="importance">
+            <div v-for="importance in ['HIGH', 'STANDARD'] as Importance[]" :key="importance">
               <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-accent-text">
                 {{ importance === 'HIGH' ? 'High priority (2 pts)' : 'Standard (1 pt)' }}
               </p>
 
-              <p v-if="!tasksFor(category.id, importance).length" class="text-xs text-muted">No tasks.</p>
+              <p v-if="!tasksFor(category.id, importance).length" class="text-xs text-muted">
+                No tasks.
+              </p>
 
               <ul v-else class="space-y-1">
                 <li
@@ -548,7 +591,9 @@ onMounted(load)
             </div>
           </div>
 
-          <div class="mt-2 flex shrink-0 items-center justify-between border-t border-subtle pt-2 text-sm">
+          <div
+            class="mt-2 flex shrink-0 items-center justify-between border-t border-subtle pt-2 text-sm"
+          >
             <span class="text-muted">Total</span>
             <span class="font-semibold text-foreground">{{ totalFor(category.id) }} pts</span>
           </div>
@@ -619,10 +664,20 @@ onMounted(load)
         <p v-if="taskFormError" class="mt-3 text-sm text-ruby-text">{{ taskFormError }}</p>
 
         <div class="mt-5 flex justify-end gap-2">
-          <BaseButton variant="secondary" type="button" :disabled="taskFormSaving" @click="closeTaskForm">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :disabled="taskFormSaving"
+            @click="closeTaskForm"
+          >
             Cancel
           </BaseButton>
-          <BaseButton variant="primary" type="button" :disabled="taskFormSaving" @click="submitTaskForm">
+          <BaseButton
+            variant="primary"
+            type="button"
+            :disabled="taskFormSaving"
+            @click="submitTaskForm"
+          >
             {{ taskFormSaving ? 'Saving...' : 'Save' }}
           </BaseButton>
         </div>
@@ -693,7 +748,12 @@ onMounted(load)
         <p v-if="createError" class="mt-3 text-sm text-ruby-text">{{ createError }}</p>
 
         <div class="mt-5 flex justify-end gap-2">
-          <BaseButton variant="secondary" type="button" :disabled="createSaving" @click="closeCreateModal">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :disabled="createSaving"
+            @click="closeCreateModal"
+          >
             Cancel
           </BaseButton>
           <BaseButton

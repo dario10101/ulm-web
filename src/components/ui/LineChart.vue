@@ -45,7 +45,9 @@ const averageSeries = computed<LineChartSeries | null>(() => {
 })
 
 // Todo lo que se dibuja/lista (lineas de categoria + el promedio, si aplica).
-const allSeries = computed(() => (averageSeries.value ? [...props.series, averageSeries.value] : props.series))
+const allSeries = computed(() =>
+  averageSeries.value ? [...props.series, averageSeries.value] : props.series,
+)
 
 const maxValue = computed(() => Math.max(...allSeries.value.flatMap((s) => s.values), 1))
 
@@ -210,7 +212,11 @@ const tooltipStyle = computed(() => {
       <p v-if="points[hoverIndex].sublabel" class="mb-1.5 -mt-1 text-[11px] text-muted">
         {{ points[hoverIndex].sublabel }}
       </p>
-      <div v-for="s in allSeries" :key="s.id" class="flex items-center justify-between gap-3 py-0.5">
+      <div
+        v-for="s in allSeries"
+        :key="s.id"
+        class="flex items-center justify-between gap-3 py-0.5"
+      >
         <span class="flex items-center gap-1.5 text-muted">
           <span
             class="w-3 rounded-full"

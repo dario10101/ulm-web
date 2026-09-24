@@ -11,7 +11,9 @@ const active = ref<string | null>(props.labels[0] ?? null)
 
 <template>
   <div class="mt-4 border-t border-subtle pt-4">
-    <p class="mb-2 flex items-center gap-2 px-3 text-xs font-semibold uppercase tracking-wide text-muted">
+    <p
+      class="mb-2 flex items-center gap-2 px-3 text-xs font-semibold uppercase tracking-wide text-muted"
+    >
       <Filter class="h-3.5 w-3.5" />
       Filters
     </p>

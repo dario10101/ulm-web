@@ -19,10 +19,11 @@ const interests = [
         Data Engineer, siempre construyendo algo por mi cuenta.
       </h1>
       <p class="mt-4 max-w-xl text-muted">
-        28 años, trabajo full-time como Data Engineer. Escribo sobre lo que voy aprendiendo —
-        sobre todo datos, arquitectura de software, y lo que vaya construyendo para
-        <RouterLink :to="{ name: 'public-projects' }" class="text-accent-text hover:underline">Unified Life Manager</RouterLink>,
-        un sistema personal que uso para aprender frontend y desarrollo asistido por IA.
+        28 años, trabajo full-time como Data Engineer. Escribo sobre lo que voy aprendiendo — sobre
+        todo datos, arquitectura de software, y lo que vaya construyendo para
+        <RouterLink :to="{ name: 'public-projects' }" class="text-accent-text hover:underline"
+          >Unified Life Manager</RouterLink
+        >, un sistema personal que uso para aprender frontend y desarrollo asistido por IA.
       </p>
     </section>
 
@@ -43,7 +44,10 @@ const interests = [
     <section>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">Últimos escritos</h2>
-        <RouterLink :to="{ name: 'public-writing' }" class="text-sm text-accent-text hover:underline">
+        <RouterLink
+          :to="{ name: 'public-writing' }"
+          class="text-sm text-accent-text hover:underline"
+        >
           Ver todos
         </RouterLink>
       </div>

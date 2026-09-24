@@ -38,7 +38,10 @@ function handleSubmit() {
       <BaseButton type="submit" class="w-full">Sign in</BaseButton>
     </form>
 
-    <RouterLink :to="{ name: 'auth-recover' }" class="block text-center text-sm text-muted hover:text-accent-text">
+    <RouterLink
+      :to="{ name: 'auth-recover' }"
+      class="block text-center text-sm text-muted hover:text-accent-text"
+    >
       Forgot your password?
     </RouterLink>
   </div>

@@ -33,11 +33,11 @@ const activeDay = ref(1)
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const activeDayLabel = computed(
-  () => DAYS.find((d) => d.value === activeDay.value)?.label ?? '',
-)
+const activeDayLabel = computed(() => DAYS.find((d) => d.value === activeDay.value)?.label ?? '')
 
-const tasksForActiveDay = computed(() => tasks.value.filter((t) => t.days.includes(activeDay.value)))
+const tasksForActiveDay = computed(() =>
+  tasks.value.filter((t) => t.days.includes(activeDay.value)),
+)
 
 function tasksFor(categoryId: number, importance: Importance): TemplateTask[] {
   return tasksForActiveDay.value.filter(
@@ -245,7 +245,11 @@ onMounted(load)
         >
           <h3 class="mb-3 text-sm font-semibold text-foreground">{{ category.name }}</h3>
 
-          <div v-for="importance in (['HIGH', 'STANDARD'] as Importance[])" :key="importance" class="mb-4">
+          <div
+            v-for="importance in ['HIGH', 'STANDARD'] as Importance[]"
+            :key="importance"
+            class="mb-4"
+          >
             <p class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-accent-text">
               {{ importance === 'HIGH' ? 'High priority (2 pts)' : 'Standard (1 pt)' }}
             </p>
@@ -291,7 +295,9 @@ onMounted(load)
             </button>
           </div>
 
-          <div class="mt-auto flex items-center justify-between border-t border-subtle pt-2 text-sm">
+          <div
+            class="mt-auto flex items-center justify-between border-t border-subtle pt-2 text-sm"
+          >
             <span class="text-muted">Total</span>
             <span class="font-semibold text-foreground">{{ totalFor(category.id) }} pts</span>
           </div>

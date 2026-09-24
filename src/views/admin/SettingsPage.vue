@@ -46,9 +46,17 @@ const toggles = [
 
     <BaseCard title="Notifications">
       <ul class="divide-y divide-subtle">
-        <li v-for="toggle in toggles" :key="toggle.label" class="flex items-center justify-between py-2">
+        <li
+          v-for="toggle in toggles"
+          :key="toggle.label"
+          class="flex items-center justify-between py-2"
+        >
           <span class="text-sm text-foreground">{{ toggle.label }}</span>
-          <input type="checkbox" :checked="toggle.enabled" class="h-4 w-4 rounded border-subtle accent-cta" />
+          <input
+            type="checkbox"
+            :checked="toggle.enabled"
+            class="h-4 w-4 rounded border-subtle accent-cta"
+          />
         </li>
       </ul>
     </BaseCard>

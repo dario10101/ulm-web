@@ -12,7 +12,8 @@ const faqs = [
   },
   {
     question: 'How is my data used?',
-    answer: "This is a private, personal tool — nothing here is shared or public unless it's in the Blog section.",
+    answer:
+      "This is a private, personal tool — nothing here is shared or public unless it's in the Blog section.",
   },
 ]
 </script>

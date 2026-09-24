@@ -17,9 +17,7 @@ const toReview = ['SQL window functions', 'Python decorators', 'System design: c
     <div class="flex items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-semibold text-foreground">Study & review</h1>
-        <p class="text-sm text-muted">
-          What you're learning and what's due for a refresh.
-        </p>
+        <p class="text-sm text-muted">What you're learning and what's due for a refresh.</p>
       </div>
       <BaseButton>Start review session</BaseButton>
     </div>
@@ -33,7 +31,10 @@ const toReview = ['SQL window functions', 'Python decorators', 'System design: c
               <span class="text-muted">{{ item.progress }}%</span>
             </div>
             <div class="h-1.5 rounded-full bg-surface-hover">
-              <div class="h-1.5 rounded-full bg-accent-text" :style="{ width: `${item.progress}%` }" />
+              <div
+                class="h-1.5 rounded-full bg-accent-text"
+                :style="{ width: `${item.progress}%` }"
+              />
             </div>
           </li>
         </ul>
@@ -41,7 +42,11 @@ const toReview = ['SQL window functions', 'Python decorators', 'System design: c
 
       <BaseCard title="Due for review">
         <ul class="space-y-2">
-          <li v-for="topic in toReview" :key="topic" class="flex items-center justify-between text-sm">
+          <li
+            v-for="topic in toReview"
+            :key="topic"
+            class="flex items-center justify-between text-sm"
+          >
             <span class="text-foreground">{{ topic }}</span>
             <BaseBadge>Review</BaseBadge>
           </li>

@@ -19,7 +19,9 @@ export function listCalendarTasksForRange(
   firstDay: string,
   lastDay: string,
 ): Promise<CalendarTaskOccurrence[]> {
-  return getJson<CalendarTaskOccurrence[]>(`/calendar-tasks?first_day=${firstDay}&last_day=${lastDay}`)
+  return getJson<CalendarTaskOccurrence[]>(
+    `/calendar-tasks?first_day=${firstDay}&last_day=${lastDay}`,
+  )
 }
 
 export function updateCalendarTask(

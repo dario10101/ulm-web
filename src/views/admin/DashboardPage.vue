@@ -7,7 +7,7 @@ import BaseCard from '@/components/ui/BaseCard.vue'
 const todayTasks = [
   { label: 'Gym — push day', done: true },
   { label: 'Finish PySpark chapter 4', done: false },
-  { label: 'Log today\'s expenses', done: false },
+  { label: "Log today's expenses", done: false },
   { label: 'Kickboxing 7pm', done: false },
 ]
 
@@ -46,7 +46,11 @@ const goals = [
 
       <BaseCard title="Habit streaks">
         <ul class="space-y-2">
-          <li v-for="habit in habits" :key="habit.label" class="flex items-center justify-between text-sm">
+          <li
+            v-for="habit in habits"
+            :key="habit.label"
+            class="flex items-center justify-between text-sm"
+          >
             <span class="text-foreground">{{ habit.label }}</span>
             <BaseBadge tone="accent">{{ habit.streak }}d</BaseBadge>
           </li>
@@ -61,7 +65,10 @@ const goals = [
               <span class="text-muted">{{ goal.progress }}%</span>
             </div>
             <div class="h-1.5 rounded-full bg-surface-hover">
-              <div class="h-1.5 rounded-full bg-accent-text" :style="{ width: `${goal.progress}%` }" />
+              <div
+                class="h-1.5 rounded-full bg-accent-text"
+                :style="{ width: `${goal.progress}%` }"
+              />
             </div>
           </li>
         </ul>

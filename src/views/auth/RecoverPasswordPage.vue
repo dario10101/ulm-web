@@ -10,9 +10,7 @@ const sent = ref(false)
   <div class="space-y-5">
     <div>
       <h1 class="text-lg font-semibold text-foreground">Reset password</h1>
-      <p class="text-sm text-muted">
-        We'll send a reset link to your email.
-      </p>
+      <p class="text-sm text-muted">We'll send a reset link to your email.</p>
     </div>
 
     <form v-if="!sent" class="space-y-4" @submit.prevent="sent = true">
@@ -26,9 +24,14 @@ const sent = ref(false)
       </label>
       <BaseButton type="submit" class="w-full">Send reset link</BaseButton>
     </form>
-    <p v-else class="text-sm text-accent-text">Check your inbox — this is just a UI preview, no email was sent.</p>
+    <p v-else class="text-sm text-accent-text">
+      Check your inbox — this is just a UI preview, no email was sent.
+    </p>
 
-    <RouterLink :to="{ name: 'auth-login' }" class="block text-center text-sm text-muted hover:text-accent-text">
+    <RouterLink
+      :to="{ name: 'auth-login' }"
+      class="block text-center text-sm text-muted hover:text-accent-text"
+    >
       Back to sign in
     </RouterLink>
   </div>

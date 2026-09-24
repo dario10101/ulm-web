@@ -49,7 +49,20 @@ export const MONTH_NAMES_EN = [
   'December',
 ]
 
-const MONTH_SHORT_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTH_SHORT_EN = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
 
 /** Formatea una fecha como "March 21, 2026" (fijo, sin depender del locale del navegador). */
 export function formatDateLong(date: Date): string {

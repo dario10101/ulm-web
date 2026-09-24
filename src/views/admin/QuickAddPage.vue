@@ -4,9 +4,24 @@ import { computed, onMounted, ref, watch } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import { recordTypes, type RecordType } from '@/config/recordTypes'
-import { addDays, formatIsoDate, isoWeekday, parseDecimal, parseIsoDate, todayIsoDate } from '@/lib/date'
+import {
+  addDays,
+  formatIsoDate,
+  isoWeekday,
+  parseDecimal,
+  parseIsoDate,
+  todayIsoDate,
+} from '@/lib/date'
 import { ApiError } from '@/lib/http'
-import { formatLocalDateTime } from '@/lib/time'
+import {
+  buildDateTime,
+  clockFromMinutes,
+  formatLocalDateTime,
+  minuteOptions,
+  minutesOfDay,
+  nextDateForWeekday,
+  weekdayOptions,
+} from '@/lib/time'
 import { createCalendarTask } from '@/services/calendarTasksApi'
 import { listCategories } from '@/services/checklistsApi'
 import { createWeight } from '@/services/weightsApi'
@@ -30,17 +45,6 @@ const weightSaved = ref(false)
 // category, importance, details) mas fecha/hora, notificacion, repeticion y
 // el check de agregarla al checklist de la semana en curso.
 const taskCategories = ref<Category[]>([])
-const weekdayOptions = [
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
-  { value: 6, label: 'Saturday' },
-  { value: 7, label: 'Sunday' },
-]
-const minuteOptions = Array.from({ length: 12 }, (_, i) => i * 5)
-
 // Por defecto la tarea se agenda para manana.
 const taskDate = ref(formatIsoDate(addDays(new Date(), 1)))
 const taskName = ref('')
@@ -59,24 +63,10 @@ const taskEndMinute = ref(30)
 const taskEndAmpm = ref<'AM' | 'PM'>('AM')
 const taskEndTouched = ref(false)
 
-function to12Hour(totalMinutes: number): { hour: number; minute: number; ampm: 'AM' | 'PM' } {
-  const normalized = ((totalMinutes % 1440) + 1440) % 1440
-  const hour24 = Math.floor(normalized / 60)
-  const minute = normalized % 60
-  const ampm = hour24 < 12 ? 'AM' : 'PM'
-  const hour = hour24 % 12 === 0 ? 12 : hour24 % 12
-  return { hour, minute, ampm }
-}
-
-function minutesOfDay(hour12: number, minute: number, ampm: 'AM' | 'PM'): number {
-  const hour24 = (hour12 % 12) + (ampm === 'PM' ? 12 : 0)
-  return hour24 * 60 + minute
-}
-
 function applyDefaultEndTime() {
   const startMinutes = minutesOfDay(taskHour.value, taskMinute.value, taskAmPm.value)
   const defaultEndMinutes = Math.min(startMinutes + 60, 23 * 60 + 59)
-  const { hour, minute, ampm } = to12Hour(defaultEndMinutes)
+  const { hour, minute, ampm } = clockFromMinutes(defaultEndMinutes)
   taskEndHour.value = hour
   taskEndMinute.value = minute
   taskEndAmpm.value = ampm
@@ -109,18 +99,6 @@ watch(isWeeklyRepeat, (weekly) => {
     taskWeekday.value = isoWeekday(parseIsoDate(taskDate.value))
   }
 })
-
-function nextDateForWeekday(weekday: number, from: Date = new Date()): Date {
-  const offset = (weekday - isoWeekday(from) + 7) % 7
-  return addDays(from, offset)
-}
-
-function buildDateTime(anchorDate: Date, hour12: number, minute: number, ampm: 'AM' | 'PM'): Date {
-  const hour24 = (hour12 % 12) + (ampm === 'PM' ? 12 : 0)
-  const result = new Date(anchorDate)
-  result.setHours(hour24, minute, 0, 0)
-  return result
-}
 
 async function loadTaskCategories() {
   try {
@@ -198,7 +176,9 @@ async function handleTaskSubmit() {
     return
   }
 
-  const anchorDate = isWeeklyRepeat.value ? nextDateForWeekday(taskWeekday.value) : parseIsoDate(taskDate.value)
+  const anchorDate = isWeeklyRepeat.value
+    ? nextDateForWeekday(taskWeekday.value)
+    : parseIsoDate(taskDate.value)
   const dateTime = buildDateTime(anchorDate, taskHour.value, taskMinute.value, taskAmPm.value)
 
   taskSubmitting.value = true
@@ -422,8 +402,14 @@ onMounted(loadTaskCategories)
 
           <label class="text-sm">
             <span class="mb-1 block text-muted">Repeat</span>
-            <span class="flex items-center gap-2 rounded-lg border border-subtle bg-surface px-3 py-2">
-              <input v-model="taskRepeatEnabled" type="checkbox" class="h-4 w-4 rounded border-subtle" />
+            <span
+              class="flex items-center gap-2 rounded-lg border border-subtle bg-surface px-3 py-2"
+            >
+              <input
+                v-model="taskRepeatEnabled"
+                type="checkbox"
+                class="h-4 w-4 rounded border-subtle"
+              />
               <span class="text-muted">Repeat task</span>
             </span>
           </label>
@@ -451,7 +437,11 @@ onMounted(loadTaskCategories)
             Notify me
           </label>
           <label class="flex items-center gap-2 text-sm text-muted">
-            <input v-model="taskAddToChecklist" type="checkbox" class="h-4 w-4 rounded border-subtle" />
+            <input
+              v-model="taskAddToChecklist"
+              type="checkbox"
+              class="h-4 w-4 rounded border-subtle"
+            />
             Also add to this week's checklist
           </label>
         </div>
@@ -496,11 +486,16 @@ onMounted(loadTaskCategories)
         </div>
         <label class="block text-sm">
           <span class="mb-1 block text-muted">Notes</span>
-          <textarea rows="2" class="w-full rounded-lg border border-subtle bg-surface px-3 py-2 text-sm" />
+          <textarea
+            rows="2"
+            class="w-full rounded-lg border border-subtle bg-surface px-3 py-2 text-sm"
+          />
         </label>
         <div class="flex items-center gap-3">
           <BaseButton type="submit">Save</BaseButton>
-          <span v-if="saved" class="text-sm text-accent-text">Looks good — nothing is actually saved yet.</span>
+          <span v-if="saved" class="text-sm text-accent-text"
+            >Looks good — nothing is actually saved yet.</span
+          >
         </div>
       </form>
     </BaseCard>

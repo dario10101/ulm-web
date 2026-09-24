@@ -41,7 +41,9 @@ function logOut() {
       </span>
     </summary>
 
-    <div class="absolute right-0 z-50 mt-2 w-52 rounded-lg border border-subtle bg-surface p-1 shadow-lg">
+    <div
+      class="absolute right-0 z-50 mt-2 w-52 rounded-lg border border-subtle bg-surface p-1 shadow-lg"
+    >
       <RouterLink
         :to="{ name: 'admin-settings' }"
         class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted hover:bg-surface-hover hover:text-foreground"

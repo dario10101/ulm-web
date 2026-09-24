@@ -8,7 +8,11 @@ import LineChart from '@/components/ui/LineChart.vue'
 import { MONTH_NAMES_EN, formatShortDate, parseIsoDate } from '@/lib/date'
 import { ApiError } from '@/lib/http'
 import { getMonthlyAnalytics, getWeeklyAnalytics } from '@/services/checklistsApi'
-import type { AnalyticsCategory, MonthlyAnalyticsRead, WeeklyAnalyticsRead } from '@/types/checklist'
+import type {
+  AnalyticsCategory,
+  MonthlyAnalyticsRead,
+  WeeklyAnalyticsRead,
+} from '@/types/checklist'
 
 type Timelapse = 'WEEKLY' | 'MONTHLY'
 
@@ -16,13 +20,23 @@ type Timelapse = 'WEEKLY' | 'MONTHLY'
 // el backend ya devuelve las categorias en un orden estable (prioridad, con
 // "Others" siempre al final), asi que el color sale de esa posicion, nunca
 // del ranking de puntaje.
-const CATEGORY_COLORS = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9']
+const CATEGORY_COLORS = [
+  '#3987e5',
+  '#d95926',
+  '#199e70',
+  '#c98500',
+  '#d55181',
+  '#008300',
+  '#9085e9',
+]
 // "Others" es un bucket agregado, no una categoria real: color neutro, no
 // tomado de la paleta categorica.
 const OTHERS_COLOR = '#A6A6A6'
 
 function colorForCategory(category: AnalyticsCategory, index: number): string {
-  return category.category_id === null ? OTHERS_COLOR : CATEGORY_COLORS[index % CATEGORY_COLORS.length]
+  return category.category_id === null
+    ? OTHERS_COLOR
+    : CATEGORY_COLORS[index % CATEGORY_COLORS.length]
 }
 
 const WEEK_WINDOW_SIZE = 12
@@ -82,7 +96,9 @@ const visibleWeeks = computed(() =>
 )
 
 const canGoToPreviousWeeks = computed(() => weekWindowStart.value > 0)
-const canGoToNextWeeks = computed(() => weekWindowStart.value + WEEK_WINDOW_SIZE < allWeeks.value.length)
+const canGoToNextWeeks = computed(
+  () => weekWindowStart.value + WEEK_WINDOW_SIZE < allWeeks.value.length,
+)
 
 function goToPreviousWeeks() {
   weekWindowStart.value = Math.max(0, weekWindowStart.value - WEEK_WINDOW_SIZE)
@@ -143,9 +159,7 @@ const series = computed(() => {
         Analytics
       </RouterLink>
       <h1 class="text-xl font-semibold text-foreground">Checklist trends</h1>
-      <p class="text-sm text-muted">
-        Score by category, from your closed checklist weeks.
-      </p>
+      <p class="text-sm text-muted">Score by category, from your closed checklist weeks.</p>
     </div>
 
     <div class="flex shrink-0 flex-wrap items-center gap-3">
@@ -153,7 +167,9 @@ const series = computed(() => {
         <button
           type="button"
           class="rounded-md px-3 py-1.5 font-medium transition-colors"
-          :class="timelapse === 'WEEKLY' ? 'bg-accent text-white' : 'text-muted hover:text-foreground'"
+          :class="
+            timelapse === 'WEEKLY' ? 'bg-accent text-white' : 'text-muted hover:text-foreground'
+          "
           @click="timelapse = 'WEEKLY'"
         >
           Weekly
@@ -161,7 +177,9 @@ const series = computed(() => {
         <button
           type="button"
           class="rounded-md px-3 py-1.5 font-medium transition-colors"
-          :class="timelapse === 'MONTHLY' ? 'bg-accent text-white' : 'text-muted hover:text-foreground'"
+          :class="
+            timelapse === 'MONTHLY' ? 'bg-accent text-white' : 'text-muted hover:text-foreground'
+          "
           @click="timelapse = 'MONTHLY'"
         >
           Monthly
@@ -188,21 +206,35 @@ const series = computed(() => {
           :points="points"
           :series="series"
           show-average
-          :y-axis-label="timelapse === 'WEEKLY' ? 'Weekly checklist score' : 'Monthly checklist score'"
+          :y-axis-label="
+            timelapse === 'WEEKLY' ? 'Weekly checklist score' : 'Monthly checklist score'
+          "
         />
 
         <div v-if="timelapse === 'WEEKLY'" class="mt-4 flex items-center justify-between">
-          <BaseButton variant="secondary" type="button" :disabled="!canGoToPreviousWeeks" @click="goToPreviousWeeks">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :disabled="!canGoToPreviousWeeks"
+            @click="goToPreviousWeeks"
+          >
             <ChevronLeft class="h-4 w-4" />
             Previous 12 weeks
           </BaseButton>
-          <BaseButton variant="secondary" type="button" :disabled="!canGoToNextWeeks" @click="goToNextWeeks">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :disabled="!canGoToNextWeeks"
+            @click="goToNextWeeks"
+          >
             Next 12 weeks
             <ChevronRight class="h-4 w-4" />
           </BaseButton>
         </div>
       </template>
-      <p v-else class="py-8 text-center text-sm text-muted">No closed weeks yet for {{ selectedYear }}.</p>
+      <p v-else class="py-8 text-center text-sm text-muted">
+        No closed weeks yet for {{ selectedYear }}.
+      </p>
     </BaseCard>
   </div>
 </template>

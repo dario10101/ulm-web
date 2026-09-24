@@ -1,4 +1,4 @@
-import { getJson, postJson } from '@/lib/http'
+import { deleteJson, getJson, postJson, putJson } from '@/lib/http'
 import type { Weight, WeightPage, WeightPayload } from '@/types/weight'
 
 export interface ListWeightsParams {
@@ -22,5 +22,11 @@ export function createWeight(payload: WeightPayload): Promise<Weight> {
   return postJson<Weight>('/weights/', payload)
 }
 
-// updateWeight/deleteWeight todavia no existen: los botones de Edit/Delete
-// de la vista de registros no tienen logica conectada por ahora.
+export function updateWeight(id: number, payload: WeightPayload): Promise<Weight> {
+  return putJson<Weight>(`/weights/${id}`, payload)
+}
+
+/** Devuelve 404 si el registro no existe o no es del usuario. */
+export function deleteWeight(id: number): Promise<void> {
+  return deleteJson<void>(`/weights/${id}`)
+}

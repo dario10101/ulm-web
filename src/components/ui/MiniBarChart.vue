@@ -10,7 +10,11 @@ const max = Math.max(...props.data.map((d) => d.value), 1)
 
 <template>
   <div class="flex h-32 gap-3">
-    <div v-for="item in data" :key="item.label" class="flex h-full flex-1 flex-col items-center justify-end gap-2">
+    <div
+      v-for="item in data"
+      :key="item.label"
+      class="flex h-full flex-1 flex-col items-center justify-end gap-2"
+    >
       <div
         class="w-full rounded-t bg-accent-text"
         :style="{ height: `${(item.value / max) * 100}%` }"

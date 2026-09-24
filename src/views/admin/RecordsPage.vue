@@ -2,12 +2,14 @@
 import { Pencil, Scale, Trash2 } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 
+import WeightFormDialog from '@/components/records/WeightFormDialog.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { recordTypes, type RecordType } from '@/config/recordTypes'
 import { ApiError } from '@/lib/http'
-import { listWeights } from '@/services/weightsApi'
-import type { WeightPage } from '@/types/weight'
+import { deleteWeight, listWeights } from '@/services/weightsApi'
+import type { Weight, WeightPage } from '@/types/weight'
 
 const PAGE_SIZE = 10
 
@@ -53,6 +55,41 @@ function applyDateFilter() {
 function goToPage(newPage: number) {
   page.value = newPage
   fetchWeights()
+}
+
+// --- Edicion y borrado ---
+
+const editing = ref<Weight | null>(null)
+const deleting = ref<Weight | null>(null)
+const deleteSaving = ref(false)
+const deleteError = ref<string | null>(null)
+
+async function onSaved() {
+  editing.value = null
+  await fetchWeights()
+}
+
+function askDelete(record: Weight) {
+  deleting.value = record
+  deleteError.value = null
+}
+
+async function confirmDelete() {
+  if (!deleting.value) return
+  deleteSaving.value = true
+  deleteError.value = null
+  try {
+    await deleteWeight(deleting.value.id)
+    deleting.value = null
+    // Si se borro el unico registro de la ultima pagina, esa pagina deja de
+    // existir: hay que retroceder para no quedar en una vista vacia.
+    if (weightPage.value?.items.length === 1 && page.value > 1) page.value -= 1
+    await fetchWeights()
+  } catch (err) {
+    deleteError.value = err instanceof ApiError ? err.message : 'Could not delete this record.'
+  } finally {
+    deleteSaving.value = false
+  }
 }
 
 onMounted(() => {
@@ -136,15 +173,17 @@ onMounted(() => {
               <td class="py-2 text-right">
                 <button
                   type="button"
-                  title="Not implemented yet"
+                  title="Edit record"
                   class="rounded-md p-1.5 text-muted hover:bg-surface-hover hover:text-foreground"
+                  @click="editing = item"
                 >
                   <Pencil class="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                  title="Not implemented yet"
+                  title="Delete record"
                   class="rounded-md p-1.5 text-muted hover:bg-surface-hover hover:text-ruby-text"
+                  @click="askDelete(item)"
                 >
                   <Trash2 class="h-4 w-4" />
                 </button>
@@ -154,7 +193,12 @@ onMounted(() => {
         </table>
 
         <div class="mt-4 flex items-center justify-between text-sm text-muted">
-          <span>Page {{ weightPage.page }} of {{ weightPage.total_pages || 1 }} ({{ weightPage.total }} total)</span>
+          <span
+            >Page {{ weightPage.page }} of {{ weightPage.total_pages || 1 }} ({{
+              weightPage.total
+            }}
+            total)</span
+          >
           <div class="flex gap-2">
             <button
               type="button"
@@ -183,5 +227,42 @@ onMounted(() => {
       :title="`${activeType.label} — coming soon`"
       description="This category is a navigable prototype for now; it isn't connected to real data yet."
     />
+
+    <WeightFormDialog :record="editing" @close="editing = null" @saved="onSaved" />
+
+    <div
+      v-if="deleting"
+      class="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4"
+      @click.self="deleting = null"
+    >
+      <div class="w-full max-w-sm rounded-xl border border-subtle bg-surface p-5">
+        <h3 class="mb-2 text-sm font-semibold text-foreground">
+          Delete the record of {{ deleting.recorded_on }}?
+        </h3>
+        <p class="text-sm text-muted">{{ deleting.weight_kg }} kg. This can't be undone.</p>
+
+        <p v-if="deleteError" class="mt-3 text-sm text-ruby-text">{{ deleteError }}</p>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :disabled="deleteSaving"
+            @click="deleting = null"
+          >
+            Cancel
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            type="button"
+            :disabled="deleteSaving"
+            class="!bg-ruby hover:!bg-ruby/90"
+            @click="confirmDelete"
+          >
+            {{ deleteSaving ? 'Deleting...' : 'Delete' }}
+          </BaseButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

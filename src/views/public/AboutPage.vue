@@ -36,7 +36,9 @@ const currentlyLearning = ['AWS Solutions Architect', 'Vue 3 + TypeScript', 'Dis
     </div>
 
     <div>
-      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Aprendiendo actualmente</h2>
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+        Aprendiendo actualmente
+      </h2>
       <ul class="list-inside list-disc space-y-1 text-muted">
         <li v-for="item in currentlyLearning" :key="item">{{ item }}</li>
       </ul>

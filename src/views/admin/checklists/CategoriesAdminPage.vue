@@ -140,7 +140,10 @@ onMounted(load)
       <p v-if="loading" class="py-6 text-center text-sm text-muted">Loading...</p>
 
       <template v-else>
-        <p v-if="!draft.length && !disabledCategories.length" class="py-6 text-center text-sm text-muted">
+        <p
+          v-if="!draft.length && !disabledCategories.length"
+          class="py-6 text-center text-sm text-muted"
+        >
           No categories yet. Add one to get started.
         </p>
 
@@ -192,7 +195,9 @@ onMounted(load)
             class="flex items-center gap-2 opacity-40"
           >
             <span class="w-6 text-right text-xs text-muted">—</span>
-            <span class="flex-1 truncate rounded-lg border border-transparent px-3 py-2 text-sm text-muted">
+            <span
+              class="flex-1 truncate rounded-lg border border-transparent px-3 py-2 text-sm text-muted"
+            >
               {{ category.name }}
             </span>
             <BaseButton
@@ -212,7 +217,12 @@ onMounted(load)
       <p v-if="error" class="mt-4 text-sm text-ruby-text">{{ error }}</p>
 
       <div class="mt-6 flex justify-end gap-2 border-t border-subtle pt-4">
-        <BaseButton variant="secondary" type="button" :disabled="!isDirty || saving" @click="cancel">
+        <BaseButton
+          variant="secondary"
+          type="button"
+          :disabled="!isDirty || saving"
+          @click="cancel"
+        >
           Cancel
         </BaseButton>
         <BaseButton variant="primary" type="button" :disabled="!isDirty || saving" @click="save">

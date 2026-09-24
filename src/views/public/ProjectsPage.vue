@@ -12,7 +12,8 @@ const projects = [
   },
   {
     name: 'Más próximamente',
-    description: 'Otros experimentos y proyectos personales van a aparecer acá a medida que tomen forma.',
+    description:
+      'Otros experimentos y proyectos personales van a aparecer acá a medida que tomen forma.',
     tags: ['Planeado'],
     link: null,
   },
