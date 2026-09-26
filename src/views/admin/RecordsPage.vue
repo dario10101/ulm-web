@@ -1,19 +1,55 @@
 <script setup lang="ts">
-import { Pencil, Scale, Trash2 } from '@lucide/vue'
-import { onMounted, ref } from 'vue'
+import { ChevronDown, ChevronRight, Pencil, ReceiptText, Salad, Scale, Trash2 } from '@lucide/vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
+import MealFormDialog from '@/components/records/MealFormDialog.vue'
 import WeightFormDialog from '@/components/records/WeightFormDialog.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { financeColorClasses, financeIcon } from '@/config/financeVisuals'
+import { mealTypeLabel } from '@/config/mealTypes'
 import { recordTypes, type RecordType } from '@/config/recordTypes'
+import { formatCOP } from '@/lib/currency'
+import { formatShortDate, isoWeekday, parseIsoDate } from '@/lib/date'
 import { ApiError } from '@/lib/http'
+import { mealScaleGradientCss, mealScalePositionPercent } from '@/lib/mealColor'
+import { parseMealContent } from '@/lib/mealContent'
+import { clockFromDate, parseLocalDateTime, weekdayOptions } from '@/lib/time'
+import { listExpenses } from '@/services/expensesApi'
+import { deleteMeal, listMeals } from '@/services/mealsApi'
 import { deleteWeight, listWeights } from '@/services/weightsApi'
+import type { ExpensePage } from '@/types/expense'
+import type { Meal } from '@/types/meal'
 import type { Weight, WeightPage } from '@/types/weight'
 
 const PAGE_SIZE = 10
+const MEAL_PAGE_SIZE = 100 // tope del backend (Query le=100), ver app/api/routes/meals.py
+const MEAL_BAR_WIDTH_PX = 80 // debe calzar con la clase w-20 de la barra
 
-const activeType = ref<RecordType>(recordTypes.find((type) => type.id === 'weight')!)
+const DEFAULT_TYPE_ID = 'weight'
+
+const route = useRoute()
+const router = useRouter()
+
+// El tipo activo vive en la URL. Sin param (o con uno invalido) se muestra
+// "weight" y se corrige la URL, para que cada vista tenga una sola direccion.
+const activeType = computed<RecordType>(
+  () =>
+    recordTypes.find((type) => type.id === route.params.type) ??
+    recordTypes.find((type) => type.id === DEFAULT_TYPE_ID)!,
+)
+
+watch(
+  () => route.params.type,
+  (type) => {
+    if (type !== activeType.value.id) {
+      router.replace({ name: 'admin-records', params: { type: activeType.value.id } })
+    }
+  },
+  { immediate: true },
+)
 
 const startDate = ref('')
 const endDate = ref('')
@@ -40,14 +76,132 @@ async function fetchWeights() {
   }
 }
 
+// --- Comidas: agrupadas por dia (recorded_on, no created_at), sin paginar
+// (se trae todo el rango filtrado y se agrupa en el cliente). ---
+
+interface MealDayGroup {
+  dateKey: string
+  date: Date
+  meals: Meal[]
+  totalPortion: number
+}
+
+const rawMeals = ref<Meal[]>([])
+const mealsFetched = ref(false)
+const mealsLoading = ref(false)
+const mealsError = ref<string | null>(null)
+const expandedMealDays = ref<Set<string>>(new Set())
+
+const mealDayGroups = computed<MealDayGroup[]>(() => {
+  const byDay = new Map<string, Meal[]>()
+  for (const meal of rawMeals.value) {
+    // recorded_on ya viene en hora local del usuario (ver mealsApi/backend).
+    const dateKey = meal.recorded_on.slice(0, 10)
+    const bucket = byDay.get(dateKey)
+    if (bucket) bucket.push(meal)
+    else byDay.set(dateKey, [meal])
+  }
+  return Array.from(byDay.entries())
+    .map(([dateKey, meals]) => ({
+      dateKey,
+      date: parseIsoDate(dateKey),
+      meals: [...meals].sort((a, b) => a.recorded_on.localeCompare(b.recorded_on)),
+      totalPortion: meals.reduce((sum, m) => sum + m.meal_size, 0),
+    }))
+    .sort((a, b) => b.dateKey.localeCompare(a.dateKey))
+})
+
+async function fetchMeals() {
+  mealsLoading.value = true
+  mealsError.value = null
+  try {
+    const result = await listMeals({
+      startDate: startDate.value || undefined,
+      endDate: endDate.value || undefined,
+      page: 1,
+      pageSize: MEAL_PAGE_SIZE,
+    })
+    rawMeals.value = result.items
+    mealsFetched.value = true
+  } catch (err) {
+    mealsError.value = err instanceof ApiError ? err.message : 'Could not load meal records.'
+  } finally {
+    mealsLoading.value = false
+  }
+}
+
+function toggleMealDay(dateKey: string) {
+  const next = new Set(expandedMealDays.value)
+  if (next.has(dateKey)) next.delete(dateKey)
+  else next.add(dateKey)
+  expandedMealDays.value = next
+}
+
+function formatMealTime(meal: Meal): string {
+  const clock = clockFromDate(parseLocalDateTime(meal.recorded_on))
+  return `${clock.hour}:${String(clock.minute).padStart(2, '0')} ${clock.ampm}`
+}
+
+function weekdayLabel(date: Date): string {
+  return weekdayOptions.find((day) => day.value === isoWeekday(date))?.label ?? ''
+}
+
+// --- Gastos: borrador inicial de visualizacion (solo lectura por ahora). ---
+
+const expensePage = ref<ExpensePage | null>(null)
+const expensePageNum = ref(1)
+const expensesLoading = ref(false)
+const expensesError = ref<string | null>(null)
+
+async function fetchExpenses() {
+  expensesLoading.value = true
+  expensesError.value = null
+  try {
+    expensePage.value = await listExpenses({
+      startDate: startDate.value || undefined,
+      endDate: endDate.value || undefined,
+      page: expensePageNum.value,
+      pageSize: PAGE_SIZE,
+    })
+  } catch (err) {
+    expensesError.value = err instanceof ApiError ? err.message : 'Could not load expenses.'
+  } finally {
+    expensesLoading.value = false
+  }
+}
+
+function goToExpensePage(newPage: number) {
+  expensePageNum.value = newPage
+  fetchExpenses()
+}
+
 function selectType(type: RecordType) {
-  activeType.value = type
+  router.push({ name: 'admin-records', params: { type: type.id } })
+}
+
+// Cada tipo se carga la primera vez que se abre (por click o entrando directo por URL).
+function loadIfNeeded(type: RecordType) {
   if (type.id === 'weight' && weightPage.value === null) {
     fetchWeights()
+  }
+  if (type.id === 'meal' && !mealsFetched.value) {
+    fetchMeals()
+  }
+  if (type.id === 'expense' && expensePage.value === null) {
+    fetchExpenses()
   }
 }
 
 function applyDateFilter() {
+  if (activeType.value.id === 'meal') {
+    fetchMeals()
+    return
+  }
+  if (activeType.value.id === 'expense') {
+    expensePageNum.value = 1
+    fetchExpenses()
+    return
+  }
   page.value = 1
   fetchWeights()
 }
@@ -92,9 +246,39 @@ async function confirmDelete() {
   }
 }
 
-onMounted(() => {
-  if (activeType.value.id === 'weight') fetchWeights()
-})
+// --- Edicion y borrado de comidas ---
+
+const editingMeal = ref<Meal | null>(null)
+const deletingMeal = ref<Meal | null>(null)
+const mealDeleteSaving = ref(false)
+const mealDeleteError = ref<string | null>(null)
+
+async function onMealSaved() {
+  editingMeal.value = null
+  await fetchMeals()
+}
+
+function askDeleteMeal(meal: Meal) {
+  deletingMeal.value = meal
+  mealDeleteError.value = null
+}
+
+async function confirmDeleteMeal() {
+  if (!deletingMeal.value) return
+  mealDeleteSaving.value = true
+  mealDeleteError.value = null
+  try {
+    await deleteMeal(deletingMeal.value.id)
+    deletingMeal.value = null
+    await fetchMeals()
+  } catch (err) {
+    mealDeleteError.value = err instanceof ApiError ? err.message : 'Could not delete this record.'
+  } finally {
+    mealDeleteSaving.value = false
+  }
+}
+
+watch(activeType, loadIfNeeded, { immediate: true })
 </script>
 
 <template>
@@ -141,7 +325,7 @@ onMounted(() => {
           @change="applyDateFilter"
         />
       </label>
-      <p v-if="activeType.id !== 'weight'" class="text-xs text-muted">
+      <p v-if="!['weight', 'meal', 'expense'].includes(activeType.id)" class="text-xs text-muted">
         No additional filters for this category yet.
       </p>
     </div>
@@ -221,6 +405,230 @@ onMounted(() => {
       </template>
     </BaseCard>
 
+    <div v-else-if="activeType.id === 'meal'">
+      <p v-if="mealsLoading" class="py-6 text-center text-sm text-muted">Loading...</p>
+      <p v-else-if="mealsError" class="py-6 text-center text-sm text-ruby-text">{{ mealsError }}</p>
+      <EmptyState
+        v-else-if="!mealDayGroups.length"
+        :icon="Salad"
+        title="No meal records yet"
+        description="Log one from Add record and it'll show up here."
+      />
+      <div v-else class="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:items-start xl:grid-cols-3">
+        <div
+          v-for="group in mealDayGroups"
+          :key="group.dateKey"
+          class="overflow-hidden rounded-lg border border-subtle bg-surface"
+        >
+          <button
+            type="button"
+            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+            @click="toggleMealDay(group.dateKey)"
+          >
+            <div class="flex min-w-0 items-center gap-1.5">
+              <component
+                :is="expandedMealDays.has(group.dateKey) ? ChevronDown : ChevronRight"
+                class="h-3.5 w-3.5 shrink-0 text-muted"
+              />
+              <p class="truncate text-sm text-foreground">
+                <span class="font-medium">{{ formatShortDate(group.date) }}</span>
+                <span class="text-muted">
+                  · {{ weekdayLabel(group.date).slice(0, 3) }} · {{ group.meals.length }} meal{{
+                    group.meals.length === 1 ? '' : 's'
+                  }}
+                </span>
+              </p>
+            </div>
+            <div
+              class="relative h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-subtle"
+              :title="`Total portion: ${group.totalPortion}%`"
+            >
+              <div
+                class="absolute inset-y-0 left-0 overflow-hidden"
+                :style="{ width: `${mealScalePositionPercent(group.totalPortion)}%` }"
+              >
+                <div
+                  class="h-full"
+                  :style="{
+                    width: `${MEAL_BAR_WIDTH_PX}px`,
+                    background: `linear-gradient(to right, ${mealScaleGradientCss})`,
+                  }"
+                />
+              </div>
+            </div>
+          </button>
+
+          <div
+            v-if="expandedMealDays.has(group.dateKey)"
+            class="space-y-2 border-t border-subtle p-3"
+          >
+            <div
+              v-for="meal in group.meals"
+              :key="meal.id"
+              class="rounded-lg border border-subtle bg-background p-3 text-sm"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <p class="font-medium text-foreground">
+                    {{ formatMealTime(meal) }} · {{ mealTypeLabel(meal.meal_type) }}
+                  </p>
+                  <p class="text-xs text-muted">Portion: {{ meal.meal_size }}%</p>
+                </div>
+                <div class="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    title="Edit record"
+                    class="rounded-md p-1.5 text-muted hover:bg-surface-hover hover:text-foreground"
+                    @click="editingMeal = meal"
+                  >
+                    <Pencil class="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    title="Delete record"
+                    class="rounded-md p-1.5 text-muted hover:bg-surface-hover hover:text-ruby-text"
+                    @click="askDeleteMeal(meal)"
+                  >
+                    <Trash2 class="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                v-if="parseMealContent(meal.meal_content).length"
+                class="mt-2 flex flex-wrap gap-1"
+              >
+                <span
+                  v-for="component in parseMealContent(meal.meal_content)"
+                  :key="component.name"
+                  class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted"
+                >
+                  {{ component.name }} {{ component.percent }}%
+                </span>
+              </div>
+              <p v-if="meal.drink" class="mt-1 text-xs text-muted">Drink: {{ meal.drink }}</p>
+              <p v-if="meal.note" class="mt-1 text-xs text-muted">{{ meal.note }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <BaseCard v-else-if="activeType.id === 'expense'">
+      <p v-if="expensesLoading" class="py-6 text-center text-sm text-muted">Loading...</p>
+      <p v-else-if="expensesError" class="py-6 text-center text-sm text-ruby-text">
+        {{ expensesError }}
+      </p>
+      <EmptyState
+        v-else-if="!expensePage?.items.length"
+        :icon="ReceiptText"
+        title="No expenses yet"
+        description="Log one from Add record and it'll show up here."
+      />
+      <template v-else>
+        <p class="mb-3 text-xs text-muted">
+          Initial draft view — editing/deleting expenses isn't wired up yet.
+        </p>
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="text-muted">
+              <th class="pb-2 font-medium">Date</th>
+              <th class="pb-2 font-medium">Name</th>
+              <th class="pb-2 font-medium">Category</th>
+              <th class="pb-2 font-medium">Payment method</th>
+              <th class="pb-2 font-medium text-right">Amount</th>
+              <th class="pb-2 font-medium">Tags</th>
+              <th class="pb-2 font-medium">Note</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-subtle">
+            <tr v-for="item in expensePage.items" :key="item.id">
+              <td class="py-2 whitespace-nowrap text-foreground">{{ item.recorded_on }}</td>
+              <td class="py-2 text-foreground">{{ item.name }}</td>
+              <td class="py-2">
+                <span class="flex items-center gap-1.5 whitespace-nowrap text-foreground">
+                  <span
+                    class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
+                    :class="financeColorClasses(item.category.color_key).bg"
+                  >
+                    <component
+                      :is="financeIcon(item.category.icon_key)"
+                      class="h-3 w-3"
+                      :class="financeColorClasses(item.category.color_key).text"
+                    />
+                  </span>
+                  {{ item.category.name }}
+                </span>
+              </td>
+              <td class="py-2">
+                <span class="flex items-center gap-1.5 whitespace-nowrap text-foreground">
+                  <span
+                    class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
+                    :class="financeColorClasses(item.payment_method.color_key).bg"
+                  >
+                    <component
+                      :is="financeIcon(item.payment_method.icon_key)"
+                      class="h-3 w-3"
+                      :class="financeColorClasses(item.payment_method.color_key).text"
+                    />
+                  </span>
+                  {{ item.payment_method.name }}
+                </span>
+              </td>
+              <td class="py-2 whitespace-nowrap text-right text-foreground">
+                {{ formatCOP(item.amount) }}
+              </td>
+              <td class="py-2">
+                <span v-if="!item.tags.length" class="text-muted">—</span>
+                <span v-else class="flex flex-wrap gap-1">
+                  <span
+                    v-for="tag in item.tags"
+                    :key="tag.id"
+                    class="rounded-full border px-2 py-0.5 text-xs font-medium"
+                    :class="[
+                      financeColorClasses(tag.color_key).bg,
+                      financeColorClasses(tag.color_key).text,
+                      financeColorClasses(tag.color_key).border,
+                    ]"
+                  >
+                    {{ tag.name }}
+                  </span>
+                </span>
+              </td>
+              <td class="py-2 text-muted">{{ item.note ?? '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="mt-4 flex items-center justify-between text-sm text-muted">
+          <span
+            >Page {{ expensePage.page }} of {{ expensePage.total_pages || 1 }} ({{
+              expensePage.total
+            }}
+            total)</span
+          >
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="rounded-md border border-subtle px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+              :disabled="expensePageNum <= 1"
+              @click="goToExpensePage(expensePageNum - 1)"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              class="rounded-md border border-subtle px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+              :disabled="expensePageNum >= expensePage.total_pages"
+              @click="goToExpensePage(expensePageNum + 1)"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </template>
+    </BaseCard>
+
     <EmptyState
       v-else
       :icon="activeType.icon"
@@ -229,6 +637,7 @@ onMounted(() => {
     />
 
     <WeightFormDialog :record="editing" @close="editing = null" @saved="onSaved" />
+    <MealFormDialog :record="editingMeal" @close="editingMeal = null" @saved="onMealSaved" />
 
     <div
       v-if="deleting"
@@ -260,6 +669,42 @@ onMounted(() => {
             @click="confirmDelete"
           >
             {{ deleteSaving ? 'Deleting...' : 'Delete' }}
+          </BaseButton>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="deletingMeal"
+      class="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4"
+      @click.self="deletingMeal = null"
+    >
+      <div class="w-full max-w-sm rounded-xl border border-subtle bg-surface p-5">
+        <h3 class="mb-2 text-sm font-semibold text-foreground">
+          Delete the {{ formatMealTime(deletingMeal) }}
+          {{ mealTypeLabel(deletingMeal.meal_type).toLowerCase() }}?
+        </h3>
+        <p class="text-sm text-muted">This can't be undone.</p>
+
+        <p v-if="mealDeleteError" class="mt-3 text-sm text-ruby-text">{{ mealDeleteError }}</p>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :disabled="mealDeleteSaving"
+            @click="deletingMeal = null"
+          >
+            Cancel
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            type="button"
+            :disabled="mealDeleteSaving"
+            class="!bg-ruby hover:!bg-ruby/90"
+            @click="confirmDeleteMeal"
+          >
+            {{ mealDeleteSaving ? 'Deleting...' : 'Delete' }}
           </BaseButton>
         </div>
       </div>

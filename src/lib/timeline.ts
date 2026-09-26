@@ -26,6 +26,18 @@ const TIMELINE_MIN_BLOCK_HEIGHT = 24
 /** Primera hora que se muestra al abrir la vista (las anteriores quedan scrolleando hacia arriba). */
 export const DEFAULT_VISIBLE_HOUR = 8
 
+/**
+ * Hora con la que abrir la vista: si el periodo mostrado incluye hoy, la hora
+ * actual (asi se ve de entrada lo que falta del dia, no lo que ya paso); si
+ * no, DEFAULT_VISIBLE_HOUR. La hora actual cae en la franja sin fila
+ * (1am-4am) tambien usa el default, porque no hay donde scrollear.
+ */
+export function defaultVisibleHour(periodIncludesToday: boolean): number {
+  if (!periodIncludesToday) return DEFAULT_VISIBLE_HOUR
+  const hour = new Date().getHours()
+  return HOURS.includes(hour) ? hour : DEFAULT_VISIBLE_HOUR
+}
+
 export interface TimelineBlock {
   occurrence: CalendarTaskOccurrence
   top: number

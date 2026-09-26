@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight } from '@lucide/vue'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import { useCategories } from '@/composables/useCategories'
 import { formatDateLong, parseIsoDate, todayIsoDate } from '@/lib/date'
 import { scrollElementIntoContainer } from '@/lib/dom'
 import {
   computeTimelineBlocks,
-  DEFAULT_VISIBLE_HOUR,
+  defaultVisibleHour,
   HOURS,
   HOUR_ROW_HEIGHT,
   hourLabel,
@@ -70,8 +70,17 @@ let gridScrollEl: HTMLElement | null = null
 const mobileHourRowEls: Record<number, HTMLElement | null> = {}
 const desktopHourRowEls: Record<number, HTMLElement | null> = {}
 
+// El scroll inicial se dispara cuando aparece el grid, no cuando llegan los
+// datos: mientras la vista muestra "Loading..." (o no hay categorias) el grid
+// no existe, y las ocurrencias se guardan un flush antes de que `loading` pase
+// a false, asi que observarlas a ellas llega siempre demasiado pronto.
 function setGridScrollEl(el: Element | null) {
-  gridScrollEl = el as HTMLElement | null
+  const next = el as HTMLElement | null
+  // Vue reasigna el ref en cada render (null y de vuelta al mismo nodo): solo
+  // interesa cuando el contenedor es realmente otro.
+  if (!next || next === gridScrollEl) return
+  gridScrollEl = next
+  scrollToDefaultHour()
 }
 
 function setMobileHourRowEl(hour: number, el: Element | null) {
@@ -91,11 +100,11 @@ function visibleHourRowEl(hour: number): HTMLElement | null {
 }
 
 function scrollToDefaultHour() {
-  nextTick(() => scrollElementIntoContainer(gridScrollEl, visibleHourRowEl(DEFAULT_VISIBLE_HOUR)))
+  const hour = defaultVisibleHour(props.date === todayIsoDate())
+  nextTick(() => scrollElementIntoContainer(gridScrollEl, visibleHourRowEl(hour)))
 }
 
-onMounted(scrollToDefaultHour)
-watch(() => props.occurrences, scrollToDefaultHour)
+watch(() => props.date, scrollToDefaultHour)
 </script>
 
 <template>

@@ -231,10 +231,11 @@ watch(yearCursor, reloadYearIfLoaded)
 // --- Agregar tarea: misma funcionalidad que "Add record" > Task (ver
 // QuickAddPage.vue), pero accesible directo desde el calendario, al lado de
 // "Today", en las 4 vistas. La fecha por defecto depende de donde este
-// parado el usuario: en Daily, el dia que esta viendo; en Weekly/Monthly/
-// Yearly, la primera fecha de ese periodo que sea >= manana (si el periodo
-// entero ya paso, se usa igual su primer dia, sin importar la regla de
-// "manana"). ---
+// parado el usuario: en Daily, el dia que esta viendo; en Monthly, el dia
+// seleccionado en el panel lateral si hay uno; en Weekly/Yearly (y en
+// Monthly sin dia seleccionado), la primera fecha de ese periodo que sea >=
+// manana (si el periodo entero ya paso, se usa igual su primer dia, sin
+// importar la regla de "manana"). ---
 
 function firstAvailableDateFor(periodStart: string, periodEnd: string): string {
   const tomorrow = formatIsoDate(addDays(parseIsoDate(todayIsoDate()), 1))
@@ -251,7 +252,7 @@ function defaultAddTaskDate(): string {
     )
   }
   if (viewMode.value === 'MONTHLY') {
-    return firstAvailableDateFor(monthCursor.value, lastOfMonth(monthCursor.value))
+    return selectedDay.value ?? firstAvailableDateFor(monthCursor.value, lastOfMonth(monthCursor.value))
   }
   return firstAvailableDateFor(`${yearCursor.value}-01-01`, `${yearCursor.value}-12-31`)
 }

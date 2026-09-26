@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight } from '@lucide/vue'
-import { computed, nextTick, onMounted, watch } from 'vue'
+import { computed, nextTick, watch } from 'vue'
 
 import { addDays, formatDateLong, formatIsoDate, parseIsoDate, todayIsoDate } from '@/lib/date'
 import { scrollElementIntoContainer } from '@/lib/dom'
 import { WEEKDAY_LABELS } from '@/lib/monthGrid'
 import {
   computeTimelineBlocks,
-  DEFAULT_VISIBLE_HOUR,
+  defaultVisibleHour,
   HOURS,
   HOUR_ROW_HEIGHT,
   hourLabel,
@@ -54,25 +54,37 @@ function eventsFor(dayIso: string): CalendarEventMarker[] {
   return props.events.filter((marker) => marker.marker_date === dayIso)
 }
 
-// La vista arranca mostrando las 8am, pero las horas anteriores siguen ahi
-// arriba: alcanza con scrollear el cuadro (nunca la pagina completa).
+// La vista arranca mostrando la hora actual (si la semana incluye hoy) para
+// que se vea de entrada lo que falta del dia; las horas anteriores siguen ahi
+// arriba, alcanza con scrollear el cuadro (nunca la pagina completa).
 let gridScrollEl: HTMLElement | null = null
 const hourRowEls: Record<number, HTMLElement | null> = {}
 
+// El scroll inicial se dispara cuando aparece el grid, no cuando llegan los
+// datos: mientras la vista muestra "Loading..." el grid no existe, y las
+// ocurrencias se guardan un flush antes de que `loading` pase a false, asi que
+// observarlas a ellas llega siempre demasiado pronto.
 function setGridScrollEl(el: Element | null) {
-  gridScrollEl = el as HTMLElement | null
+  const next = el as HTMLElement | null
+  // Vue reasigna el ref en cada render (null y de vuelta al mismo nodo): solo
+  // interesa cuando el contenedor es realmente otro.
+  if (!next || next === gridScrollEl) return
+  gridScrollEl = next
+  scrollToDefaultHour()
 }
 
 function setHourRowEl(hour: number, el: Element | null) {
   hourRowEls[hour] = el as HTMLElement | null
 }
 
+const weekIncludesToday = computed(() => weekDays.value.some((day) => isTodayColumn(day)))
+
 function scrollToDefaultHour() {
-  nextTick(() => scrollElementIntoContainer(gridScrollEl, hourRowEls[DEFAULT_VISIBLE_HOUR]))
+  const hour = defaultVisibleHour(weekIncludesToday.value)
+  nextTick(() => scrollElementIntoContainer(gridScrollEl, hourRowEls[hour]))
 }
 
-onMounted(scrollToDefaultHour)
-watch(() => props.occurrences, scrollToDefaultHour)
+watch(() => props.weekStart, scrollToDefaultHour)
 </script>
 
 <template>

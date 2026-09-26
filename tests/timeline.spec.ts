@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   computeTimelineBlocks,
+  DEFAULT_VISIBLE_HOUR,
+  defaultVisibleHour,
   HOUR_ROW_HEIGHT,
   hourLabel,
   minutesFromTimelineStart,
@@ -99,6 +101,26 @@ describe('computeTimelineBlocks', () => {
 
   it('no devuelve nada si no hay ocurrencias', () => {
     expect(computeTimelineBlocks([])).toEqual([])
+  })
+})
+
+describe('defaultVisibleHour', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('usa el default si el periodo mostrado no incluye hoy', () => {
+    vi.setSystemTime(new Date(2026, 8, 15, 14, 0))
+    expect(defaultVisibleHour(false)).toBe(DEFAULT_VISIBLE_HOUR)
+  })
+
+  it('usa la hora actual si el periodo incluye hoy', () => {
+    vi.setSystemTime(new Date(2026, 8, 15, 14, 0))
+    expect(defaultVisibleHour(true)).toBe(14)
+  })
+
+  it('cae al default si la hora actual esta en la franja sin fila (1am-4am)', () => {
+    vi.setSystemTime(new Date(2026, 8, 15, 3, 0))
+    expect(defaultVisibleHour(true)).toBe(DEFAULT_VISIBLE_HOUR)
   })
 })
 

@@ -17,7 +17,8 @@ const router = createRouter({
     { path: '/login', component: AuthLayout, children: authRoutes },
     { path: '/:pathMatch(.*)*', redirect: { name: 'public-home' } },
   ],
-  scrollBehavior() {
+  scrollBehavior(to, from) {
+    if (to.name === from.name && to.meta.managesOwnScroll) return false
     return { top: 0 }
   },
 })

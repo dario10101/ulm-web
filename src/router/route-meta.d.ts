@@ -6,5 +6,7 @@ declare module 'vue-router' {
   interface RouteMeta {
     hasFilters?: boolean
     filterLabels?: string[]
+    // Si la vista cambia solo de params (misma ruta), ella misma decide el scroll.
+    managesOwnScroll?: boolean
   }
 }

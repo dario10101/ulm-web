@@ -26,3 +26,19 @@ describe('useLayoutState', () => {
     a.closeSidebar()
   })
 })
+
+describe('useLayoutState - modo colapsado (desktop)', () => {
+  it('alterna el colapso sin afectar el drawer de mobile y lo persiste', () => {
+    const { isSidebarOpen, isSidebarCollapsed, closeSidebar, toggleSidebarCollapsed } =
+      useLayoutState()
+    closeSidebar()
+    const initial = isSidebarCollapsed.value
+
+    toggleSidebarCollapsed()
+    expect(isSidebarCollapsed.value).toBe(!initial)
+    expect(isSidebarOpen.value).toBe(false)
+
+    toggleSidebarCollapsed()
+    expect(isSidebarCollapsed.value).toBe(initial)
+  })
+})

@@ -10,14 +10,19 @@ export const adminRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/admin/DashboardPage.vue'),
   },
   {
-    path: 'quick-add',
+    // Cada tipo tiene su URL (/admin/quick-add/expense...): se puede enlazar
+    // directo, y el boton "atras" del navegador vuelve al menu de tipos.
+    path: 'quick-add/:type?',
     name: 'admin-quick-add',
     component: () => import('@/views/admin/QuickAddPage.vue'),
+    meta: { managesOwnScroll: true },
   },
   {
-    path: 'records',
+    // Igual que quick-add: cada tipo tiene su URL (/admin/records/meal...).
+    path: 'records/:type?',
     name: 'admin-records',
     component: () => import('@/views/admin/RecordsPage.vue'),
+    meta: { managesOwnScroll: true },
   },
   {
     path: 'checklists',
