@@ -49,7 +49,7 @@ export const MONTH_NAMES_EN = [
   'December',
 ]
 
-const MONTH_SHORT_EN = [
+export const MONTH_SHORT_EN = [
   'Jan',
   'Feb',
   'Mar',

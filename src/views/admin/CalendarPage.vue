@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronDown, Plus } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import DailyView from '@/components/calendar/DailyView.vue'
 import DeleteTaskDialog from '@/components/calendar/DeleteTaskDialog.vue'
@@ -27,29 +28,52 @@ import {
 import type { CalendarEventMarker, CalendarEventRange } from '@/types/calendarEvent'
 import type { CalendarTaskOccurrence } from '@/types/calendarTask'
 
-// --- Selector de vista (Daily/Weekly/Monthly/Yearly). Monthly es la vista
-// por defecto (ver viewMode mas abajo). ---
+// --- Selector de vista (Daily/Weekly/Monthly/Yearly). La vista activa vive en
+// la URL (/admin/calendar/daily...), igual que quick-add y records: se puede
+// enlazar directo y el boton "atras" vuelve a la vista anterior. ---
 
 type ViewMode = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
-const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
-  { value: 'DAILY', label: 'Daily' },
-  { value: 'WEEKLY', label: 'Weekly' },
-  { value: 'MONTHLY', label: 'Monthly' },
-  { value: 'YEARLY', label: 'Yearly' },
+const VIEW_OPTIONS: { value: ViewMode; slug: string; label: string }[] = [
+  { value: 'DAILY', slug: 'daily', label: 'Daily' },
+  { value: 'WEEKLY', slug: 'weekly', label: 'Weekly' },
+  { value: 'MONTHLY', slug: 'monthly', label: 'Monthly' },
+  { value: 'YEARLY', slug: 'yearly', label: 'Yearly' },
 ]
+const DEFAULT_VIEW: ViewMode = 'MONTHLY'
 
 const { categories, ensureLoaded: ensureCategoriesLoaded } = useCategories()
 
-const viewMode = ref<ViewMode>('MONTHLY')
+const route = useRoute()
+const router = useRouter()
+
+const viewMode = computed<ViewMode>(
+  () => VIEW_OPTIONS.find((option) => option.slug === route.params.view)?.value ?? DEFAULT_VIEW,
+)
 const viewMenuOpen = ref(false)
+
+function viewSlug(mode: ViewMode): string {
+  return VIEW_OPTIONS.find((option) => option.value === mode)!.slug
+}
+
+// Sin param (o con uno invalido) se muestra Monthly y se corrige la URL, para
+// que cada vista tenga una sola direccion.
+watch(
+  () => route.params.view,
+  (view) => {
+    if (view !== viewSlug(viewMode.value)) {
+      router.replace({ name: 'admin-calendar', params: { view: viewSlug(viewMode.value) } })
+    }
+  },
+  { immediate: true },
+)
 
 function viewLabel(mode: ViewMode): string {
   return VIEW_OPTIONS.find((option) => option.value === mode)?.label ?? ''
 }
 
 function selectView(mode: ViewMode) {
-  viewMode.value = mode
   viewMenuOpen.value = false
+  router.push({ name: 'admin-calendar', params: { view: viewSlug(mode) } })
 }
 
 // --- Vista diaria: grilla categorias (columnas) x horas (filas, 5am-12am) ---
@@ -181,7 +205,7 @@ watch(monthCursor, reloadMonthIfLoaded)
 
 function openMonthFromYear(monthIndex0: number) {
   monthCursor.value = formatIsoDate(new Date(yearCursor.value, monthIndex0, 1))
-  viewMode.value = 'MONTHLY'
+  selectView('MONTHLY')
 }
 
 // --- Vista anual: los 12 meses del anio, compactos, coloreados igual que
@@ -206,7 +230,7 @@ function goToNextYear() {
 
 function goToDayFromYear(isoDate: string) {
   currentDate.value = isoDate
-  viewMode.value = 'DAILY'
+  selectView('DAILY')
 }
 
 const visibleYearRanges = computed(() =>

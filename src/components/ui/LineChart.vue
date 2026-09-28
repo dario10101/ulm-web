@@ -16,17 +16,22 @@ interface LineChartSeries {
   dashed?: boolean
 }
 
-const props = defineProps<{
-  points: LineChartPoint[]
-  series: LineChartSeries[]
-  yAxisLabel?: string
-  // Agrega una serie extra con el promedio de `series` en cada punto.
-  showAverage?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    points: LineChartPoint[]
+    series: LineChartSeries[]
+    yAxisLabel?: string
+    // Agrega una serie extra con el promedio de `series` en cada punto.
+    showAverage?: boolean
+    // Formato de ticks del eje Y y valores del tooltip (ej. montos en COP).
+    format?: (value: number) => string
+  }>(),
+  { yAxisLabel: undefined, showAverage: false, format: (value: number) => String(value) },
+)
 
 const CHART_W = 800
 const CHART_H = 240
-const PADDING = { top: 14, right: 16, bottom: 28, left: 34 }
+const PADDING = { top: 14, right: 16, bottom: 28, left: 44 }
 const innerW = CHART_W - PADDING.left - PADDING.right
 const innerH = CHART_H - PADDING.top - PADDING.bottom
 
@@ -142,7 +147,7 @@ const tooltipStyle = computed(() => {
           dominant-baseline="middle"
           class="fill-muted text-[10px]"
         >
-          {{ tick }}
+          {{ format(tick) }}
         </text>
       </g>
 
@@ -225,7 +230,7 @@ const tooltipStyle = computed(() => {
           />
           {{ s.label }}
         </span>
-        <span class="font-semibold text-foreground">{{ s.values[hoverIndex] }}</span>
+        <span class="font-semibold text-foreground">{{ format(s.values[hoverIndex]) }}</span>
       </div>
     </div>
 

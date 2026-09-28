@@ -19,7 +19,13 @@ export const analyticsTypes: AnalyticsType[] = [
     to: { name: 'admin-analytics-checklists' },
     implemented: true,
   },
-  { id: 'finance', label: 'Finance analysis', icon: TrendingUp, implemented: false },
+  {
+    id: 'finance',
+    label: 'Finance analysis',
+    icon: TrendingUp,
+    to: { name: 'admin-analytics-finance' },
+    implemented: true,
+  },
   { id: 'weight', label: 'Weight trend', icon: Scale, implemented: false },
   { id: 'learning', label: 'Study hours', icon: GraduationCap, implemented: false },
 ]

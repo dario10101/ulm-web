@@ -41,7 +41,8 @@ export const adminRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/admin/checklists/TemplateAdminPage.vue'),
   },
   {
-    path: 'calendar',
+    // Igual que quick-add: cada vista tiene su URL (/admin/calendar/daily...).
+    path: 'calendar/:view?',
     name: 'admin-calendar',
     component: () => import('@/views/admin/CalendarPage.vue'),
     meta: { hasFilters: true, filterLabels: ['Habits', 'Tasks', 'Study', 'Finance'] },
@@ -55,6 +56,13 @@ export const adminRoutes: RouteRecordRaw[] = [
     path: 'analytics',
     name: 'admin-analytics',
     component: () => import('@/views/admin/AnalyticsPage.vue'),
+  },
+  {
+    // Cada area y sub-analisis tiene su URL (/admin/analytics/finance/expenses/month),
+    // igual patron que quick-add/:type y records/:type.
+    path: 'analytics/finance/:type?/:view?',
+    name: 'admin-analytics-finance',
+    component: () => import('@/views/admin/analytics/FinanceAnalysisPage.vue'),
   },
   {
     path: 'analytics/checklists',

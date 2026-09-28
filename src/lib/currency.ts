@@ -22,3 +22,16 @@ export function parseThousandsInput(formatted: string): number {
 export function formatCOP(amount: number): string {
   return `$ ${formatThousands(String(Math.round(amount)))}`
 }
+
+/** Version corta para ejes y etiquetas de grafico: 25000 -> "$25k", 1250000 -> "$1.3M". */
+export function formatCompactCOP(amount: number): string {
+  const abs = Math.abs(amount)
+  const sign = amount < 0 ? '-' : ''
+  if (abs >= 1_000_000) return `${sign}$${trimZero((abs / 1_000_000).toFixed(1))}M`
+  if (abs >= 1_000) return `${sign}$${trimZero((abs / 1_000).toFixed(abs >= 100_000 ? 0 : 1))}k`
+  return `${sign}$${Math.round(abs)}`
+}
+
+function trimZero(value: string): string {
+  return value.endsWith('.0') ? value.slice(0, -2) : value
+}

@@ -1,8 +1,20 @@
 <script setup lang="ts">
-import { ChevronDown, ChevronRight, Pencil, ReceiptText, Salad, Scale, Trash2 } from '@lucide/vue'
+import {
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+  Plus,
+  ReceiptText,
+  Salad,
+  Scale,
+  Tag,
+  Trash2,
+} from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import ExpenseFilterBar from '@/components/expenses/ExpenseFilterBar.vue'
+import ExpenseFormDialog from '@/components/records/ExpenseFormDialog.vue'
 import MealFormDialog from '@/components/records/MealFormDialog.vue'
 import WeightFormDialog from '@/components/records/WeightFormDialog.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -13,14 +25,19 @@ import { mealTypeLabel } from '@/config/mealTypes'
 import { recordTypes, type RecordType } from '@/config/recordTypes'
 import { formatCOP } from '@/lib/currency'
 import { formatShortDate, isoWeekday, parseIsoDate } from '@/lib/date'
+import {
+  defaultExpenseFilters,
+  expenseFilterQuery,
+  type ExpenseFilterState,
+} from '@/lib/expenseFilters'
 import { ApiError } from '@/lib/http'
 import { mealScaleGradientCss, mealScalePositionPercent } from '@/lib/mealColor'
 import { parseMealContent } from '@/lib/mealContent'
 import { clockFromDate, parseLocalDateTime, weekdayOptions } from '@/lib/time'
-import { listExpenses } from '@/services/expensesApi'
+import { deleteExpense, listExpenses } from '@/services/expensesApi'
 import { deleteMeal, listMeals } from '@/services/mealsApi'
 import { deleteWeight, listWeights } from '@/services/weightsApi'
-import type { ExpensePage } from '@/types/expense'
+import type { Expense, ExpensePage } from '@/types/expense'
 import type { Meal } from '@/types/meal'
 import type { Weight, WeightPage } from '@/types/weight'
 
@@ -146,7 +163,11 @@ function weekdayLabel(date: Date): string {
   return weekdayOptions.find((day) => day.value === isoWeekday(date))?.label ?? ''
 }
 
-// --- Gastos: borrador inicial de visualizacion (solo lectura por ahora). ---
+// --- Gastos ---
+
+// Filtros en un solo objeto inmutable (ver lib/expenseFilters.ts): la barra
+// emite uno nuevo en cada cambio y aca solo se vuelve a pedir la lista.
+const expenseFilters = ref<ExpenseFilterState>(defaultExpenseFilters())
 
 const expensePage = ref<ExpensePage | null>(null)
 const expensePageNum = ref(1)
@@ -158,8 +179,7 @@ async function fetchExpenses() {
   expensesError.value = null
   try {
     expensePage.value = await listExpenses({
-      startDate: startDate.value || undefined,
-      endDate: endDate.value || undefined,
+      ...expenseFilterQuery(expenseFilters.value),
       page: expensePageNum.value,
       pageSize: PAGE_SIZE,
     })
@@ -170,9 +190,50 @@ async function fetchExpenses() {
   }
 }
 
+watch(expenseFilters, () => {
+  expensePageNum.value = 1
+  fetchExpenses()
+})
+
 function goToExpensePage(newPage: number) {
   expensePageNum.value = newPage
   fetchExpenses()
+}
+
+// --- Edicion y borrado de gastos ---
+
+const editingExpense = ref<Expense | null>(null)
+const deletingExpense = ref<Expense | null>(null)
+const expenseDeleteSaving = ref(false)
+const expenseDeleteError = ref<string | null>(null)
+
+async function onExpenseSaved() {
+  editingExpense.value = null
+  await fetchExpenses()
+}
+
+function askDeleteExpense(expense: Expense) {
+  deletingExpense.value = expense
+  expenseDeleteError.value = null
+}
+
+async function confirmDeleteExpense() {
+  if (!deletingExpense.value) return
+  expenseDeleteSaving.value = true
+  expenseDeleteError.value = null
+  try {
+    await deleteExpense(deletingExpense.value.id)
+    deletingExpense.value = null
+    if (expensePage.value?.items.length === 1 && expensePageNum.value > 1) {
+      expensePageNum.value -= 1
+    }
+    await fetchExpenses()
+  } catch (err) {
+    expenseDeleteError.value =
+      err instanceof ApiError ? err.message : 'Could not delete this record.'
+  } finally {
+    expenseDeleteSaving.value = false
+  }
 }
 
 function selectType(type: RecordType) {
@@ -195,11 +256,6 @@ function loadIfNeeded(type: RecordType) {
 function applyDateFilter() {
   if (activeType.value.id === 'meal') {
     fetchMeals()
-    return
-  }
-  if (activeType.value.id === 'expense') {
-    expensePageNum.value = 1
-    fetchExpenses()
     return
   }
   page.value = 1
@@ -283,9 +339,30 @@ watch(activeType, loadIfNeeded, { immediate: true })
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-xl font-semibold text-foreground">View records</h1>
-      <p class="text-sm text-muted">Browse everything you've logged, filtered by date.</p>
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h1 class="text-xl font-semibold text-foreground">View records</h1>
+        <p class="text-sm text-muted">Browse everything you've logged, filtered by date.</p>
+      </div>
+      <div class="flex shrink-0 gap-2">
+        <RouterLink
+          v-if="activeType.implemented"
+          :to="{ name: 'admin-quick-add', params: { type: activeType.id } }"
+          class="flex items-center gap-1.5 rounded-lg border border-subtle px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:border-accent-text/50 hover:text-foreground"
+        >
+          <Plus class="h-4 w-4" />
+          Add {{ activeType.label.toLowerCase() }}
+        </RouterLink>
+        <RouterLink
+          :to="{
+            name: 'admin-analytics-finance',
+            params: activeType.id === 'expense' ? { type: 'expenses' } : {},
+          }"
+          class="rounded-lg border border-subtle px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:border-accent-text/50 hover:text-foreground"
+        >
+          View trends
+        </RouterLink>
+      </div>
     </div>
 
     <div class="flex flex-wrap gap-2 border-b border-subtle pb-4">
@@ -306,7 +383,9 @@ watch(activeType, loadIfNeeded, { immediate: true })
       </button>
     </div>
 
-    <div class="flex flex-wrap items-end gap-4">
+    <ExpenseFilterBar v-if="activeType.id === 'expense'" v-model="expenseFilters" />
+
+    <div v-else class="flex flex-wrap items-end gap-4">
       <label class="text-sm">
         <span class="mb-1 block text-muted">From</span>
         <input
@@ -325,7 +404,7 @@ watch(activeType, loadIfNeeded, { immediate: true })
           @change="applyDateFilter"
         />
       </label>
-      <p v-if="!['weight', 'meal', 'expense'].includes(activeType.id)" class="text-xs text-muted">
+      <p v-if="!['weight', 'meal'].includes(activeType.id)" class="text-xs text-muted">
         No additional filters for this category yet.
       </p>
     </div>
@@ -526,27 +605,37 @@ watch(activeType, loadIfNeeded, { immediate: true })
         description="Log one from Add record and it'll show up here."
       />
       <template v-else>
-        <p class="mb-3 text-xs text-muted">
-          Initial draft view — editing/deleting expenses isn't wired up yet.
-        </p>
-        <table class="w-full text-left text-sm">
+        <table class="w-full table-fixed text-left text-sm">
+          <colgroup>
+            <col class="w-24" />
+            <col class="w-40" />
+            <col class="w-32" />
+            <col class="w-32" />
+            <col class="w-24" />
+            <col class="w-16" />
+            <col />
+            <col class="w-16" />
+          </colgroup>
           <thead>
             <tr class="text-muted">
               <th class="pb-2 font-medium">Date</th>
               <th class="pb-2 font-medium">Name</th>
               <th class="pb-2 font-medium">Category</th>
               <th class="pb-2 font-medium">Payment method</th>
-              <th class="pb-2 font-medium text-right">Amount</th>
+              <th class="pb-2 font-medium">Amount</th>
               <th class="pb-2 font-medium">Tags</th>
               <th class="pb-2 font-medium">Note</th>
+              <th class="pb-2 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-subtle">
             <tr v-for="item in expensePage.items" :key="item.id">
               <td class="py-2 whitespace-nowrap text-foreground">{{ item.recorded_on }}</td>
-              <td class="py-2 text-foreground">{{ item.name }}</td>
+              <td class="py-2 text-foreground">
+                <span class="block truncate" :title="item.name">{{ item.name }}</span>
+              </td>
               <td class="py-2">
-                <span class="flex items-center gap-1.5 whitespace-nowrap text-foreground">
+                <span class="flex min-w-0 items-center gap-1.5 text-foreground">
                   <span
                     class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
                     :class="financeColorClasses(item.category.color_key).bg"
@@ -557,11 +646,11 @@ watch(activeType, loadIfNeeded, { immediate: true })
                       :class="financeColorClasses(item.category.color_key).text"
                     />
                   </span>
-                  {{ item.category.name }}
+                  <span class="truncate" :title="item.category.name">{{ item.category.name }}</span>
                 </span>
               </td>
               <td class="py-2">
-                <span class="flex items-center gap-1.5 whitespace-nowrap text-foreground">
+                <span class="flex min-w-0 items-center gap-1.5 text-foreground">
                   <span
                     class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
                     :class="financeColorClasses(item.payment_method.color_key).bg"
@@ -572,30 +661,64 @@ watch(activeType, loadIfNeeded, { immediate: true })
                       :class="financeColorClasses(item.payment_method.color_key).text"
                     />
                   </span>
-                  {{ item.payment_method.name }}
+                  <span class="truncate" :title="item.payment_method.name">{{
+                    item.payment_method.name
+                  }}</span>
                 </span>
               </td>
-              <td class="py-2 whitespace-nowrap text-right text-foreground">
-                {{ formatCOP(item.amount) }}
-              </td>
+              <td class="py-2 whitespace-nowrap text-foreground">{{ formatCOP(item.amount) }}</td>
               <td class="py-2">
                 <span v-if="!item.tags.length" class="text-muted">—</span>
-                <span v-else class="flex flex-wrap gap-1">
-                  <span
-                    v-for="tag in item.tags"
-                    :key="tag.id"
-                    class="rounded-full border px-2 py-0.5 text-xs font-medium"
-                    :class="[
-                      financeColorClasses(tag.color_key).bg,
-                      financeColorClasses(tag.color_key).text,
-                      financeColorClasses(tag.color_key).border,
-                    ]"
+                <!-- Lista desplegable en vez de badges inline: con varios tags
+                     rompia el ancho de la columna. -->
+                <details v-else class="relative">
+                  <summary
+                    class="flex w-fit cursor-pointer list-none items-center gap-1 rounded-md border border-subtle px-1.5 py-0.5 text-xs text-muted hover:text-foreground [&::-webkit-details-marker]:hidden"
                   >
-                    {{ tag.name }}
-                  </span>
-                </span>
+                    <Tag class="h-3 w-3" />
+                    {{ item.tags.length }}
+                  </summary>
+                  <div
+                    class="absolute z-10 mt-1 flex w-max max-w-48 flex-col gap-1 rounded-lg border border-subtle bg-surface p-2 shadow-lg"
+                  >
+                    <span
+                      v-for="tag in item.tags"
+                      :key="tag.id"
+                      class="rounded-full border px-2 py-0.5 text-xs font-medium"
+                      :class="[
+                        financeColorClasses(tag.color_key).bg,
+                        financeColorClasses(tag.color_key).text,
+                        financeColorClasses(tag.color_key).border,
+                      ]"
+                    >
+                      {{ tag.name }}
+                    </span>
+                  </div>
+                </details>
               </td>
-              <td class="py-2 text-muted">{{ item.note ?? '—' }}</td>
+              <td class="py-2 text-muted">
+                <span class="block truncate" :title="item.note ?? undefined">{{
+                  item.note ?? '—'
+                }}</span>
+              </td>
+              <td class="py-2 text-right whitespace-nowrap">
+                <button
+                  type="button"
+                  title="Edit record"
+                  class="rounded-md p-1.5 text-muted hover:bg-surface-hover hover:text-foreground"
+                  @click="editingExpense = item"
+                >
+                  <Pencil class="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  title="Delete record"
+                  class="rounded-md p-1.5 text-muted hover:bg-surface-hover hover:text-ruby-text"
+                  @click="askDeleteExpense(item)"
+                >
+                  <Trash2 class="h-4 w-4" />
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -638,6 +761,11 @@ watch(activeType, loadIfNeeded, { immediate: true })
 
     <WeightFormDialog :record="editing" @close="editing = null" @saved="onSaved" />
     <MealFormDialog :record="editingMeal" @close="editingMeal = null" @saved="onMealSaved" />
+    <ExpenseFormDialog
+      :record="editingExpense"
+      @close="editingExpense = null"
+      @saved="onExpenseSaved"
+    />
 
     <div
       v-if="deleting"
@@ -705,6 +833,46 @@ watch(activeType, loadIfNeeded, { immediate: true })
             @click="confirmDeleteMeal"
           >
             {{ mealDeleteSaving ? 'Deleting...' : 'Delete' }}
+          </BaseButton>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="deletingExpense"
+      class="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4"
+      @click.self="deletingExpense = null"
+    >
+      <div class="w-full max-w-sm rounded-xl border border-subtle bg-surface p-5">
+        <h3 class="mb-2 text-sm font-semibold text-foreground">
+          Delete "{{ deletingExpense.name }}"?
+        </h3>
+        <p class="text-sm text-muted">
+          {{ formatCOP(deletingExpense.amount) }} on {{ deletingExpense.recorded_on }}. This can't
+          be undone.
+        </p>
+
+        <p v-if="expenseDeleteError" class="mt-3 text-sm text-ruby-text">
+          {{ expenseDeleteError }}
+        </p>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :disabled="expenseDeleteSaving"
+            @click="deletingExpense = null"
+          >
+            Cancel
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            type="button"
+            :disabled="expenseDeleteSaving"
+            class="!bg-ruby hover:!bg-ruby/90"
+            @click="confirmDeleteExpense"
+          >
+            {{ expenseDeleteSaving ? 'Deleting...' : 'Delete' }}
           </BaseButton>
         </div>
       </div>

@@ -60,3 +60,23 @@ export interface ExpenseCreatePayload {
   category_id: number
   tag_ids?: number[]
 }
+
+export type ExpenseGroupBy = 'category' | 'tag' | 'payment_method' | 'month' | 'year'
+
+export interface ExpenseSummaryBucket {
+  /** id del catalogo ("none" = sin tag) o periodo ("2026-09" / "2026"). */
+  key: string
+  label: string
+  icon_key: string | null
+  color_key: string | null
+  total: number
+  count: number
+}
+
+export interface ExpenseSummary {
+  group_by: ExpenseGroupBy
+  /** Total del conjunto filtrado. Por tag, la suma de buckets puede superarlo. */
+  total: number
+  count: number
+  buckets: ExpenseSummaryBucket[]
+}
