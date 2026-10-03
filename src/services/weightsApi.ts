@@ -24,16 +24,14 @@ export function listWeights(params: ListWeightsParams = {}): Promise<WeightPage>
   return getJson<WeightPage>(`/weights/?${query.toString()}`)
 }
 
-/** Peso promedio por mes o por dia dentro del rango (para analytics). */
+/** Peso promedio por mes o por dia dentro del rango (sin rango = todo el historial). */
 export function summarizeWeights(
   groupBy: WeightSummaryGroupBy,
-  params: { startDate: string; endDate: string },
+  params: { startDate?: string; endDate?: string } = {},
 ): Promise<WeightSummary> {
-  const query = new URLSearchParams({
-    group_by: groupBy,
-    start_date: params.startDate,
-    end_date: params.endDate,
-  })
+  const query = new URLSearchParams({ group_by: groupBy })
+  if (params.startDate) query.set('start_date', params.startDate)
+  if (params.endDate) query.set('end_date', params.endDate)
   return getJson<WeightSummary>(`/weights/summary?${query.toString()}`)
 }
 

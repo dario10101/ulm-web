@@ -27,9 +27,6 @@ const props = withDefaults(
     showAverage?: boolean
     // Formato de ticks del eje Y y valores del tooltip (ej. montos en COP).
     format?: (value: number) => string
-    // false = el eje Y se ajusta al rango de los datos en vez de arrancar en
-    // 0 (para magnitudes como el peso, donde 0 aplastaria la linea).
-    zeroBaseline?: boolean
     // Marcador en cada punto con dato (util cuando hay huecos).
     showMarkers?: boolean
     // Muestra la etiqueta del eje X cada N puntos (evita que se pisen).
@@ -39,7 +36,6 @@ const props = withDefaults(
     yAxisLabel: undefined,
     showAverage: false,
     format: (value: number) => String(value),
-    zeroBaseline: true,
     showMarkers: false,
     xLabelEvery: 1,
   },
@@ -73,10 +69,7 @@ const allSeries = computed(() =>
 const definedValues = computed(() =>
   allSeries.value.flatMap((s) => s.values.filter((v): v is number => v !== null)),
 )
-const maxValue = computed(() => Math.max(...definedValues.value, props.zeroBaseline ? 1 : 0))
-const minValue = computed(() =>
-  props.zeroBaseline || !definedValues.value.length ? 0 : Math.min(...definedValues.value),
-)
+const maxValue = computed(() => Math.max(...definedValues.value, 1))
 
 // "Nice numbers" para el eje Y: el paso se redondea a 1/2/5 * 10^n para que
 // los ticks queden en numeros limpios sin importar la escala (~100 en
@@ -88,22 +81,12 @@ function niceStep(roughStep: number): number {
   return niceFraction * 10 ** exponent
 }
 
-// Sin baseline en 0, un rango plano (un solo valor) igual necesita algo de
-// alto: se usa 1 como span minimo.
-const yStep = computed(() =>
-  niceStep((props.zeroBaseline ? maxValue.value : maxValue.value - minValue.value || 1) / 4 || 1),
-)
-const yMin = computed(() =>
-  props.zeroBaseline ? 0 : Math.floor(minValue.value / yStep.value) * yStep.value,
-)
-const yMax = computed(() => {
-  const top = Math.ceil(maxValue.value / yStep.value) * yStep.value
-  return top > yMin.value ? top : yMin.value + yStep.value
-})
+const yStep = computed(() => niceStep(maxValue.value / 4 || 1))
+const yMax = computed(() => Math.ceil(maxValue.value / yStep.value) * yStep.value)
 const yTicks = computed(() => {
   const ticks: number[] = []
   // toFixed: con pasos decimales (0.5, 0.2) la suma acumula error binario.
-  for (let v = yMin.value; v <= yMax.value + 1e-9; v += yStep.value) {
+  for (let v = 0; v <= yMax.value + 1e-9; v += yStep.value) {
     ticks.push(Number(v.toFixed(6)))
   }
   return ticks
@@ -115,7 +98,7 @@ function xFor(index: number): number {
 }
 
 function yFor(value: number): number {
-  return PADDING.top + innerH - ((value - yMin.value) / (yMax.value - yMin.value)) * innerH
+  return PADDING.top + innerH - (value / yMax.value) * innerH
 }
 
 function definedPoints(series: LineChartSeries): { index: number; value: number }[] {

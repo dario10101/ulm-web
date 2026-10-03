@@ -22,10 +22,10 @@ export interface WeightPayload {
   note?: string | null
 }
 
-export type WeightSummaryGroupBy = 'month' | 'day'
+export type WeightSummaryGroupBy = 'year' | 'month' | 'day'
 
 export interface WeightSummaryBucket {
-  /** "YYYY-MM" (month) o "YYYY-MM-DD" (day). */
+  /** "YYYY" (year), "YYYY-MM" (month) o "YYYY-MM-DD" (day). */
   key: string
   average_kg: number
   count: number
