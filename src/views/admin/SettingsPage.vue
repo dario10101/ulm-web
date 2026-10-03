@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import BaseCard from '@/components/ui/BaseCard.vue'
+import { useAuth } from '@/composables/useAuth'
+
+// /admin solo se ve con sesion (router/authGuard.ts), asi que user ya esta cargado.
+const { user } = useAuth()
 
 const toggles = [
   { label: 'Daily checklist reminder', enabled: true },
@@ -18,12 +22,14 @@ const toggles = [
     </div>
 
     <BaseCard title="Profile">
+      <p class="mb-3 text-sm text-muted">Name and email come from your Google account.</p>
       <div class="grid gap-4 sm:grid-cols-2">
         <label class="text-sm">
           <span class="mb-1 block text-muted">Display name</span>
           <input
             type="text"
-            value="Ruben"
+            :value="user?.name ?? ''"
+            readonly
             class="w-full rounded-lg border border-subtle bg-surface px-3 py-2 text-sm"
           />
         </label>
@@ -31,7 +37,8 @@ const toggles = [
           <span class="mb-1 block text-muted">Email</span>
           <input
             type="email"
-            value="ruben@example.com"
+            :value="user?.email ?? ''"
+            readonly
             class="w-full rounded-lg border border-subtle bg-surface px-3 py-2 text-sm"
           />
         </label>

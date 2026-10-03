@@ -8,5 +8,7 @@ declare module 'vue-router' {
     filterLabels?: string[]
     // Si la vista cambia solo de params (misma ruta), ella misma decide el scroll.
     managesOwnScroll?: boolean
+    // Exige sesion: sin ella el guard manda a /login (ver router/authGuard.ts).
+    requiresAuth?: boolean
   }
 }

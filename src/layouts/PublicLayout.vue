@@ -44,7 +44,11 @@ const navLinks = [
             >
               Admin
             </RouterLink>
-            <UserMenu account-label="Ajustes de la cuenta" log-out-label="Cerrar sesión" />
+            <UserMenu
+              account-label="Ajustes de la cuenta"
+              log-out-label="Cerrar sesión"
+              sign-in-label="Iniciar sesión"
+            />
           </div>
         </div>
       </div>

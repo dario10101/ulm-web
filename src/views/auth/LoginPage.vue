@@ -1,13 +1,36 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
+import { safeAdminPath } from '@/lib/redirect'
+import { googleLoginUrl } from '@/services/authApi'
 
-const router = useRouter()
+// El backend devuelve aca con ?error=<code> si el login no termina en sesion
+// (ver ulm-core app/services/errors.py, LoginError.code). session_expired lo
+// pone el front (router/authGuard.ts) cuando la API responde 401.
+const ERROR_MESSAGES: Record<string, string> = {
+  not_invited: "Your account doesn't have access yet. Ask the administrator for an invitation.",
+  disabled: 'Your account has been disabled.',
+  email_not_verified: 'Your Google account email is not verified.',
+  cancelled: 'Sign in was cancelled.',
+  not_configured: 'Sign in with Google is not configured on the server.',
+  oauth_failed: 'Sign in with Google failed. Please try again.',
+  session_expired: 'Your session has expired. Please sign in again.',
+}
 
-function handleSubmit() {
-  // Sin backend de auth todavia: el submit solo simula el flujo de login.
-  router.push({ name: 'admin-dashboard' })
+const route = useRoute()
+
+const errorMessage = computed(() => {
+  const code = route.query.error
+  if (typeof code !== 'string') return null
+  return ERROR_MESSAGES[code] ?? ERROR_MESSAGES.oauth_failed
+})
+
+function signInWithGoogle() {
+  // Vuelve a la pagina desde la que se llego al login (el guard la pone en
+  // `redirect`), validada igual que en el backend.
+  window.location.assign(googleLoginUrl(safeAdminPath(route.query.redirect) ?? undefined))
 }
 </script>
 
@@ -18,31 +41,16 @@ function handleSubmit() {
       <p class="text-sm text-muted">Welcome back.</p>
     </div>
 
-    <form class="space-y-4" @submit.prevent="handleSubmit">
-      <label class="block text-sm">
-        <span class="mb-1 block text-muted">Email</span>
-        <input
-          type="email"
-          required
-          class="w-full rounded-lg border border-subtle bg-surface px-3 py-2 text-sm"
-        />
-      </label>
-      <label class="block text-sm">
-        <span class="mb-1 block text-muted">Password</span>
-        <input
-          type="password"
-          required
-          class="w-full rounded-lg border border-subtle bg-surface px-3 py-2 text-sm"
-        />
-      </label>
-      <BaseButton type="submit" class="w-full">Sign in</BaseButton>
-    </form>
-
-    <RouterLink
-      :to="{ name: 'auth-recover' }"
-      class="block text-center text-sm text-muted hover:text-accent-text"
+    <p
+      v-if="errorMessage"
+      role="alert"
+      class="rounded-lg border border-subtle bg-surface-hover px-3 py-2 text-sm text-foreground"
     >
-      Forgot your password?
-    </RouterLink>
+      {{ errorMessage }}
+    </p>
+
+    <BaseButton type="button" class="w-full" @click="signInWithGoogle">
+      Continue with Google
+    </BaseButton>
   </div>
 </template>

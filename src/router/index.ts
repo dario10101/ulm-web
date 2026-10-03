@@ -4,6 +4,7 @@ import AppShellLayout from '@/layouts/AppShellLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 
+import { installAuthGuard } from './authGuard'
 import { adminRoutes } from './routes/admin.routes'
 import { authRoutes } from './routes/auth.routes'
 import { publicRoutes } from './routes/public.routes'
@@ -13,7 +14,12 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: { name: 'public-home' } },
     { path: '/blog', component: PublicLayout, children: publicRoutes },
-    { path: '/admin', component: AppShellLayout, children: adminRoutes },
+    {
+      path: '/admin',
+      component: AppShellLayout,
+      children: adminRoutes,
+      meta: { requiresAuth: true },
+    },
     { path: '/login', component: AuthLayout, children: authRoutes },
     { path: '/:pathMatch(.*)*', redirect: { name: 'public-home' } },
   ],
@@ -22,5 +28,7 @@ const router = createRouter({
     return { top: 0 }
   },
 })
+
+installAuthGuard(router)
 
 export default router
