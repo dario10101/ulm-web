@@ -6,7 +6,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import { useExpenseOptions } from '@/composables/useExpenseOptions'
 import { financeColorClasses, financeIcon } from '@/config/financeVisuals'
-import { formatThousandsInput, parseThousandsInput } from '@/lib/currency'
+import { formatAmountInput, parseAmountInput } from '@/lib/currency'
 import { todayIsoDate } from '@/lib/date'
 import { ApiError } from '@/lib/http'
 import { createExpense } from '@/services/expensesApi'
@@ -32,10 +32,14 @@ const expenseSubmitting = ref(false)
 const expenseError = ref<string | null>(null)
 const expenseSaved = ref(false)
 
-// Formatea el monto con "." como separador de miles a medida que se escribe
-// (ej. 10345456 -> 10.345.456). Solo parte entera: COP no maneja decimales aqui.
+// Formatea el monto mientras se escribe: "." de miles y "," decimal
+// (ej. 10345456,5 -> 10.345.456,5), ver formatAmountInput.
 function onExpenseAmountInput(event: Event) {
-  expenseValue.value = formatThousandsInput((event.target as HTMLInputElement).value)
+  const input = event.target as HTMLInputElement
+  expenseValue.value = formatAmountInput(input.value)
+  // Si el formato no cambia el valor (ej. un tercer decimal), Vue no
+  // re-renderiza y quedaria visible el caracter que se acaba de descartar.
+  input.value = expenseValue.value
 }
 
 function toggleExpenseTag(tagId: number) {
@@ -61,7 +65,7 @@ async function handleExpenseSubmit() {
     expenseError.value = 'Name is required.'
     return
   }
-  const parsedValue = parseThousandsInput(expenseValue.value)
+  const parsedValue = parseAmountInput(expenseValue.value)
   if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
     expenseError.value = 'Enter a valid amount greater than 0.'
     return
@@ -140,7 +144,7 @@ onDeactivated(() => {
             <input
               :value="expenseValue"
               type="text"
-              inputmode="numeric"
+              inputmode="decimal"
               placeholder="25.000"
               required
               class="w-full bg-transparent outline-none"

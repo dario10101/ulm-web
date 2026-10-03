@@ -65,6 +65,12 @@ export const adminRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/admin/analytics/FinanceAnalysisPage.vue'),
   },
   {
+    // Rango (anual/mensual) en la URL: /admin/analytics/weight/month.
+    path: 'analytics/weight/:view?',
+    name: 'admin-analytics-weight',
+    component: () => import('@/views/admin/analytics/WeightTrendPage.vue'),
+  },
+  {
     path: 'analytics/checklists',
     name: 'admin-analytics-checklists',
     component: () => import('@/views/admin/analytics/ChecklistScoreTrendsPage.vue'),

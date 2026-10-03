@@ -11,15 +11,20 @@
 // - "range": from/to libres, ambos opcionales.
 export type ExpenseDateMode = 'ymd' | 'range'
 
-export interface ExpenseFilterState {
+/** Parte de fecha de un estado de filtros; la comparte incomeFilters.ts. */
+export interface DateFilterFields {
   dateMode: ExpenseDateMode
   year: number | null
   month: number | null
   day: number | null
   rangeStart: string
   rangeEnd: string
-  categoryId: number | null
-  paymentMethodId: number | null
+}
+
+export interface ExpenseFilterState extends DateFilterFields {
+  /** Multi-seleccion; vacio = todas. */
+  categoryIds: number[]
+  paymentMethodIds: number[]
   tagIds: number[]
   minAmount: string
   maxAmount: string
@@ -29,8 +34,8 @@ export interface ExpenseFilterState {
 export interface ExpenseFilterQuery {
   startDate?: string
   endDate?: string
-  categoryId?: number
-  paymentMethodId?: number
+  categoryIds?: number[]
+  paymentMethodIds?: number[]
   tagIds?: number[]
   minAmount?: number
   maxAmount?: number
@@ -49,8 +54,8 @@ export function defaultExpenseFilters(
     day: depth === 'day' ? today.getDate() : null,
     rangeStart: '',
     rangeEnd: '',
-    categoryId: null,
-    paymentMethodId: null,
+    categoryIds: [],
+    paymentMethodIds: [],
     tagIds: [],
     minAmount: '',
     maxAmount: '',
@@ -66,7 +71,7 @@ function pad(n: number): string {
 }
 
 /** Rango efectivo segun el modo de fecha activo. */
-export function expenseDateRange(state: ExpenseFilterState): { start?: string; end?: string } {
+export function expenseDateRange(state: DateFilterFields): { start?: string; end?: string } {
   if (state.dateMode === 'range') {
     return { start: state.rangeStart || undefined, end: state.rangeEnd || undefined }
   }
@@ -88,8 +93,8 @@ export function expenseFilterQuery(state: ExpenseFilterState): ExpenseFilterQuer
   return {
     startDate: range.start,
     endDate: range.end,
-    categoryId: state.categoryId ?? undefined,
-    paymentMethodId: state.paymentMethodId ?? undefined,
+    categoryIds: state.categoryIds.length ? state.categoryIds : undefined,
+    paymentMethodIds: state.paymentMethodIds.length ? state.paymentMethodIds : undefined,
     tagIds: state.tagIds.length ? state.tagIds : undefined,
     minAmount: state.minAmount ? Number(state.minAmount) : undefined,
     maxAmount: state.maxAmount ? Number(state.maxAmount) : undefined,
@@ -99,8 +104,8 @@ export function expenseFilterQuery(state: ExpenseFilterState): ExpenseFilterQuer
 /** Si hay algun filtro fuera de la fecha (para mostrar "Clear"). */
 export function hasExtraExpenseFilters(state: ExpenseFilterState): boolean {
   return (
-    state.categoryId !== null ||
-    state.paymentMethodId !== null ||
+    state.categoryIds.length > 0 ||
+    state.paymentMethodIds.length > 0 ||
     state.tagIds.length > 0 ||
     state.minAmount !== '' ||
     state.maxAmount !== ''
@@ -108,10 +113,7 @@ export function hasExtraExpenseFilters(state: ExpenseFilterState): boolean {
 }
 
 /** Aplica un cambio respetando la jerarquia año > mes > dia. */
-export function patchExpenseFilters(
-  state: ExpenseFilterState,
-  patch: Partial<ExpenseFilterState>,
-): ExpenseFilterState {
+export function patchExpenseFilters<T extends DateFilterFields>(state: T, patch: Partial<T>): T {
   const next = { ...state, ...patch }
   if (!next.year) {
     next.month = null

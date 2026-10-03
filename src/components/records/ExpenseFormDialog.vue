@@ -5,7 +5,7 @@ import { onMounted, ref, watch } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { useExpenseOptions } from '@/composables/useExpenseOptions'
 import { financeColorClasses, financeIcon } from '@/config/financeVisuals'
-import { formatThousands, formatThousandsInput, parseThousandsInput } from '@/lib/currency'
+import { formatAmountInput, parseAmountInput, toAmountInput } from '@/lib/currency'
 import { ApiError } from '@/lib/http'
 import { updateExpense } from '@/services/expensesApi'
 import type { Expense } from '@/types/expense'
@@ -41,7 +41,7 @@ watch(
     if (!record) return
 
     expenseName.value = record.name
-    expenseValue.value = formatThousands(String(Math.round(record.amount)))
+    expenseValue.value = toAmountInput(record.amount)
     expenseDate.value = record.recorded_on
     expensePaymentMethodId.value = record.payment_method.id
     expenseCategoryId.value = record.category.id
@@ -53,7 +53,11 @@ watch(
 )
 
 function onExpenseAmountInput(event: Event) {
-  expenseValue.value = formatThousandsInput((event.target as HTMLInputElement).value)
+  const input = event.target as HTMLInputElement
+  expenseValue.value = formatAmountInput(input.value)
+  // Si el formato no cambia el valor (ej. un tercer decimal), Vue no
+  // re-renderiza y quedaria visible el caracter que se acaba de descartar.
+  input.value = expenseValue.value
 }
 
 function toggleExpenseTag(tagId: number) {
@@ -80,7 +84,7 @@ async function submit() {
     error.value = 'Name is required.'
     return
   }
-  const parsedValue = parseThousandsInput(expenseValue.value)
+  const parsedValue = parseAmountInput(expenseValue.value)
   if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
     error.value = 'Enter a valid amount greater than 0.'
     return
@@ -153,7 +157,7 @@ onMounted(ensureExpenseOptionsLoaded)
             <input
               :value="expenseValue"
               type="text"
-              inputmode="numeric"
+              inputmode="decimal"
               required
               class="w-full bg-transparent outline-none"
               @input="onExpenseAmountInput"

@@ -80,19 +80,20 @@ const SELECT_CLASS = 'h-9 rounded-lg border border-subtle bg-surface px-3 text-s
           <p class="text-sm text-muted">{{ selectedType.description }}</p>
         </div>
         <div class="flex flex-wrap items-end gap-3">
-          <label class="text-sm">
-            <span class="mb-1 block text-xs text-muted">Area</span>
-            <select :value="selectedType.id" :class="SELECT_CLASS" @change="onSelectType">
-              <option v-for="type in financeAnalysisTypes" :key="type.id" :value="type.id">
-                {{ type.label }}
-              </option>
-            </select>
-          </label>
           <label v-if="selectedType.views && selectedView" class="text-sm">
             <span class="mb-1 block text-xs text-muted">Analysis</span>
             <select :value="selectedView.id" :class="SELECT_CLASS" @change="onSelectView">
               <option v-for="view in selectedType.views" :key="view.id" :value="view.id">
                 {{ view.label }}
+              </option>
+            </select>
+          </label>
+          <!-- Siempre a la derecha del todo, sin importar si hay selector de Analysis. -->
+          <label class="text-sm">
+            <span class="mb-1 block text-xs text-muted">Area</span>
+            <select :value="selectedType.id" :class="SELECT_CLASS" @change="onSelectType">
+              <option v-for="type in financeAnalysisTypes" :key="type.id" :value="type.id">
+                {{ type.label }}
               </option>
             </select>
           </label>

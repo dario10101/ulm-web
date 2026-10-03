@@ -35,9 +35,16 @@ export const financeAnalysisTypes: FinanceAnalysisType[] = [
     icon: TrendingUp,
     description: 'Track how much money comes in over time, by source.',
     component: defineAsyncComponent(
-      () => import('@/components/analytics/finance/drafts/IncomeDraft.vue'),
+      () => import('@/components/analytics/finance/IncomeAnalysis.vue'),
     ),
-    draft: true,
+    views: [
+      { id: 'source', label: 'By source' },
+      { id: 'subcategory', label: 'By subcategory' },
+      { id: 'tags', label: 'By tags' },
+      { id: 'year', label: 'By year' },
+      { id: 'month', label: 'By month' },
+    ],
+    draft: false,
   },
   {
     id: 'expenses',

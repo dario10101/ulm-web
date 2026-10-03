@@ -1,5 +1,11 @@
 import { deleteJson, getJson, postJson, putJson } from '@/lib/http'
-import type { Weight, WeightPage, WeightPayload } from '@/types/weight'
+import type {
+  Weight,
+  WeightPage,
+  WeightPayload,
+  WeightSummary,
+  WeightSummaryGroupBy,
+} from '@/types/weight'
 
 export interface ListWeightsParams {
   startDate?: string
@@ -16,6 +22,19 @@ export function listWeights(params: ListWeightsParams = {}): Promise<WeightPage>
   query.set('page_size', String(params.pageSize ?? 10))
 
   return getJson<WeightPage>(`/weights/?${query.toString()}`)
+}
+
+/** Peso promedio por mes o por dia dentro del rango (para analytics). */
+export function summarizeWeights(
+  groupBy: WeightSummaryGroupBy,
+  params: { startDate: string; endDate: string },
+): Promise<WeightSummary> {
+  const query = new URLSearchParams({
+    group_by: groupBy,
+    start_date: params.startDate,
+    end_date: params.endDate,
+  })
+  return getJson<WeightSummary>(`/weights/summary?${query.toString()}`)
 }
 
 export function createWeight(payload: WeightPayload): Promise<Weight> {

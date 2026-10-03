@@ -10,7 +10,9 @@ interface LineChartSeries {
   id: string
   label: string
   color: string
-  values: number[]
+  // null = sin dato en ese punto (ej. dia sin pesaje): la linea lo salta y
+  // une los puntos con dato a cada lado.
+  values: (number | null)[]
   // Linea de referencia derivada (ej. promedio): trazo punteado, sin marcador
   // solido de fin de linea. Nunca uno de los colores categoricos.
   dashed?: boolean
@@ -25,8 +27,22 @@ const props = withDefaults(
     showAverage?: boolean
     // Formato de ticks del eje Y y valores del tooltip (ej. montos en COP).
     format?: (value: number) => string
+    // false = el eje Y se ajusta al rango de los datos en vez de arrancar en
+    // 0 (para magnitudes como el peso, donde 0 aplastaria la linea).
+    zeroBaseline?: boolean
+    // Marcador en cada punto con dato (util cuando hay huecos).
+    showMarkers?: boolean
+    // Muestra la etiqueta del eje X cada N puntos (evita que se pisen).
+    xLabelEvery?: number
   }>(),
-  { yAxisLabel: undefined, showAverage: false, format: (value: number) => String(value) },
+  {
+    yAxisLabel: undefined,
+    showAverage: false,
+    format: (value: number) => String(value),
+    zeroBaseline: true,
+    showMarkers: false,
+    xLabelEvery: 1,
+  },
 )
 
 const CHART_W = 800
@@ -54,7 +70,13 @@ const allSeries = computed(() =>
   averageSeries.value ? [...props.series, averageSeries.value] : props.series,
 )
 
-const maxValue = computed(() => Math.max(...allSeries.value.flatMap((s) => s.values), 1))
+const definedValues = computed(() =>
+  allSeries.value.flatMap((s) => s.values.filter((v): v is number => v !== null)),
+)
+const maxValue = computed(() => Math.max(...definedValues.value, props.zeroBaseline ? 1 : 0))
+const minValue = computed(() =>
+  props.zeroBaseline || !definedValues.value.length ? 0 : Math.min(...definedValues.value),
+)
 
 // "Nice numbers" para el eje Y: el paso se redondea a 1/2/5 * 10^n para que
 // los ticks queden en numeros limpios sin importar la escala (~100 en
@@ -66,11 +88,24 @@ function niceStep(roughStep: number): number {
   return niceFraction * 10 ** exponent
 }
 
-const yStep = computed(() => niceStep(maxValue.value / 4 || 1))
-const yMax = computed(() => Math.ceil(maxValue.value / yStep.value) * yStep.value)
+// Sin baseline en 0, un rango plano (un solo valor) igual necesita algo de
+// alto: se usa 1 como span minimo.
+const yStep = computed(() =>
+  niceStep((props.zeroBaseline ? maxValue.value : maxValue.value - minValue.value || 1) / 4 || 1),
+)
+const yMin = computed(() =>
+  props.zeroBaseline ? 0 : Math.floor(minValue.value / yStep.value) * yStep.value,
+)
+const yMax = computed(() => {
+  const top = Math.ceil(maxValue.value / yStep.value) * yStep.value
+  return top > yMin.value ? top : yMin.value + yStep.value
+})
 const yTicks = computed(() => {
   const ticks: number[] = []
-  for (let v = 0; v <= yMax.value + 1e-9; v += yStep.value) ticks.push(Math.round(v))
+  // toFixed: con pasos decimales (0.5, 0.2) la suma acumula error binario.
+  for (let v = yMin.value; v <= yMax.value + 1e-9; v += yStep.value) {
+    ticks.push(Number(v.toFixed(6)))
+  }
   return ticks
 })
 
@@ -80,11 +115,25 @@ function xFor(index: number): number {
 }
 
 function yFor(value: number): number {
-  return PADDING.top + innerH - (value / yMax.value) * innerH
+  return PADDING.top + innerH - ((value - yMin.value) / (yMax.value - yMin.value)) * innerH
+}
+
+function definedPoints(series: LineChartSeries): { index: number; value: number }[] {
+  return series.values.flatMap((value, index) => (value === null ? [] : [{ index, value }]))
 }
 
 function pathFor(series: LineChartSeries): string {
-  return series.values.map((v, i) => `${i === 0 ? 'M' : 'L'}${xFor(i)},${yFor(v)}`).join(' ')
+  return definedPoints(series)
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${xFor(p.index)},${yFor(p.value)}`)
+    .join(' ')
+}
+
+function lastPoint(series: LineChartSeries): { index: number; value: number } | undefined {
+  return definedPoints(series).at(-1)
+}
+
+function valueAt(series: LineChartSeries, index: number): number | null {
+  return series.values[index] ?? null
 }
 
 // Crosshair + tooltip compartido: sigue al puntero y se ajusta al indice de
@@ -152,16 +201,17 @@ const tooltipStyle = computed(() => {
       </g>
 
       <!-- Eje X: numero de semana -->
-      <text
-        v-for="(point, index) in points"
-        :key="`x-${index}`"
-        :x="xFor(index)"
-        :y="CHART_H - PADDING.bottom + 18"
-        text-anchor="middle"
-        class="fill-muted text-[10px]"
-      >
-        {{ point.label }}
-      </text>
+      <template v-for="(point, index) in points" :key="`x-${index}`">
+        <text
+          v-if="index % xLabelEvery === 0"
+          :x="xFor(index)"
+          :y="CHART_H - PADDING.bottom + 18"
+          text-anchor="middle"
+          class="fill-muted text-[10px]"
+        >
+          {{ point.label }}
+        </text>
+      </template>
 
       <!-- Crosshair -->
       <line
@@ -186,19 +236,31 @@ const tooltipStyle = computed(() => {
           stroke-linejoin="round"
           :stroke-dasharray="s.dashed ? '6 4' : undefined"
         />
+        <template v-if="showMarkers && !s.dashed">
+          <circle
+            v-for="p in definedPoints(s)"
+            :key="p.index"
+            :cx="xFor(p.index)"
+            :cy="yFor(p.value)"
+            r="3"
+            :fill="s.color"
+            stroke="#242424"
+            stroke-width="1.5"
+          />
+        </template>
         <circle
-          v-if="s.values.length && !s.dashed"
-          :cx="xFor(s.values.length - 1)"
-          :cy="yFor(s.values[s.values.length - 1])"
+          v-if="lastPoint(s) && !s.dashed"
+          :cx="xFor(lastPoint(s)!.index)"
+          :cy="yFor(lastPoint(s)!.value)"
           r="4"
           :fill="s.color"
           stroke="#242424"
           stroke-width="2"
         />
         <circle
-          v-if="hoverIndex !== null"
+          v-if="hoverIndex !== null && valueAt(s, hoverIndex) !== null"
           :cx="xFor(hoverIndex)"
-          :cy="yFor(s.values[hoverIndex])"
+          :cy="yFor(valueAt(s, hoverIndex)!)"
           r="4"
           :fill="s.color"
           stroke="#242424"
@@ -230,7 +292,9 @@ const tooltipStyle = computed(() => {
           />
           {{ s.label }}
         </span>
-        <span class="font-semibold text-foreground">{{ format(s.values[hoverIndex]) }}</span>
+        <span class="font-semibold text-foreground">{{
+          valueAt(s, hoverIndex) === null ? '—' : format(valueAt(s, hoverIndex)!)
+        }}</span>
       </div>
     </div>
 

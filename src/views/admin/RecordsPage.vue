@@ -15,6 +15,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import ExpenseFilterBar from '@/components/expenses/ExpenseFilterBar.vue'
 import ExpenseFormDialog from '@/components/records/ExpenseFormDialog.vue'
+import IncomeRecords from '@/components/records/IncomeRecords.vue'
 import MealFormDialog from '@/components/records/MealFormDialog.vue'
 import WeightFormDialog from '@/components/records/WeightFormDialog.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -385,7 +386,8 @@ watch(activeType, loadIfNeeded, { immediate: true })
 
     <ExpenseFilterBar v-if="activeType.id === 'expense'" v-model="expenseFilters" />
 
-    <div v-else class="flex flex-wrap items-end gap-4">
+    <!-- Income trae su propia barra de filtros (ver IncomeRecords). -->
+    <div v-else-if="activeType.id !== 'income'" class="flex flex-wrap items-end gap-4">
       <label class="text-sm">
         <span class="mb-1 block text-muted">From</span>
         <input
@@ -751,6 +753,8 @@ watch(activeType, loadIfNeeded, { immediate: true })
         </div>
       </template>
     </BaseCard>
+
+    <IncomeRecords v-else-if="activeType.id === 'income'" />
 
     <EmptyState
       v-else

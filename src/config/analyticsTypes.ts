@@ -26,6 +26,12 @@ export const analyticsTypes: AnalyticsType[] = [
     to: { name: 'admin-analytics-finance' },
     implemented: true,
   },
-  { id: 'weight', label: 'Weight trend', icon: Scale, implemented: false },
+  {
+    id: 'weight',
+    label: 'Weight trend',
+    icon: Scale,
+    to: { name: 'admin-analytics-weight' },
+    implemented: true,
+  },
   { id: 'learning', label: 'Study hours', icon: GraduationCap, implemented: false },
 ]

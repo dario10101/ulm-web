@@ -41,15 +41,15 @@ describe('expenseFilters', () => {
     const state = patchExpenseFilters(defaultExpenseFilters(TODAY), {
       dateMode: 'range',
       rangeStart: '2026-01-01',
-      categoryId: 3,
+      categoryIds: [3, 4],
       tagIds: [1, 2],
       minAmount: '1000',
     })
     expect(expenseFilterQuery(state)).toEqual({
       startDate: '2026-01-01',
       endDate: undefined,
-      categoryId: 3,
-      paymentMethodId: undefined,
+      categoryIds: [3, 4],
+      paymentMethodIds: undefined,
       tagIds: [1, 2],
       minAmount: 1000,
       maxAmount: undefined,

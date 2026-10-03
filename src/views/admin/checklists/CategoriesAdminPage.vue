@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
+import { categoryNameProblem } from '@/lib/categoryNames'
 import { ApiError } from '@/lib/http'
 import { enableCategory, listCategories, replaceCategories } from '@/services/checklistsApi'
 import type { Category, CategoryWrite } from '@/types/checklist'
@@ -80,6 +81,14 @@ async function save() {
   const items: CategoryWrite[] = draft.value
     .map((c) => ({ id: c.id, name: c.name.trim() }))
     .filter((c) => c.name.length > 0)
+
+  const keptIds = new Set(items.map((c) => c.id))
+  const removed = original.value.filter((c) => !keptIds.has(c.id))
+  const problem = categoryNameProblem(items, disabledCategories.value, removed)
+  if (problem) {
+    error.value = problem
+    return
+  }
 
   saving.value = true
   try {

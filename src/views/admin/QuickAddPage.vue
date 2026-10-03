@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ExpenseForm from '@/components/quick-add/ExpenseForm.vue'
+import IncomeForm from '@/components/quick-add/IncomeForm.vue'
 import MealForm from '@/components/quick-add/MealForm.vue'
 import TaskForm from '@/components/quick-add/TaskForm.vue'
 import WeightForm from '@/components/quick-add/WeightForm.vue'
@@ -11,6 +12,7 @@ import { recordTypes, type RecordType } from '@/config/recordTypes'
 // Un form por tipo. Un tipo sin entrada aca no se puede seleccionar.
 const formByType: Record<string, Component> = {
   expense: ExpenseForm,
+  income: IncomeForm,
   weight: WeightForm,
   meal: MealForm,
   task: TaskForm,

@@ -85,3 +85,28 @@ export function parseDecimal(input: string): number | null {
   const value = Number(normalized)
   return Number.isFinite(value) ? value : null
 }
+
+/** Cantidad de dias del mes (monthIndex 0-11). El dia 0 del mes siguiente es el ultimo de este. */
+export function daysInMonth(year: number, monthIndex: number): number {
+  return new Date(year, monthIndex + 1, 0).getDate()
+}
+
+/**
+ * Mueve una fecha ISO a otro mes del mismo anio conservando el dia; si ese
+ * dia no existe en el mes destino (ej. 31 -> febrero) baja al ultimo dia valido.
+ */
+export function moveToMonth(isoDate: string, monthIndex: number): string {
+  const [year, , day] = isoDate.split('-').map(Number)
+  const clampedDay = Math.min(day, daysInMonth(year, monthIndex))
+  return formatIsoDate(new Date(year, monthIndex, clampedDay))
+}
+
+/** Periodo (anio + mes 0-11) inmediatamente anterior; enero retrocede a diciembre del anio previo. */
+export function previousMonth(
+  year: number,
+  monthIndex: number,
+): { year: number; monthIndex: number } {
+  return monthIndex === 0
+    ? { year: year - 1, monthIndex: 11 }
+    : { year, monthIndex: monthIndex - 1 }
+}
