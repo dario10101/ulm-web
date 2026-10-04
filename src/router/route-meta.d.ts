@@ -15,5 +15,8 @@ declare module 'vue-router' {
     // Permiso de dominio (o lista: cualquiera de). Sin el, el guard manda a
     // admin-no-access. Solo UX: el backend responde 403 igual.
     permission?: PermissionRequirement
+    // Nombre de la ruta del item del sidebar que se marca activo estando aca
+    // (para subpaginas que son otra ruta, ver SidebarNav).
+    navActive?: string
   }
 }

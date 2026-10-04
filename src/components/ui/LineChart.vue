@@ -47,9 +47,10 @@ const PADDING = { top: 14, right: 16, bottom: 28, left: 44 }
 const innerW = CHART_W - PADDING.left - PADDING.right
 const innerH = CHART_H - PADDING.top - PADDING.bottom
 
-// Texto/foreground de la app, no negro puro: el tema es oscuro fijo (fondo
-// casi negro), asi que un negro literal seria practicamente invisible.
-const AVERAGE_COLOR = '#F0F0F0'
+// El color de texto del tema (token foreground): un blanco o negro literal
+// desapareceria en uno de los dos temas. Los navegadores resuelven var() en
+// los atributos de presentacion SVG (stroke/fill).
+const AVERAGE_COLOR = 'rgb(var(--color-foreground))'
 
 const averageSeries = computed<LineChartSeries | null>(() => {
   if (!props.showAverage || props.series.length === 0) return null
@@ -167,7 +168,7 @@ const tooltipStyle = computed(() => {
           :x2="CHART_W - PADDING.right"
           :y1="yFor(tick)"
           :y2="yFor(tick)"
-          stroke="#333333"
+          class="stroke-subtle"
           stroke-width="1"
         />
         <text
@@ -203,7 +204,7 @@ const tooltipStyle = computed(() => {
         :x2="xFor(hoverIndex)"
         :y1="PADDING.top"
         :y2="CHART_H - PADDING.bottom"
-        stroke="#A6A6A6"
+        class="stroke-muted"
         stroke-width="1"
         stroke-dasharray="3 3"
       />
@@ -227,7 +228,7 @@ const tooltipStyle = computed(() => {
             :cy="yFor(p.value)"
             r="3"
             :fill="s.color"
-            stroke="#242424"
+            class="stroke-surface"
             stroke-width="1.5"
           />
         </template>
@@ -237,7 +238,7 @@ const tooltipStyle = computed(() => {
           :cy="yFor(lastPoint(s)!.value)"
           r="4"
           :fill="s.color"
-          stroke="#242424"
+          class="stroke-surface"
           stroke-width="2"
         />
         <circle
@@ -246,7 +247,7 @@ const tooltipStyle = computed(() => {
           :cy="yFor(valueAt(s, hoverIndex)!)"
           r="4"
           :fill="s.color"
-          stroke="#242424"
+          class="stroke-surface"
           stroke-width="2"
         />
       </g>

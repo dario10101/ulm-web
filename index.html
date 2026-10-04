@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ULM - Unified Life Manager</title>
+    <!-- Tema antes del primer pintado (sin destello). Misma logica que
+         src/composables/useTheme.ts, que toma el control al montar la app. -->
+    <script>
+      ;(function () {
+        var pref = 'system'
+        try {
+          pref = localStorage.getItem('ulm-theme') || 'system'
+        } catch (e) {}
+        var dark =
+          pref === 'dark' ||
+          (pref !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        if (dark) document.documentElement.classList.add('dark')
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>

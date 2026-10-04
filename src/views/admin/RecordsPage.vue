@@ -24,6 +24,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import { financeColorClasses, financeIcon } from '@/config/financeVisuals'
 import { mealTypeLabel } from '@/config/mealTypes'
 import { useAuth } from '@/composables/useAuth'
+import { recordParamPanels } from '@/config/paramPanels'
 import { recordTypes, type RecordType } from '@/config/recordTypes'
 import { formatCOP } from '@/lib/currency'
 import { formatShortDate, isoWeekday, parseIsoDate } from '@/lib/date'
@@ -78,6 +79,8 @@ watch(
   },
   { immediate: true },
 )
+
+const paramPanels = computed(() => recordParamPanels[activeType.value.id] ?? [])
 
 const startDate = ref('')
 const endDate = ref('')
@@ -350,12 +353,12 @@ watch(activeType, loadIfNeeded, { immediate: true })
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-start justify-between gap-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <div>
         <h1 class="text-xl font-semibold text-foreground">View records</h1>
         <p class="text-sm text-muted">Browse everything you've logged, filtered by date.</p>
       </div>
-      <div class="flex shrink-0 gap-2">
+      <div class="flex flex-wrap gap-2 sm:justify-end">
         <RouterLink
           v-if="activeType.implemented"
           :to="{ name: 'admin-quick-add', params: { type: activeType.id } }"
@@ -363,6 +366,17 @@ watch(activeType, loadIfNeeded, { immediate: true })
         >
           <Plus class="h-4 w-4" />
           Add {{ activeType.label.toLowerCase() }}
+        </RouterLink>
+        <!-- Parametros del dominio (tags, fuentes...): cada uno abre su panel. -->
+        <RouterLink
+          v-for="panel in paramPanels"
+          :key="panel.id"
+          :to="{ name: 'admin-record-params', params: { type: activeType.id, panel: panel.id } }"
+          :title="`Manage ${panel.label.toLowerCase()}`"
+          class="flex items-center gap-1.5 rounded-lg border border-subtle px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:border-accent-text/50 hover:text-foreground"
+        >
+          <component :is="panel.icon" class="h-4 w-4" />
+          {{ panel.label }}
         </RouterLink>
         <RouterLink
           :to="{

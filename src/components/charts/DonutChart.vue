@@ -35,7 +35,7 @@ const slices = computed<ChartItem[]>(() => {
       key: '__other__',
       label: `Other (${rest.length})`,
       value: rest.reduce((sum, item) => sum + item.value, 0),
-      colorClass: 'text-slate-400',
+      colorClass: 'text-slate-600 dark:text-slate-400',
     },
   ]
 })
@@ -71,7 +71,14 @@ function percent(value: number): string {
         role="img"
         aria-label="Donut chart"
       >
-        <circle cx="80" cy="80" :r="RADIUS" fill="none" stroke="#2E2E2E" :stroke-width="STROKE" />
+        <circle
+          cx="80"
+          cy="80"
+          :r="RADIUS"
+          fill="none"
+          class="stroke-surface-hover"
+          :stroke-width="STROKE"
+        />
         <circle
           v-for="arc in arcs"
           :key="arc.item.key"

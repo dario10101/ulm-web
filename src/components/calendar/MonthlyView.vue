@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, Pencil, Trash2 } from '@lucide/vue'
+import { CalendarDays, ChevronLeft, ChevronRight, Pencil, Trash2 } from '@lucide/vue'
 import { computed, watch } from 'vue'
 
 import { useCategories } from '@/composables/useCategories'
@@ -17,7 +17,7 @@ import {
   type MonthGridDay,
 } from '@/lib/monthGrid'
 import { timeRangeLabel } from '@/lib/timeline'
-import type { CalendarEventRange } from '@/types/calendarEvent'
+import { isUserEvent, type CalendarEventRange } from '@/types/calendarEvent'
 import type { CalendarTaskOccurrence } from '@/types/calendarTask'
 
 /**
@@ -42,6 +42,11 @@ const emit = defineEmits<{
   edit: [occurrence: CalendarTaskOccurrence]
   remove: [occurrence: CalendarTaskOccurrence]
   addToChecklist: [occurrence: CalendarTaskOccurrence]
+  openEvent: [event: CalendarEventRange]
+  editEvent: [event: CalendarEventRange]
+  removeEvent: [event: CalendarEventRange]
+  /** Abrir el dia seleccionado en la vista diaria. */
+  openDay: [isoDate: string]
 }>()
 
 const { categoryName } = useCategories()
@@ -73,10 +78,13 @@ function occurrencesFor(dayIso: string): CalendarTaskOccurrence[] {
 
 interface MonthDayEvent {
   key: string
+  range: CalendarEventRange
   name: string
   detail: string | null
   label: 'Holiday' | 'Starts' | 'Ends' | null
   color: string
+  /** Solo los personales se editan/borran (los festivos son del admin). */
+  editable: boolean
 }
 
 /**
@@ -92,6 +100,8 @@ function eventsFor(dayIso: string): MonthDayEvent[] {
     const isEnd = range.last_day === dayIso
     return {
       key: `${range.source}-${range.id}`,
+      range,
+      editable: isUserEvent(range),
       name: range.name,
       detail: range.detail,
       label: isHoliday
@@ -136,6 +146,16 @@ function selectDay(day: MonthGridDay) {
       @click="emit('next')"
     >
       <ChevronRight class="h-4 w-4" />
+    </button>
+    <button
+      v-if="selectedDay"
+      type="button"
+      :title="`Open ${formatDateLong(parseIsoDate(selectedDay))} in the daily view`"
+      class="flex items-center gap-1.5 rounded-lg border border-subtle px-2.5 py-1.5 text-sm text-muted transition-colors hover:text-foreground"
+      @click="emit('openDay', selectedDay)"
+    >
+      <CalendarDays class="h-4 w-4" />
+      Go to day
     </button>
   </div>
 
@@ -247,9 +267,33 @@ function selectDay(day: MonthGridDay) {
               borderColor: withAlpha(marker.color, '66'),
             }"
           >
-            <p class="font-medium text-foreground">
-              <template v-if="marker.label">{{ marker.label }}: </template>{{ marker.name }}
-            </p>
+            <div class="flex items-center gap-1">
+              <span
+                class="min-w-0 flex-1 cursor-pointer truncate font-medium text-foreground"
+                :title="marker.name"
+                @click="emit('openEvent', marker.range)"
+              >
+                <template v-if="marker.label">{{ marker.label }}: </template>{{ marker.name }}
+              </span>
+              <template v-if="marker.editable">
+                <button
+                  type="button"
+                  title="Edit event"
+                  class="shrink-0 rounded p-0.5 text-muted hover:bg-surface-hover hover:text-foreground"
+                  @click="emit('editEvent', marker.range)"
+                >
+                  <Pencil class="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  title="Delete event"
+                  class="shrink-0 rounded p-0.5 text-muted hover:bg-surface-hover hover:text-ruby-text"
+                  @click="emit('removeEvent', marker.range)"
+                >
+                  <Trash2 class="h-3 w-3" />
+                </button>
+              </template>
+            </div>
             <p v-if="marker.detail" class="mt-0.5 text-muted">{{ marker.detail }}</p>
           </div>
 

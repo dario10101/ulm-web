@@ -8,7 +8,9 @@ import type { IncomeSourceOption, IncomeSubcategoryOption } from '@/types/income
  * conserva su color en todas las vistas y filtros, aunque cambie su ranking.
  */
 function colorAt(index: number): string {
-  return index < 0 ? 'text-slate-400' : FALLBACK_CHART_COLORS[index % FALLBACK_CHART_COLORS.length]
+  return index < 0
+    ? 'text-slate-600 dark:text-slate-400'
+    : FALLBACK_CHART_COLORS[index % FALLBACK_CHART_COLORS.length]
 }
 
 export function sourceColor(sources: IncomeSourceOption[], sourceId: number): string {

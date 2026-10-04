@@ -8,6 +8,10 @@ Frontend de ULM (gestion personal: habitos, finanzas, contenido). Consume la API
 
 **Auth**: cookie de sesion (la maneja el backend). `useAuth` (usuario de `/me`), `router/authGuard.ts` (`meta.requiresAuth` en `/admin`, 401 global via `setUnauthorizedHandler` de `lib/http`). Nada de tokens en JS ni `localStorage`. Permisos (`src/config/permissions.ts`): `meta.permission` en rutas (lista = cualquiera de), `permission` en items de `nav.ts`/`recordTypes`/`analyticsTypes`, `useAuth().can()`. Solo UX: el backend responde 403.
 
+**Tema**: claro/oscuro por dispositivo (`useTheme`, localStorage + script inline en `index.html`). Los colores son variables CSS (`src/style.css`, canales RGB) mapeadas en `tailwind.config.js`: no usar hex fijos; la paleta por defecto de Tailwind necesita par claro/oscuro (`text-rose-600 dark:text-rose-400`).
+
+**Parametros**: paneles con URL propia en `/admin/settings/<section>` (System = solo admin) y `/admin/records/<type>/<panel>` (ver `config/paramPanels.ts`).
+
 **Idioma de UI**: `/blog/**` (sitio publico) esta en espanol. `/admin/**` y `/login/**` estan en ingles. El `lang` del `<html>` se actualiza por layout (`PublicLayout` pone `es`, `AppShellLayout`/`AuthLayout` ponen `en`).
 
 Estilo: ver STYLEGUIDE.md (codigo en ingles, comentarios/logs en espanol).

@@ -104,7 +104,7 @@ function bucketColor(bucket: IncomeSummaryBucket): string {
   if (view.value === 'source') return sourceColor(sources.value, Number(bucket.key))
   if (view.value === 'subcategory') return subcategoryColor(subcategories.value, Number(bucket.key))
   if (bucket.color_key) return financeColorClasses(bucket.color_key).text
-  return 'text-slate-400'
+  return 'text-slate-600 dark:text-slate-400'
 }
 
 const catalogItems = computed<ChartItem[]>(() =>
@@ -290,8 +290,18 @@ const kindItems = computed<ChartItem[]>(() => {
   const s = summary.value
   if (!s) return []
   return [
-    { key: 'direct', label: 'Direct', value: s.direct_total, colorClass: 'text-emerald-400' },
-    { key: 'interest', label: 'Interest', value: s.interest_total, colorClass: 'text-sky-400' },
+    {
+      key: 'direct',
+      label: 'Direct',
+      value: s.direct_total,
+      colorClass: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      key: 'interest',
+      label: 'Interest',
+      value: s.interest_total,
+      colorClass: 'text-sky-600 dark:text-sky-400',
+    },
   ]
 })
 const showKindSplit = computed(
@@ -362,7 +372,7 @@ const stackNoun = computed(() => (stackBy.value === 'subcategory' ? 'subcategory
         "
       >
         <template v-if="view === 'tags' && tagOverlap" #actions>
-          <span class="text-xs text-amber-400">
+          <span class="text-xs text-amber-600 dark:text-amber-400">
             Some incomes have several tags: slices add up to more than the total.
           </span>
         </template>

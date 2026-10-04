@@ -69,9 +69,15 @@ export const financeAnalysisTypes: FinanceAnalysisType[] = [
     icon: ArrowLeftRight,
     description: 'Compare what you earn against what you spend, period over period.',
     component: defineAsyncComponent(
-      () => import('@/components/analytics/finance/drafts/IncomeVsExpensesDraft.vue'),
+      () => import('@/components/analytics/finance/IncomeVsExpensesAnalysis.vue'),
     ),
-    draft: true,
+    // La primera es la de entrada por defecto.
+    views: [
+      { id: 'month', label: 'By month' },
+      { id: 'year', label: 'By year' },
+      { id: 'tags', label: 'By tags' },
+    ],
+    draft: false,
   },
   {
     id: 'investments',

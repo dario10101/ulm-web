@@ -29,6 +29,14 @@ export const adminRoutes: RouteRecordRaw[] = [
     meta: { managesOwnScroll: true, permission: RECORD_PERMISSIONS },
   },
   {
+    // Parametros del dominio abiertos desde "View records"
+    // (/admin/records/income/sources). Hoy solo finanzas tiene paneles.
+    path: 'records/:type/:panel',
+    name: 'admin-record-params',
+    component: () => import('@/views/admin/RecordParamsPage.vue'),
+    meta: { permission: 'finances', navActive: 'admin-records' },
+  },
+  {
     path: 'checklists',
     name: 'admin-checklists',
     component: () => import('@/views/admin/ChecklistsPage.vue'),
@@ -98,7 +106,10 @@ export const adminRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'settings',
+    // Cada seccion tiene su URL (/admin/settings/appearance). Las de "System"
+    // son solo del admin: SettingsPage las oculta y corrige la URL; el backend
+    // responde 403 igual.
+    path: 'settings/:section?',
     name: 'admin-settings',
     component: () => import('@/views/admin/SettingsPage.vue'),
   },

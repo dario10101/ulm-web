@@ -19,14 +19,14 @@ export type ValueFormatter = (value: number) => string
 
 /** Paleta de respaldo para datos sin color propio (borradores, periodos). */
 export const FALLBACK_CHART_COLORS = [
-  'text-sky-400',
-  'text-amber-400',
-  'text-emerald-400',
-  'text-violet-400',
-  'text-rose-400',
-  'text-teal-400',
-  'text-orange-400',
-  'text-indigo-400',
+  'text-sky-600 dark:text-sky-400',
+  'text-amber-600 dark:text-amber-400',
+  'text-emerald-600 dark:text-emerald-400',
+  'text-violet-600 dark:text-violet-400',
+  'text-rose-600 dark:text-rose-400',
+  'text-teal-600 dark:text-teal-400',
+  'text-orange-600 dark:text-orange-400',
+  'text-indigo-600 dark:text-indigo-400',
 ]
 
 /** "Nice numbers" para ejes: redondea el paso a 1/2/5 * 10^n. */

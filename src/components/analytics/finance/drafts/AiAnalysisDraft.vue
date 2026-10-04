@@ -7,7 +7,7 @@ import DraftNotice from './DraftNotice.vue'
 import { aiInsights } from './draftData'
 
 const TONES = {
-  warning: { icon: CircleAlert, classes: 'text-amber-400 bg-amber-500/10' },
+  warning: { icon: CircleAlert, classes: 'text-amber-600 dark:text-amber-400 bg-amber-500/10' },
   good: { icon: TrendingUp, classes: 'text-success-text bg-success/20' },
   info: { icon: Info, classes: 'text-accent-text bg-accent/10' },
 }

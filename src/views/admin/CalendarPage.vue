@@ -4,7 +4,10 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import DailyView from '@/components/calendar/DailyView.vue'
+import DeleteEventDialog from '@/components/calendar/DeleteEventDialog.vue'
 import DeleteTaskDialog from '@/components/calendar/DeleteTaskDialog.vue'
+import EventDetailDialog from '@/components/calendar/EventDetailDialog.vue'
+import EventFormDialog from '@/components/calendar/EventFormDialog.vue'
 import TaskDetailDialog from '@/components/calendar/TaskDetailDialog.vue'
 import TaskEditDialog from '@/components/calendar/TaskEditDialog.vue'
 import TaskFormDialog from '@/components/calendar/TaskFormDialog.vue'
@@ -19,13 +22,13 @@ import { useCategories } from '@/composables/useCategories'
 import { allEventTypes, normalizedEventCode, type EventTypeValue } from '@/lib/eventTypes'
 import { firstOfMonth, lastOfMonth, mondayOf } from '@/lib/monthGrid'
 import { ApiError } from '@/lib/http'
-import { listCalendarEventRanges, listCalendarEvents } from '@/services/calendarEventsApi'
+import { listCalendarEventRanges } from '@/services/calendarEventsApi'
 import {
   enableCalendarTaskChecklistSync,
   listCalendarTasksForDay,
   listCalendarTasksForRange,
 } from '@/services/calendarTasksApi'
-import type { CalendarEventMarker, CalendarEventRange } from '@/types/calendarEvent'
+import type { CalendarEventRange } from '@/types/calendarEvent'
 import type { CalendarTaskOccurrence } from '@/types/calendarTask'
 
 // --- Selector de vista (Daily/Weekly/Monthly/Yearly). La vista activa vive en
@@ -80,6 +83,7 @@ function selectView(mode: ViewMode) {
 
 const currentDate = ref(todayIsoDate())
 const occurrences = ref<CalendarTaskOccurrence[]>([])
+const dayEvents = ref<CalendarEventRange[]>([])
 
 function goToPreviousDay() {
   currentDate.value = formatIsoDate(addDays(parseIsoDate(currentDate.value), -1))
@@ -104,7 +108,12 @@ const {
   ensureLoaded: ensureDayLoaded,
   reloadIfLoaded: reloadDayIfLoaded,
 } = useCalendarSection(async () => {
-  occurrences.value = await listCalendarTasksForDay(currentDate.value)
+  const [tasks, events] = await Promise.all([
+    listCalendarTasksForDay(currentDate.value),
+    listCalendarEventRanges(currentDate.value, currentDate.value),
+  ])
+  occurrences.value = tasks
+  dayEvents.value = events
 }, 'Could not load this day.')
 
 watch(currentDate, reloadDayIfLoaded)
@@ -123,7 +132,7 @@ onMounted(() => {
 const weekStart = ref(mondayOf(todayIsoDate()))
 
 const weekOccurrences = ref<CalendarTaskOccurrence[]>([])
-const weekEvents = ref<CalendarEventMarker[]>([])
+const weekEvents = ref<CalendarEventRange[]>([])
 
 function goToPreviousWeek() {
   weekStart.value = formatIsoDate(addDays(parseIsoDate(weekStart.value), -7))
@@ -144,7 +153,7 @@ const {
   const end = formatIsoDate(addDays(parseIsoDate(start), 6))
   const [tasks, events] = await Promise.all([
     listCalendarTasksForRange(start, end),
-    listCalendarEvents(start, end),
+    listCalendarEventRanges(start, end),
   ])
   weekOccurrences.value = tasks
   weekEvents.value = events
@@ -158,11 +167,23 @@ watch(viewMode, (mode) => {
 })
 watch(weekStart, reloadWeekIfLoaded)
 
+/**
+ * Tras crear/editar/borrar una tarea o un evento: recarga la vista actual (y la
+ * espera) y, en segundo plano, las otras que ya se hayan abierto, para que al
+ * cambiar de vista no se vean datos viejos. Las que nunca se abrieron no se
+ * piden.
+ */
 async function refreshCurrentView() {
-  if (viewMode.value === 'WEEKLY') await loadWeek()
-  else if (viewMode.value === 'MONTHLY') await loadMonth()
-  else if (viewMode.value === 'YEARLY') await loadYear()
-  else await loadDay()
+  const sections: Record<ViewMode, { reload: () => Promise<void>; reloadIfLoaded: () => void }> = {
+    DAILY: { reload: loadDay, reloadIfLoaded: reloadDayIfLoaded },
+    WEEKLY: { reload: loadWeek, reloadIfLoaded: reloadWeekIfLoaded },
+    MONTHLY: { reload: loadMonth, reloadIfLoaded: reloadMonthIfLoaded },
+    YEARLY: { reload: loadYear, reloadIfLoaded: reloadYearIfLoaded },
+  }
+  for (const [mode, section] of Object.entries(sections)) {
+    if (mode !== viewMode.value) section.reloadIfLoaded()
+  }
+  await sections[viewMode.value].reload()
 }
 
 // --- Vista mensual: calendario clasico Lunes..Domingo, con un panel lateral
@@ -228,7 +249,8 @@ function goToNextYear() {
   yearCursor.value += 1
 }
 
-function goToDayFromYear(isoDate: string) {
+/** Abre un dia en la vista diaria (click en un dia de Yearly, "Go to day" en Monthly). */
+function openDayInDailyView(isoDate: string) {
   currentDate.value = isoDate
   selectView('DAILY')
 }
@@ -252,9 +274,9 @@ const {
 
 watch(yearCursor, reloadYearIfLoaded)
 
-// --- Agregar tarea: misma funcionalidad que "Add record" > Task (ver
-// QuickAddPage.vue), pero accesible directo desde el calendario, al lado de
-// "Today", en las 4 vistas. La fecha por defecto depende de donde este
+// --- Agregar tarea / evento: "Add task" es la misma funcionalidad que "Add
+// record" > Task (ver QuickAddPage.vue), en las 4 vistas; "Add event" va en
+// Daily/Weekly/Monthly. La fecha por defecto (de ambos) depende de donde este
 // parado el usuario: en Daily, el dia que esta viendo; en Monthly, el dia
 // seleccionado en el panel lateral si hay uno; en Weekly/Yearly (y en
 // Monthly sin dia seleccionado), la primera fecha de ese periodo que sea >=
@@ -267,7 +289,7 @@ function firstAvailableDateFor(periodStart: string, periodEnd: string): string {
   return candidate > periodEnd ? periodStart : candidate
 }
 
-function defaultAddTaskDate(): string {
+function defaultFormDate(): string {
   if (viewMode.value === 'DAILY') return currentDate.value
   if (viewMode.value === 'WEEKLY') {
     return firstAvailableDateFor(
@@ -276,7 +298,9 @@ function defaultAddTaskDate(): string {
     )
   }
   if (viewMode.value === 'MONTHLY') {
-    return selectedDay.value ?? firstAvailableDateFor(monthCursor.value, lastOfMonth(monthCursor.value))
+    return (
+      selectedDay.value ?? firstAvailableDateFor(monthCursor.value, lastOfMonth(monthCursor.value))
+    )
   }
   return firstAvailableDateFor(`${yearCursor.value}-01-01`, `${yearCursor.value}-12-31`)
 }
@@ -336,6 +360,51 @@ async function onTaskDeleted() {
   await refreshCurrentView()
 }
 
+// --- Eventos personales: mismo esquema que las tareas (detalle -> editar o
+// borrar). Alta y edicion comparten EventFormDialog: sin `editingEvent` es un
+// alta. Los festivos se abren en el detalle, pero ahi no ofrece acciones. ---
+
+const detailEvent = ref<CalendarEventRange | null>(null)
+const eventFormOpen = ref(false)
+const editingEvent = ref<CalendarEventRange | null>(null)
+const deleteEventTarget = ref<CalendarEventRange | null>(null)
+
+function openEventDetail(event: CalendarEventRange) {
+  detailEvent.value = event
+}
+
+function openAddEvent() {
+  editingEvent.value = null
+  eventFormOpen.value = true
+}
+
+// Cierran el detalle antes de abrir edicion/borrado para no apilar modales.
+function openEditEvent(event: CalendarEventRange) {
+  detailEvent.value = null
+  editingEvent.value = event
+  eventFormOpen.value = true
+}
+
+function openDeleteEvent(event: CalendarEventRange) {
+  detailEvent.value = null
+  deleteEventTarget.value = event
+}
+
+function closeEventForm() {
+  eventFormOpen.value = false
+  editingEvent.value = null
+}
+
+async function onEventSaved() {
+  closeEventForm()
+  await refreshCurrentView()
+}
+
+async function onEventDeleted() {
+  deleteEventTarget.value = null
+  await refreshCurrentView()
+}
+
 // --- Alta retroactiva al checklist semanal ---
 
 const syncingTaskId = ref<number | null>(null)
@@ -369,7 +438,9 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
     <div class="flex shrink-0 flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-xl font-semibold text-foreground">Calendar</h1>
-        <p class="text-sm text-muted">Your calendar tasks, laid out by category and hour.</p>
+        <p class="text-sm text-muted">
+          Your calendar tasks and events, laid out by category and hour.
+        </p>
       </div>
 
       <div class="flex items-center gap-2">
@@ -377,6 +448,15 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
         <BaseButton variant="primary" type="button" @click="openAddTask">
           <Plus class="h-4 w-4" />
           Add task
+        </BaseButton>
+        <BaseButton
+          v-if="viewMode !== 'YEARLY'"
+          variant="primary"
+          type="button"
+          @click="openAddEvent"
+        >
+          <Plus class="h-4 w-4" />
+          Add event
         </BaseButton>
 
         <EventTypeFilter v-if="viewMode === 'YEARLY'" v-model="selectedEventTypes" />
@@ -386,10 +466,10 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
             {{ viewLabel(viewMode) }}
             <ChevronDown class="h-4 w-4" />
           </BaseButton>
-          <div v-if="viewMenuOpen" class="fixed inset-0 z-10" @click="viewMenuOpen = false" />
+          <div v-if="viewMenuOpen" class="fixed inset-0 z-20" @click="viewMenuOpen = false" />
           <div
             v-if="viewMenuOpen"
-            class="absolute right-0 z-20 mt-1 w-36 rounded-lg border border-subtle bg-surface py-1 shadow-lg"
+            class="absolute right-0 z-30 mt-1 w-36 rounded-lg border border-subtle bg-surface py-1 shadow-lg"
           >
             <button
               v-for="option in VIEW_OPTIONS"
@@ -412,11 +492,13 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
       v-if="viewMode === 'DAILY'"
       :date="currentDate"
       :occurrences="occurrences"
+      :events="dayEvents"
       :loading="loading"
       :error="loadError"
       @prev="goToPreviousDay"
       @next="goToNextDay"
       @open-detail="openDetail"
+      @open-event="openEventDetail"
     />
 
     <WeeklyView
@@ -430,6 +512,7 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
       @prev="goToPreviousWeek"
       @next="goToNextWeek"
       @open-detail="openDetail"
+      @open-event="openEventDetail"
     />
 
     <MonthlyView
@@ -449,6 +532,10 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
       @edit="openEdit"
       @remove="openDeleteConfirm"
       @add-to-checklist="addToChecklist"
+      @open-event="openEventDetail"
+      @edit-event="openEditEvent"
+      @remove-event="openDeleteEvent"
+      @open-day="openDayInDailyView"
     />
 
     <YearlyView
@@ -461,7 +548,7 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
       @prev="goToPreviousYear"
       @next="goToNextYear"
       @open-month="openMonthFromYear"
-      @open-day="goToDayFromYear"
+      @open-day="openDayInDailyView"
     />
 
     <TaskDetailDialog
@@ -478,11 +565,32 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
 
     <TaskFormDialog
       :open="addTaskOpen"
-      :default-date="defaultAddTaskDate()"
+      :default-date="defaultFormDate()"
       @close="addTaskOpen = false"
       @saved="onTaskCreated"
     />
 
     <DeleteTaskDialog :task="deleteTarget" @close="deleteTarget = null" @deleted="onTaskDeleted" />
+
+    <EventDetailDialog
+      :event="detailEvent"
+      @close="detailEvent = null"
+      @edit="openEditEvent"
+      @remove="openDeleteEvent"
+    />
+
+    <EventFormDialog
+      :open="eventFormOpen"
+      :event="editingEvent"
+      :default-date="defaultFormDate()"
+      @close="closeEventForm"
+      @saved="onEventSaved"
+    />
+
+    <DeleteEventDialog
+      :event="deleteEventTarget"
+      @close="deleteEventTarget = null"
+      @deleted="onEventDeleted"
+    />
   </div>
 </template>

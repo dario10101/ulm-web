@@ -3,8 +3,8 @@ import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import { computed, nextTick, watch } from 'vue'
 
 import { addDays, formatDateLong, formatIsoDate, parseIsoDate, todayIsoDate } from '@/lib/date'
-import { scrollElementIntoContainer } from '@/lib/dom'
-import { WEEKDAY_LABELS } from '@/lib/monthGrid'
+import { scrollElementIntoContainer, stickyInset } from '@/lib/dom'
+import { eventColor, WEEKDAY_LABELS, withAlpha } from '@/lib/monthGrid'
 import {
   computeTimelineBlocks,
   defaultVisibleHour,
@@ -13,7 +13,8 @@ import {
   hourLabel,
   type TimelineBlock,
 } from '@/lib/timeline'
-import type { CalendarEventMarker } from '@/types/calendarEvent'
+import { eventDateLabel, weekEventBars } from '@/lib/userEvents'
+import type { CalendarEventRange } from '@/types/calendarEvent'
 import type { CalendarTaskOccurrence } from '@/types/calendarTask'
 
 /**
@@ -23,7 +24,8 @@ import type { CalendarTaskOccurrence } from '@/types/calendarTask'
 const props = defineProps<{
   weekStart: string
   occurrences: CalendarTaskOccurrence[]
-  events: CalendarEventMarker[]
+  /** Eventos que tocan la semana, con su rango completo (sin recortar). */
+  events: CalendarEventRange[]
   loading: boolean
   error: string | null
   hasCategories: boolean
@@ -33,6 +35,7 @@ const emit = defineEmits<{
   prev: []
   next: []
   openDetail: [occurrence: CalendarTaskOccurrence]
+  openEvent: [event: CalendarEventRange]
 }>()
 
 const weekDays = computed(() => {
@@ -50,14 +53,24 @@ function timelineBlocksFor(dayIso: string): TimelineBlock[] {
   )
 }
 
-function eventsFor(dayIso: string): CalendarEventMarker[] {
-  return props.events.filter((marker) => marker.marker_date === dayIso)
-}
+/**
+ * Los eventos no tienen hora: van en una fila "All day" fija debajo de los
+ * dias. Uno de varios dias es una sola barra que cruza esas columnas (en vez de
+ * repetirse en cada dia), y si sigue fuera de la semana lo indica con una
+ * flecha en el borde.
+ */
+const eventBars = computed(() =>
+  weekEventBars(
+    props.events,
+    weekDays.value.map((day) => formatIsoDate(day)),
+  ),
+)
 
 // La vista arranca mostrando la hora actual (si la semana incluye hoy) para
 // que se vea de entrada lo que falta del dia; las horas anteriores siguen ahi
 // arriba, alcanza con scrollear el cuadro (nunca la pagina completa).
 let gridScrollEl: HTMLElement | null = null
+let allDayEl: HTMLElement | null = null
 const hourRowEls: Record<number, HTMLElement | null> = {}
 
 // El scroll inicial se dispara cuando aparece el grid, no cuando llegan los
@@ -73,6 +86,10 @@ function setGridScrollEl(el: Element | null) {
   scrollToDefaultHour()
 }
 
+function setAllDayEl(el: Element | null) {
+  allDayEl = el as HTMLElement | null
+}
+
 function setHourRowEl(hour: number, el: Element | null) {
   hourRowEls[hour] = el as HTMLElement | null
 }
@@ -81,7 +98,11 @@ const weekIncludesToday = computed(() => weekDays.value.some((day) => isTodayCol
 
 function scrollToDefaultHour() {
   const hour = defaultVisibleHour(weekIncludesToday.value)
-  nextTick(() => scrollElementIntoContainer(gridScrollEl, hourRowEls[hour]))
+  // Los encabezados y la fila "All day" quedan pegados arriba: se descuentan
+  // para que la hora actual quede justo debajo, no tapada por ellos.
+  nextTick(() =>
+    scrollElementIntoContainer(gridScrollEl, hourRowEls[hour], stickyInset(gridScrollEl, allDayEl)),
+  )
 }
 
 watch(() => props.weekStart, scrollToDefaultHour)
@@ -122,39 +143,59 @@ watch(() => props.weekStart, scrollToDefaultHour)
     class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-xl border border-subtle bg-surface"
   >
     <div class="grid text-sm" style="grid-template-columns: 3.25rem repeat(7, minmax(0, 1fr))">
-      <div class="sticky top-0 z-10 border-b border-r border-subtle bg-surface"></div>
+      <!-- Encabezados con alto fijo (h-9): la fila "All day" se pega justo
+           debajo (top-9). Fondo opaco + tinte interno, para que lo que pasa
+           por debajo al scrollear no se transparente en la columna de hoy. -->
+      <div class="sticky top-0 z-10 h-9 border-b border-r border-subtle bg-surface"></div>
       <div
         v-for="(day, i) in weekDays"
         :key="i"
-        class="sticky top-0 z-10 min-w-0 truncate border-b border-subtle p-1.5 text-center text-xs font-semibold sm:text-sm"
-        :class="isTodayColumn(day) ? 'bg-accent/10 text-accent-text' : 'bg-surface text-foreground'"
-      >
-        {{ WEEKDAY_LABELS[i] }} {{ day.getDate() }}
-      </div>
-
-      <!-- Festivos y eventos (cld_events/cld_user_events): solo marcan el
-           inicio y/o fin del rango, sin ninguna accion posible. -->
-      <div class="border-b border-r border-subtle"></div>
-      <div
-        v-for="(day, i) in weekDays"
-        :key="`ev-${i}`"
-        class="min-h-[2rem] min-w-0 space-y-1 border-b border-subtle p-1"
-        :class="isTodayColumn(day) ? 'bg-accent/10' : ''"
+        class="sticky top-0 z-10 h-9 min-w-0 border-b border-subtle bg-surface text-xs font-semibold sm:text-sm"
       >
         <div
-          v-for="marker in eventsFor(formatIsoDate(day))"
-          :key="`${marker.source}-${marker.id}-${marker.marker_type}`"
-          :title="marker.detail || marker.name"
-          class="truncate rounded-md border px-1.5 py-0.5 text-[10px]"
-          :class="
-            marker.code === 'HOLIDAY'
-              ? 'border-accent/40 bg-accent/10 text-accent-text'
-              : 'border-subtle bg-background text-muted'
-          "
+          class="h-full truncate px-1.5 text-center leading-9"
+          :class="isTodayColumn(day) ? 'bg-accent/10 text-accent-text' : 'text-foreground'"
         >
-          <template v-if="marker.marker_type === 'start'">▶ </template>
-          <template v-else-if="marker.marker_type === 'end'">◀ </template>
-          {{ marker.name }}
+          {{ WEEKDAY_LABELS[i] }} {{ day.getDate() }}
+        </div>
+      </div>
+
+      <div
+        class="sticky top-9 z-10 flex items-start justify-end border-b border-r border-subtle bg-surface p-1 text-right text-[10px] leading-tight text-muted"
+      >
+        All day
+      </div>
+      <div
+        :ref="(el) => setAllDayEl(el as Element | null)"
+        class="sticky top-9 z-10 col-span-7 border-b border-subtle bg-surface"
+      >
+        <div class="relative">
+          <div class="pointer-events-none absolute inset-0 grid grid-cols-7">
+            <div
+              v-for="(day, i) in weekDays"
+              :key="`tint-${i}`"
+              :class="isTodayColumn(day) ? 'bg-accent/10' : ''"
+            ></div>
+          </div>
+          <div class="relative grid min-h-[2rem] grid-flow-row-dense grid-cols-7 gap-y-1 py-1">
+            <button
+              v-for="bar in eventBars"
+              :key="`${bar.range.source}-${bar.range.id}`"
+              type="button"
+              :title="`${bar.range.name} · ${eventDateLabel(bar.range)}`"
+              class="mx-0.5 flex min-w-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-left text-[10px] hover:brightness-95"
+              :style="{
+                gridColumn: `${bar.startColumn + 1} / ${bar.endColumn + 2}`,
+                backgroundColor: withAlpha(eventColor(bar.range), '26'),
+                borderColor: withAlpha(eventColor(bar.range), '66'),
+              }"
+              @click="emit('openEvent', bar.range)"
+            >
+              <span v-if="bar.continuesBefore" class="shrink-0 text-muted">◀</span>
+              <span class="min-w-0 flex-1 truncate text-foreground">{{ bar.range.name }}</span>
+              <span v-if="bar.continuesAfter" class="shrink-0 text-muted">▶</span>
+            </button>
+          </div>
         </div>
       </div>
 

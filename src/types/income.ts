@@ -10,6 +10,8 @@ export interface IncomeSourceOption {
   id: number
   name: string
   type: IncomeCatalogType
+  // Las opciones solo traen ENABLED; un registro viejo puede traer una archivada.
+  status: 'ENABLED' | 'DISABLED'
 }
 
 /** Pertenece a una sola fuente (`source_id`). */
@@ -18,6 +20,7 @@ export interface IncomeSubcategoryOption {
   source_id: number
   name: string
   type: IncomeCatalogType
+  status: 'ENABLED' | 'DISABLED'
 }
 
 export interface InterestEndBalance {

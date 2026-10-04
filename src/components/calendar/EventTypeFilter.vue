@@ -38,10 +38,10 @@ function toggle(value: EventTypeValue) {
       {{ summaryLabel }}
       <ChevronDown class="h-4 w-4" />
     </BaseButton>
-    <div v-if="menuOpen" class="fixed inset-0 z-10" @click="menuOpen = false" />
+    <div v-if="menuOpen" class="fixed inset-0 z-20" @click="menuOpen = false" />
     <div
       v-if="menuOpen"
-      class="absolute left-0 z-20 mt-1 w-48 rounded-lg border border-subtle bg-surface py-1 shadow-lg"
+      class="absolute left-0 z-30 mt-1 w-48 rounded-lg border border-subtle bg-surface py-1 shadow-lg"
     >
       <label
         class="flex w-full cursor-pointer items-center gap-2 border-b border-subtle px-3 py-2 text-sm font-medium hover:bg-surface-hover"

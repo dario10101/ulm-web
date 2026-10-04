@@ -92,7 +92,9 @@ function catalogItem(bucket: ExpenseSummaryBucket): ChartItem {
     key: bucket.key,
     label: bucket.label,
     value: bucket.total,
-    colorClass: bucket.color_key ? financeColorClasses(bucket.color_key).text : 'text-slate-400',
+    colorClass: bucket.color_key
+      ? financeColorClasses(bucket.color_key).text
+      : 'text-slate-600 dark:text-slate-400',
     icon: bucket.icon_key ? financeIcon(bucket.icon_key) : undefined,
     meta: countLabel(bucket.count),
   }

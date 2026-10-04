@@ -23,18 +23,63 @@ export const expensesByMonth = [
 ]
 
 export const incomeBySource = [
-  { key: 'salary', label: 'Salary', value: 55_800_000, colorClass: 'text-emerald-400' },
-  { key: 'freelance', label: 'Freelance', value: 5_900_000, colorClass: 'text-sky-400' },
-  { key: 'bonus', label: 'Bonus', value: 3_100_000, colorClass: 'text-amber-400' },
-  { key: 'interest', label: 'Interest', value: 1_000_000, colorClass: 'text-violet-400' },
+  {
+    key: 'salary',
+    label: 'Salary',
+    value: 55_800_000,
+    colorClass: 'text-emerald-600 dark:text-emerald-400',
+  },
+  {
+    key: 'freelance',
+    label: 'Freelance',
+    value: 5_900_000,
+    colorClass: 'text-sky-600 dark:text-sky-400',
+  },
+  {
+    key: 'bonus',
+    label: 'Bonus',
+    value: 3_100_000,
+    colorClass: 'text-amber-600 dark:text-amber-400',
+  },
+  {
+    key: 'interest',
+    label: 'Interest',
+    value: 1_000_000,
+    colorClass: 'text-violet-600 dark:text-violet-400',
+  },
 ]
 
 export const investmentAllocation = [
-  { key: 'etf', label: 'Global ETFs', value: 42_000_000, colorClass: 'text-sky-400' },
-  { key: 'cdt', label: 'CDT', value: 18_000_000, colorClass: 'text-emerald-400' },
-  { key: 'pension', label: 'Voluntary pension', value: 12_500_000, colorClass: 'text-amber-400' },
-  { key: 'crypto', label: 'Crypto', value: 4_300_000, colorClass: 'text-violet-400' },
-  { key: 'cash', label: 'Cash reserve', value: 6_000_000, colorClass: 'text-slate-400' },
+  {
+    key: 'etf',
+    label: 'Global ETFs',
+    value: 42_000_000,
+    colorClass: 'text-sky-600 dark:text-sky-400',
+  },
+  {
+    key: 'cdt',
+    label: 'CDT',
+    value: 18_000_000,
+    colorClass: 'text-emerald-600 dark:text-emerald-400',
+  },
+  {
+    key: 'pension',
+    label: 'Voluntary pension',
+    value: 12_500_000,
+    colorClass: 'text-amber-600 dark:text-amber-400',
+  },
+  {
+    key: 'crypto',
+    label: 'Crypto',
+    value: 4_300_000,
+    colorClass: 'text-violet-600 dark:text-violet-400',
+  },
+  {
+    key: 'cash',
+    label: 'Cash reserve',
+    value: 6_000_000,
+    colorClass: 'text-slate-600 dark:text-slate-400',
+  },
 ]
 
 export const portfolioValueByMonth = [
@@ -52,28 +97,28 @@ export const debts = [
     label: 'Mortgage',
     value: 148_000_000,
     meta: '11.2% EA · 17y left',
-    colorClass: 'text-sky-400',
+    colorClass: 'text-sky-600 dark:text-sky-400',
   },
   {
     key: 'car',
     label: 'Car loan',
     value: 21_500_000,
     meta: '14.9% EA · 28m left',
-    colorClass: 'text-amber-400',
+    colorClass: 'text-amber-600 dark:text-amber-400',
   },
   {
     key: 'card',
     label: 'Credit card',
     value: 3_200_000,
     meta: '28.1% EA · revolving',
-    colorClass: 'text-rose-400',
+    colorClass: 'text-rose-600 dark:text-rose-400',
   },
   {
     key: 'icetex',
     label: 'Student loan',
     value: 6_800_000,
     meta: '9.5% EA · 20m left',
-    colorClass: 'text-violet-400',
+    colorClass: 'text-violet-600 dark:text-violet-400',
   },
 ]
 
@@ -88,10 +133,25 @@ export const assetsByMonth = [
 ]
 
 export const assetBreakdown = [
-  { key: 'home', label: 'Home', value: 210_000_000, colorClass: 'text-sky-400' },
-  { key: 'investments', label: 'Investments', value: 82_800_000, colorClass: 'text-emerald-400' },
-  { key: 'vehicle', label: 'Vehicle', value: 19_000_000, colorClass: 'text-amber-400' },
-  { key: 'cash', label: 'Cash & accounts', value: 7_000_000, colorClass: 'text-violet-400' },
+  { key: 'home', label: 'Home', value: 210_000_000, colorClass: 'text-sky-600 dark:text-sky-400' },
+  {
+    key: 'investments',
+    label: 'Investments',
+    value: 82_800_000,
+    colorClass: 'text-emerald-600 dark:text-emerald-400',
+  },
+  {
+    key: 'vehicle',
+    label: 'Vehicle',
+    value: 19_000_000,
+    colorClass: 'text-amber-600 dark:text-amber-400',
+  },
+  {
+    key: 'cash',
+    label: 'Cash & accounts',
+    value: 7_000_000,
+    colorClass: 'text-violet-600 dark:text-violet-400',
+  },
 ]
 
 export const aiInsights = [

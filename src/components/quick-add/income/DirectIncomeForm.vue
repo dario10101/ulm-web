@@ -6,6 +6,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import CollapsibleNote from '@/components/ui/CollapsibleNote.vue'
 import CopAmountInput from '@/components/ui/CopAmountInput.vue'
 import { useIncomeOptions } from '@/composables/useIncomeOptions'
+import { withCurrent } from '@/lib/catalogOptions'
 import { parseAmountInput, toAmountInput } from '@/lib/currency'
 import { MONTH_NAMES_EN, moveToMonth, parseIsoDate, todayIsoDate } from '@/lib/date'
 import { ApiError } from '@/lib/http'
@@ -19,14 +20,25 @@ const props = withDefaults(defineProps<{ record?: DirectIncome | null }>(), { re
 const emit = defineEmits<{ saved: [record: DirectIncome]; cancel: [] }>()
 
 const { tags, ensureLoaded, sourcesFor, subcategoriesOf } = useIncomeOptions()
-const sources = sourcesFor('direct')
+const activeSources = sourcesFor('direct')
+// Mas el item del registro editado si esta archivado (ver lib/catalogOptions).
+const sources = computed(() =>
+  withCurrent(activeSources.value, props.record ? [props.record.source] : []),
+)
 const isEdit = computed(() => props.record !== null)
 
 const amount = ref('')
 const sourceId = ref<number | null>(null)
 const subcategoryId = ref<number | null>(null)
 // Cada subcategoria pertenece a una fuente: se ofrecen solo las de la elegida.
-const subcategories = subcategoriesOf(sourceId)
+const activeSubcategories = subcategoriesOf(sourceId)
+const subcategories = computed(() =>
+  withCurrent(
+    activeSubcategories.value,
+    props.record?.subcategory.source_id === sourceId.value ? [props.record.subcategory] : [],
+  ),
+)
+const tagOptions = computed(() => withCurrent(tags.value, props.record?.tags ?? []))
 const date = ref(todayIsoDate())
 const tagIds = ref<number[]>([])
 const note = ref('')
@@ -213,7 +225,7 @@ onDeactivated(() => {
 
     <CollapsibleNote v-model="note" />
 
-    <TagPicker v-model="tagIds" :tags="tags" />
+    <TagPicker v-model="tagIds" :tags="tagOptions" />
 
     <div class="flex items-center gap-3" :class="isEdit && 'flex-row-reverse'">
       <BaseButton type="submit" :disabled="submitting">

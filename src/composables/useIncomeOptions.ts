@@ -69,6 +69,11 @@ export function useIncomeOptions() {
     return inFlight
   }
 
+  /** Tras editar fuentes/subcategorias/tags: la proxima carga vuelve a pedirlas. */
+  function invalidate(): void {
+    loaded = false
+  }
+
   // Aceptan un kind reactivo (ej. la barra de filtros, que cambia de tipo).
   function sourcesFor(kind: MaybeRefOrGetter<IncomeKind>) {
     return computed(() => forKind(sources.value, toValue(kind)))
@@ -119,6 +124,7 @@ export function useIncomeOptions() {
     tags,
     loadError,
     ensureLoaded,
+    invalidate,
     sourcesFor,
     subcategoriesOf,
     subcategoriesFor,

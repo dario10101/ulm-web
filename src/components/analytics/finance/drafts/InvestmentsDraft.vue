@@ -65,7 +65,7 @@ const contributionItems = DRAFT_MONTHS.map((label, i) => ({
         :items="contributionItems"
         :format="formatCOP"
         :axis-format="formatCompactCOP"
-        color-class="text-sky-400"
+        color-class="text-sky-600 dark:text-sky-400"
         show-average
       />
     </BaseCard>

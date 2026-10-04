@@ -13,6 +13,7 @@ const scrollSpy = vi.fn()
 
 vi.mock('@/lib/dom', () => ({
   scrollElementIntoContainer: (container: unknown, target: unknown) => scrollSpy(container, target),
+  stickyInset: () => 0,
 }))
 
 vi.mock('@/composables/useCategories', async () => {
@@ -38,7 +39,7 @@ describe('DailyView: hora visible al abrir', () => {
 
   it('apunta a la hora actual cuando los datos ya estaban cargados al montar', async () => {
     mount(DailyView, {
-      props: { date: '2026-09-26', occurrences: [], loading: false, error: null },
+      props: { date: '2026-09-26', occurrences: [], events: [], loading: false, error: null },
     })
     await flushPromises()
 
@@ -51,7 +52,7 @@ describe('DailyView: hora visible al abrir', () => {
   // disparo tiene que ser la aparicion del grid, no la llegada de los datos.
   it('apunta a la hora actual aunque el grid aparezca despues de los datos', async () => {
     const wrapper = mount(DailyView, {
-      props: { date: '2026-09-26', occurrences: [], loading: true, error: null },
+      props: { date: '2026-09-26', occurrences: [], events: [], loading: true, error: null },
     })
     await flushPromises()
 
@@ -65,7 +66,7 @@ describe('DailyView: hora visible al abrir', () => {
 
   it('usa la hora por defecto si el dia mostrado no es hoy', async () => {
     mount(DailyView, {
-      props: { date: '2026-09-30', occurrences: [], loading: false, error: null },
+      props: { date: '2026-09-30', occurrences: [], events: [], loading: false, error: null },
     })
     await flushPromises()
 

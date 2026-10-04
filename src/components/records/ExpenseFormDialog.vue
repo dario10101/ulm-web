@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { useExpenseOptions } from '@/composables/useExpenseOptions'
 import { financeColorClasses, financeIcon } from '@/config/financeVisuals'
+import { withCurrent } from '@/lib/catalogOptions'
 import { formatAmountInput, parseAmountInput, toAmountInput } from '@/lib/currency'
 import { ApiError } from '@/lib/http'
 import { updateExpense } from '@/services/expensesApi'
@@ -17,11 +18,21 @@ const props = defineProps<{ record: Expense | null }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
 
 const {
-  categories: expenseCategories,
-  paymentMethods: expensePaymentMethods,
-  tags: expenseTagChoices,
+  categories: activeCategories,
+  paymentMethods: activePaymentMethods,
+  tags: activeTags,
   ensureLoaded: ensureExpenseOptionsLoaded,
 } = useExpenseOptions()
+
+// Opciones activas mas lo que el registro ya usa, aunque este archivado (ver
+// lib/catalogOptions): si no, editar el monto obligaria a cambiar la categoria.
+const expenseCategories = computed(() =>
+  withCurrent(activeCategories.value, props.record ? [props.record.category] : []),
+)
+const expensePaymentMethods = computed(() =>
+  withCurrent(activePaymentMethods.value, props.record ? [props.record.payment_method] : []),
+)
+const expenseTagChoices = computed(() => withCurrent(activeTags.value, props.record?.tags ?? []))
 
 const expenseName = ref('')
 const expenseValue = ref('')

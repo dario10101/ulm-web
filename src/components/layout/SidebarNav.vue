@@ -7,6 +7,7 @@ import FilterPanel from '@/components/layout/FilterPanel.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useLayoutState } from '@/composables/useLayoutState'
 import { bottomNavItems, mainNavItems } from '@/config/nav'
+import type { NavItem } from '@/types/nav'
 
 const route = useRoute()
 const { isSidebarOpen, isSidebarCollapsed, closeSidebar, toggleSidebarCollapsed } = useLayoutState()
@@ -31,6 +32,13 @@ const linkClass = computed(() => [
 ])
 const labelClass = computed(() => ['truncate', collapsed.value && 'lg:hidden'])
 const activeLinkClass = 'bg-accent/15 text-accent-text'
+
+// Una ruta hija de otra seccion (ej. los parametros de "View records") marca
+// el item de esa seccion con meta.navActive: RouterLink solo marca su propia ruta.
+function forcedActive(item: NavItem): string | undefined {
+  const to = item.to as { name?: string }
+  return route.meta.navActive && route.meta.navActive === to.name ? activeLinkClass : undefined
+}
 </script>
 
 <template>
@@ -55,7 +63,7 @@ const activeLinkClass = 'bg-accent/15 text-accent-text'
         v-for="item in visibleMainItems"
         :key="item.label"
         :to="item.to"
-        :class="linkClass"
+        :class="[linkClass, forcedActive(item)]"
         :active-class="activeLinkClass"
         :title="collapsed ? item.label : undefined"
       >

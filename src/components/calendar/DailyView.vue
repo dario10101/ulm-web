@@ -4,7 +4,8 @@ import { computed, nextTick, ref, watch } from 'vue'
 
 import { useCategories } from '@/composables/useCategories'
 import { formatDateLong, parseIsoDate, todayIsoDate } from '@/lib/date'
-import { scrollElementIntoContainer } from '@/lib/dom'
+import { scrollElementIntoContainer, stickyInset } from '@/lib/dom'
+import { eventColor, withAlpha } from '@/lib/monthGrid'
 import {
   computeTimelineBlocks,
   defaultVisibleHour,
@@ -13,6 +14,8 @@ import {
   hourLabel,
   type TimelineBlock,
 } from '@/lib/timeline'
+import { eventDateLabel, sortEventsForDisplay } from '@/lib/userEvents'
+import type { CalendarEventRange } from '@/types/calendarEvent'
 import type { CalendarTaskOccurrence } from '@/types/calendarTask'
 
 /**
@@ -22,6 +25,8 @@ import type { CalendarTaskOccurrence } from '@/types/calendarTask'
 const props = defineProps<{
   date: string
   occurrences: CalendarTaskOccurrence[]
+  /** Eventos que cubren este dia (festivos y personales). */
+  events: CalendarEventRange[]
   loading: boolean
   error: string | null
 }>()
@@ -30,6 +35,7 @@ const emit = defineEmits<{
   prev: []
   next: []
   openDetail: [occurrence: CalendarTaskOccurrence]
+  openEvent: [event: CalendarEventRange]
 }>()
 
 const { categories } = useCategories()
@@ -47,6 +53,19 @@ const visibleCategories = computed(() =>
 function isCurrentHourBlock(hour: number): boolean {
   return props.date === todayIsoDate() && hour === new Date().getHours()
 }
+
+/**
+ * Los eventos no tienen hora, asi que no entran en la linea de tiempo: van en
+ * una franja "All day" arriba de la grilla, fuera del area con scroll (siempre
+ * a la vista, sin tapar horas). Respetan el filtro de categoria; los festivos
+ * no tienen categoria y se muestran siempre.
+ */
+const dayEvents = computed(() => {
+  const visibleIds = new Set(visibleCategories.value.map((c) => c.id))
+  return sortEventsForDisplay(
+    props.events.filter((e) => e.category_id === null || visibleIds.has(e.category_id)),
+  )
+})
 
 function dayTimelineBlocks(categoryId: number): TimelineBlock[] {
   return computeTimelineBlocks(props.occurrences.filter((o) => o.category_id === categoryId))
@@ -99,9 +118,23 @@ function visibleHourRowEl(hour: number): HTMLElement | null {
   return mobile ?? desktop ?? null
 }
 
+// Encabezado de categorias (sticky, solo escritorio): se descuenta al
+// scrollear para que la hora actual no quede tapada por el.
+let headerEl: HTMLElement | null = null
+
+function setHeaderEl(el: Element | null) {
+  headerEl = el as HTMLElement | null
+}
+
 function scrollToDefaultHour() {
   const hour = defaultVisibleHour(props.date === todayIsoDate())
-  nextTick(() => scrollElementIntoContainer(gridScrollEl, visibleHourRowEl(hour)))
+  nextTick(() =>
+    scrollElementIntoContainer(
+      gridScrollEl,
+      visibleHourRowEl(hour),
+      stickyInset(gridScrollEl, headerEl),
+    ),
+  )
 }
 
 watch(() => props.date, scrollToDefaultHour)
@@ -146,104 +179,132 @@ watch(() => props.date, scrollToDefaultHour)
     No categories yet — create one from the checklist page first.
   </p>
 
-  <div
-    v-else
-    :ref="(el) => setGridScrollEl(el as Element | null)"
-    class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-xl border border-subtle bg-surface"
-  >
-    <!-- Mobile: una sola columna, tareas de todas las categorias visibles
+  <template v-else>
+    <div
+      v-if="dayEvents.length"
+      class="flex shrink-0 flex-wrap items-center gap-1.5 rounded-xl border border-subtle bg-surface px-2 py-1.5"
+    >
+      <span class="pr-1 text-[10px] font-medium uppercase tracking-wide text-muted">All day</span>
+      <button
+        v-for="event in dayEvents"
+        :key="`${event.source}-${event.id}`"
+        type="button"
+        :title="event.detail || event.name"
+        class="flex min-w-0 max-w-full items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs hover:brightness-95"
+        :style="{
+          backgroundColor: withAlpha(eventColor(event), '1a'),
+          borderColor: withAlpha(eventColor(event), '66'),
+        }"
+        @click="emit('openEvent', event)"
+      >
+        <span class="truncate text-foreground">{{ event.name }}</span>
+        <span v-if="event.first_day !== event.last_day" class="shrink-0 text-[10px] text-muted">
+          {{ eventDateLabel(event) }}
+        </span>
+      </button>
+    </div>
+
+    <div
+      :ref="(el) => setGridScrollEl(el as Element | null)"
+      class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-xl border border-subtle bg-surface"
+    >
+      <!-- Mobile: una sola columna, tareas de todas las categorias visibles
            mezcladas por hora (sin separar en columnas). Respeta el mismo
            filtro que la vista de escritorio. -->
-    <div class="divide-y divide-subtle sm:hidden">
-      <div
-        v-for="hour in HOURS"
-        :key="hour"
-        :ref="(el) => setMobileHourRowEl(hour, el as Element | null)"
-        class="flex gap-2 p-2"
-        :class="isCurrentHourBlock(hour) ? 'bg-accent/10' : ''"
-      >
-        <div class="w-11 shrink-0 pt-0.5 text-right text-[10px] text-muted">
-          {{ hourLabel(hour) }}
-        </div>
-        <div class="min-w-0 flex-1 space-y-1">
-          <p v-if="!mobileOccurrencesFor(hour).length" class="text-[10px] text-muted/50">—</p>
-          <div
-            v-for="occurrence in mobileOccurrencesFor(hour)"
-            :key="occurrence.id"
-            class="min-w-0 cursor-pointer truncate rounded-md border border-subtle bg-background px-1.5 py-1 text-xs text-foreground"
-            :title="occurrence.name"
-            @click="emit('openDetail', occurrence)"
-          >
-            {{ occurrence.name }}
+      <div class="divide-y divide-subtle sm:hidden">
+        <div
+          v-for="hour in HOURS"
+          :key="hour"
+          :ref="(el) => setMobileHourRowEl(hour, el as Element | null)"
+          class="flex gap-2 p-2"
+          :class="isCurrentHourBlock(hour) ? 'bg-accent/10' : ''"
+        >
+          <div class="w-11 shrink-0 pt-0.5 text-right text-[10px] text-muted">
+            {{ hourLabel(hour) }}
+          </div>
+          <div class="min-w-0 flex-1 space-y-1">
+            <p v-if="!mobileOccurrencesFor(hour).length" class="text-[10px] text-muted/50">—</p>
+            <div
+              v-for="occurrence in mobileOccurrencesFor(hour)"
+              :key="occurrence.id"
+              class="min-w-0 cursor-pointer truncate rounded-md border border-subtle bg-background px-1.5 py-1 text-xs text-foreground"
+              :title="occurrence.name"
+              @click="emit('openDetail', occurrence)"
+            >
+              {{ occurrence.name }}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Desktop/tablet (sm+): una columna por categoria visible. Linea de
+      <!-- Desktop/tablet (sm+): una columna por categoria visible. Linea de
            tiempo continua: cada tarea se posiciona segun su hora de inicio
            y su duracion real (ver computeTimelineBlocks), en vez de ocupar
            todo el bloque de una hora. -->
-    <div
-      class="hidden text-sm sm:grid"
-      :style="{
-        gridTemplateColumns: `3.25rem repeat(${visibleCategories.length}, minmax(0, 1fr))`,
-      }"
-    >
-      <div class="sticky top-0 z-10 border-b border-r border-subtle bg-surface"></div>
       <div
-        v-for="category in visibleCategories"
-        :key="category.id"
-        class="sticky top-0 z-10 min-w-0 truncate border-b border-subtle bg-surface p-1.5 text-center text-xs font-semibold text-foreground sm:text-sm"
-        :title="category.name"
+        class="hidden text-sm sm:grid"
+        :style="{
+          gridTemplateColumns: `3.25rem repeat(${visibleCategories.length}, minmax(0, 1fr))`,
+        }"
       >
-        {{ category.name }}
-      </div>
-
-      <!-- Columna de horas: una fila por hora, altura fija (para que
-             calce en pixeles exactos con el overlay de cada categoria). -->
-      <div>
         <div
-          v-for="hour in HOURS"
-          :key="hour"
-          :ref="(el) => setDesktopHourRowEl(hour, el as Element | null)"
-          :style="{ height: `${HOUR_ROW_HEIGHT}px` }"
-          class="border-b border-r border-subtle p-1 text-right text-[10px] text-muted sm:p-2 sm:text-xs"
-          :class="isCurrentHourBlock(hour) ? 'bg-accent/10' : ''"
-        >
-          {{ hourLabel(hour) }}
-        </div>
-      </div>
-
-      <!-- Una columna por categoria: fondo con separadores de hora +
-             overlay de tareas posicionadas por su horario real. -->
-      <div v-for="category in visibleCategories" :key="category.id" class="relative min-w-0">
-        <div
-          v-for="hour in HOURS"
-          :key="hour"
-          :style="{ height: `${HOUR_ROW_HEIGHT}px` }"
-          class="border-b border-subtle"
-          :class="isCurrentHourBlock(hour) ? 'bg-accent/10' : ''"
+          :ref="(el) => setHeaderEl(el as Element | null)"
+          class="sticky top-0 z-10 border-b border-r border-subtle bg-surface"
         ></div>
+        <div
+          v-for="category in visibleCategories"
+          :key="category.id"
+          class="sticky top-0 z-10 min-w-0 truncate border-b border-subtle bg-surface p-1.5 text-center text-xs font-semibold text-foreground sm:text-sm"
+          :title="category.name"
+        >
+          {{ category.name }}
+        </div>
 
-        <div class="pointer-events-none absolute inset-0">
+        <!-- Columna de horas: una fila por hora, altura fija (para que
+             calce en pixeles exactos con el overlay de cada categoria). -->
+        <div>
           <div
-            v-for="block in dayTimelineBlocks(category.id)"
-            :key="block.occurrence.id"
-            class="pointer-events-auto absolute flex cursor-pointer items-center overflow-hidden rounded-md border border-subtle bg-background px-1.5 py-1 text-xs"
-            :style="{
-              top: `${block.top}px`,
-              height: `${block.height}px`,
-              left: `${block.leftPercent}%`,
-              width: `${block.widthPercent}%`,
-            }"
-            :title="block.occurrence.name"
-            @click="emit('openDetail', block.occurrence)"
+            v-for="hour in HOURS"
+            :key="hour"
+            :ref="(el) => setDesktopHourRowEl(hour, el as Element | null)"
+            :style="{ height: `${HOUR_ROW_HEIGHT}px` }"
+            class="border-b border-r border-subtle p-1 text-right text-[10px] text-muted sm:p-2 sm:text-xs"
+            :class="isCurrentHourBlock(hour) ? 'bg-accent/10' : ''"
           >
-            <span class="min-w-0 truncate text-foreground">{{ block.occurrence.name }}</span>
+            {{ hourLabel(hour) }}
+          </div>
+        </div>
+
+        <!-- Una columna por categoria: fondo con separadores de hora +
+             overlay de tareas posicionadas por su horario real. -->
+        <div v-for="category in visibleCategories" :key="category.id" class="relative min-w-0">
+          <div
+            v-for="hour in HOURS"
+            :key="hour"
+            :style="{ height: `${HOUR_ROW_HEIGHT}px` }"
+            class="border-b border-subtle"
+            :class="isCurrentHourBlock(hour) ? 'bg-accent/10' : ''"
+          ></div>
+
+          <div class="pointer-events-none absolute inset-0">
+            <div
+              v-for="block in dayTimelineBlocks(category.id)"
+              :key="block.occurrence.id"
+              class="pointer-events-auto absolute flex cursor-pointer items-center overflow-hidden rounded-md border border-subtle bg-background px-1.5 py-1 text-xs"
+              :style="{
+                top: `${block.top}px`,
+                height: `${block.height}px`,
+                left: `${block.leftPercent}%`,
+                width: `${block.widthPercent}%`,
+              }"
+              :title="block.occurrence.name"
+              @click="emit('openDetail', block.occurrence)"
+            >
+              <span class="min-w-0 truncate text-foreground">{{ block.occurrence.name }}</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </template>
 </template>

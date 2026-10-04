@@ -124,7 +124,7 @@ const SELECT_CLASS = 'h-9 rounded-lg border border-subtle bg-surface px-3 text-s
         >
           <span
             v-if="type.draft"
-            class="absolute right-3 top-3 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"
+            class="absolute right-3 top-3 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400"
           >
             Draft
           </span>
