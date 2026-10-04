@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '@/config/env'
-import { getJson, postJson } from '@/lib/http'
+import { getJson, postJson, putJson } from '@/lib/http'
 import type { Me } from '@/types/user'
 
 /**
@@ -9,6 +9,11 @@ import type { Me } from '@/types/user'
  */
 export function getMe(): Promise<Me> {
   return getJson<Me>('/me', { skipUnauthorizedHandler: true })
+}
+
+/** Crea el username (una sola vez: el backend responde 409 si ya hay uno). */
+export function setUsername(username: string): Promise<Me> {
+  return putJson<Me>('/me/username', { username })
 }
 
 export function logout(): Promise<void> {

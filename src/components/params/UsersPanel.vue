@@ -334,6 +334,7 @@ onMounted(load)
             </td>
             <td class="py-2 text-center">
               <input
+                v-if="domain.ai"
                 type="checkbox"
                 :aria-label="`${domain.label} AI`"
                 :checked="draft.includes(domain.ai)"

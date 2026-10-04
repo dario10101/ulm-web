@@ -10,6 +10,7 @@ export type Permission =
   | 'finances.ai'
   | 'planning'
   | 'planning.ai'
+  | 'blog'
 
 /**
  * Lo que exige una ruta, un item del menu o un tipo de registro. Una lista
@@ -18,18 +19,19 @@ export type Permission =
  */
 export type PermissionRequirement = Permission | readonly Permission[]
 
-export type PermissionDomain = 'weight' | 'meals' | 'finances' | 'planning'
+export type PermissionDomain = 'weight' | 'meals' | 'finances' | 'planning' | 'blog'
 
 /**
  * Dominios con su permiso base y su avanzado (`.ai`), para la pantalla de
  * administracion de usuarios (Settings -> Users). Si el backend agrega un
- * dominio que no esta aca, solo falta su fila: el backend valida igual.
+ * dominio que no esta aca, solo falta su fila: el backend valida igual. Sin
+ * `ai`, el dominio no tiene avanzado (blog).
  */
 export const PERMISSION_DOMAINS: readonly {
   id: PermissionDomain
   label: string
   description: string
-  ai: Permission
+  ai?: Permission
 }[] = [
   { id: 'weight', label: 'Weight', description: 'Weight records and trend', ai: 'weight.ai' },
   { id: 'meals', label: 'Meals', description: 'Meal records', ai: 'meals.ai' },
@@ -45,6 +47,7 @@ export const PERMISSION_DOMAINS: readonly {
     description: 'Checklists and calendar',
     ai: 'planning.ai',
   },
+  { id: 'blog', label: 'Blog', description: 'Public blog at /blog/<username>' },
 ]
 
 /** Union sin repetidos de los permisos de `items` (los que no piden ninguno no suman). */

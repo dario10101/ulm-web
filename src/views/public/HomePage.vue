@@ -2,6 +2,8 @@
 import { Code2, Dumbbell, LineChart, Swords } from '@lucide/vue'
 
 import { posts } from '@/data/posts'
+import BlogNoContent from '@/components/blog/BlogNoContent.vue'
+import { useBlogOwner } from '@/composables/useBlogOwner'
 
 const interests = [
   { label: 'Ingeniería de datos', icon: LineChart },
@@ -9,10 +11,12 @@ const interests = [
   { label: 'Kickboxing y gimnasio', icon: Swords },
   { label: 'Entrenamiento de fuerza', icon: Dumbbell },
 ]
+
+const owner = useBlogOwner()
 </script>
 
 <template>
-  <div class="space-y-16">
+  <div v-if="owner?.hasDemoContent" class="space-y-16">
     <section>
       <p class="mb-3 text-sm font-medium text-ruby-text">Hola, soy Ruben</p>
       <h1 class="text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
@@ -21,7 +25,7 @@ const interests = [
       <p class="mt-4 max-w-xl text-muted">
         28 años, trabajo full-time como Data Engineer. Escribo sobre lo que voy aprendiendo — sobre
         todo datos, arquitectura de software, y lo que vaya construyendo para
-        <RouterLink :to="{ name: 'public-projects' }" class="text-accent-text hover:underline"
+        <RouterLink :to="{ name: 'blog-projects' }" class="text-accent-text hover:underline"
           >Unified Life Manager</RouterLink
         >, un sistema personal que uso para aprender frontend y desarrollo asistido por IA.
       </p>
@@ -44,10 +48,7 @@ const interests = [
     <section>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">Últimos escritos</h2>
-        <RouterLink
-          :to="{ name: 'public-writing' }"
-          class="text-sm text-accent-text hover:underline"
-        >
+        <RouterLink :to="{ name: 'blog-writing' }" class="text-sm text-accent-text hover:underline">
           Ver todos
         </RouterLink>
       </div>
@@ -55,7 +56,7 @@ const interests = [
         <RouterLink
           v-for="post in posts.slice(0, 2)"
           :key="post.slug"
-          :to="{ name: 'public-writing-post', params: { slug: post.slug } }"
+          :to="{ name: 'blog-writing-post', params: { slug: post.slug } }"
           class="block"
         >
           <p class="text-xs text-muted">{{ post.date }}</p>
@@ -65,4 +66,5 @@ const interests = [
       </div>
     </section>
   </div>
+  <BlogNoContent v-else />
 </template>

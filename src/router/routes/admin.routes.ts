@@ -106,6 +106,14 @@ export const adminRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    // Administracion del blog propio. Exige username (la pagina lo pide si
+    // falta): sin el, el blog no tiene URL.
+    path: 'blog',
+    name: 'admin-blog',
+    component: () => import('@/views/admin/BlogAdminPage.vue'),
+    meta: { permission: 'blog' },
+  },
+  {
     // Cada seccion tiene su URL (/admin/settings/appearance). Las de "System"
     // son solo del admin: SettingsPage las oculta y corrige la URL; el backend
     // responde 403 igual.

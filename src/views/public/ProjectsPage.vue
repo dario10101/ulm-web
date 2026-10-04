@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
+import BlogNoContent from '@/components/blog/BlogNoContent.vue'
+import { useBlogOwner } from '@/composables/useBlogOwner'
 
 const projects = [
   {
@@ -18,10 +20,12 @@ const projects = [
     link: null,
   },
 ]
+
+const owner = useBlogOwner()
 </script>
 
 <template>
-  <div class="space-y-8">
+  <div v-if="owner?.hasDemoContent" class="space-y-8">
     <div>
       <h1 class="text-2xl font-semibold text-foreground">Proyectos</h1>
       <p class="mt-2 text-muted">Cosas que construí o estoy construyendo.</p>
@@ -34,4 +38,5 @@ const projects = [
       </div>
     </BaseCard>
   </div>
+  <BlogNoContent v-else />
 </template>

@@ -2,6 +2,7 @@
 import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import UsernameCard from '@/components/account/UsernameCard.vue'
 import AccessPanel from '@/components/params/AccessPanel.vue'
 import AppearancePanel from '@/components/params/AppearancePanel.vue'
 import CalendarEventsPanel from '@/components/params/CalendarEventsPanel.vue'
@@ -130,6 +131,8 @@ const toggles = [
               </label>
             </div>
           </BaseCard>
+
+          <UsernameCard />
 
           <BaseCard title="Notifications">
             <p class="mb-2 text-xs text-muted">Visual only for now — nothing is saved.</p>

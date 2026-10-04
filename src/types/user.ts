@@ -7,6 +7,8 @@ export interface Me {
   email: string
   avatar_url: string | null
   timezone: string
+  // Nulo hasta que el usuario lo crea (Settings -> General). URL de su blog.
+  username: string | null
   is_admin: boolean
   // Efectivos: todos si es admin. Ver src/config/permissions.ts.
   permissions: Permission[]

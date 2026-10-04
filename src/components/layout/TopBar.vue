@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { Menu, Newspaper } from '@lucide/vue'
+import { computed } from 'vue'
 
 import UserMenu from '@/components/layout/UserMenu.vue'
+import { useAuth } from '@/composables/useAuth'
 import { useLayoutState } from '@/composables/useLayoutState'
 
 const { toggleSidebar } = useLayoutState()
+const { user } = useAuth()
+
+// Con username, el blog propio; sin el, la landing publica.
+const blogLink = computed(() =>
+  user.value?.username
+    ? { name: 'blog-home', params: { username: user.value.username } }
+    : { name: 'public-home' },
+)
 </script>
 
 <template>
@@ -27,7 +37,7 @@ const { toggleSidebar } = useLayoutState()
 
     <div class="flex items-center gap-4">
       <RouterLink
-        :to="{ name: 'public-home' }"
+        :to="blogLink"
         class="hidden items-center gap-1.5 text-sm font-medium text-muted hover:text-foreground sm:flex"
       >
         <Newspaper class="h-4 w-4" />

@@ -5,6 +5,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   ListChecks,
+  Newspaper,
   PlusCircle,
   Search,
   Settings,
@@ -48,6 +49,7 @@ export const mainNavItems: NavItem[] = [
     icon: BarChart3,
     permission: ANALYTICS_PERMISSIONS,
   },
+  { label: 'Blog', to: { name: 'admin-blog' }, icon: Newspaper, permission: 'blog' },
 ]
 
 // Seccion de configuracion del sidebar (fija, abajo).

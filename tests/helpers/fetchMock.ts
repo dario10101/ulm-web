@@ -29,6 +29,7 @@ export const ME = {
   email: 'ruben.d21pc@gmail.com',
   avatar_url: 'https://lh3.googleusercontent.com/a/photo',
   timezone: 'America/Bogota',
+  username: null as string | null,
   is_admin: false,
   permissions: [] as Permission[],
 }
@@ -38,6 +39,7 @@ export const ME_ALL = {
   ...ME,
   is_admin: true,
   permissions: [
+    'blog',
     'finances',
     'finances.ai',
     'meals',

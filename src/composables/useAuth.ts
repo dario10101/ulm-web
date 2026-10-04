@@ -95,6 +95,10 @@ export function useAuth() {
     can,
     ensureLoaded,
     logout,
+    /** Reemplaza el usuario por uno que devolvio la API (ej. tras crear el username). */
+    setUser(me: Me): void {
+      user.value = me
+    },
     /** La API respondio 401 en medio del uso: la sesion ya no existe. */
     markSessionExpired: setAnonymous,
   }

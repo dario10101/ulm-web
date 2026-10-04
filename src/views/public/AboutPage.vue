@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import BaseBadge from '@/components/ui/BaseBadge.vue'
+import BlogNoContent from '@/components/blog/BlogNoContent.vue'
+import { useBlogOwner } from '@/composables/useBlogOwner'
 
 const skills = [
   'Python',
@@ -12,10 +14,12 @@ const skills = [
 ]
 
 const currentlyLearning = ['AWS Solutions Architect', 'Vue 3 + TypeScript', 'Diseño de sistemas']
+
+const owner = useBlogOwner()
 </script>
 
 <template>
-  <div class="space-y-10">
+  <div v-if="owner?.hasDemoContent" class="space-y-10">
     <div>
       <h1 class="text-2xl font-semibold text-foreground">Sobre mí</h1>
       <p class="mt-4 text-muted">
@@ -44,4 +48,5 @@ const currentlyLearning = ['AWS Solutions Architect', 'Vue 3 + TypeScript', 'Dis
       </ul>
     </div>
   </div>
+  <BlogNoContent v-else />
 </template>

@@ -4,16 +4,22 @@ import { computed } from 'vue'
 
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { useBlogOwner } from '@/composables/useBlogOwner'
 import { posts } from '@/data/posts'
 
 const props = defineProps<{ slug: string }>()
 
-const post = computed(() => posts.find((p) => p.slug === props.slug))
+const owner = useBlogOwner()
+
+// Los posts de ejemplo son solo del blog de su dueño (ver data/blogDemo.ts).
+const post = computed(() =>
+  owner.value?.hasDemoContent ? posts.find((p) => p.slug === props.slug) : undefined,
+)
 </script>
 
 <template>
   <article v-if="post" class="space-y-6">
-    <RouterLink :to="{ name: 'public-writing' }" class="text-sm text-muted hover:text-accent-text">
+    <RouterLink :to="{ name: 'blog-writing' }" class="text-sm text-muted hover:text-accent-text">
       ← Volver a escritos
     </RouterLink>
     <div>

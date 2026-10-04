@@ -12,6 +12,8 @@ Frontend de ULM (gestion personal: habitos, finanzas, contenido). Consume la API
 
 **Parametros**: paneles con URL propia en `/admin/settings/<section>` (System = solo admin; ahi vive `users`, la administracion de usuarios y sus permisos por dominio) y `/admin/records/<type>/<panel>` (ver `config/paramPanels.ts`).
 
+**Blog publico**: `/blog` = landing; `/blog/:username/...` = blog de un usuario (`PublicLayout` lo resuelve contra `/public/blogs/{username}` y lo provee con `useBlogOwner`). `users.username` se crea en Settings -> General (inmutable).
+
 **Idioma de UI**: `/blog/**` (sitio publico) esta en espanol. `/admin/**` y `/login/**` estan en ingles. El `lang` del `<html>` se actualiza por layout (`PublicLayout` pone `es`, `AppShellLayout`/`AuthLayout` ponen `en`).
 
 Estilo: ver STYLEGUIDE.md (codigo en ingles, comentarios/logs en espanol).

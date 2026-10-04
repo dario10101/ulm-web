@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import { posts } from '@/data/posts'
+import BlogNoContent from '@/components/blog/BlogNoContent.vue'
+import { useBlogOwner } from '@/composables/useBlogOwner'
+
+const owner = useBlogOwner()
 </script>
 
 <template>
-  <div class="space-y-8">
+  <div v-if="owner?.hasDemoContent" class="space-y-8">
     <div>
       <h1 class="text-2xl font-semibold text-foreground">Escritos</h1>
       <p class="mt-2 text-muted">Notas sobre datos, código, y lo que vaya surgiendo.</p>
@@ -14,7 +18,7 @@ import { posts } from '@/data/posts'
       <RouterLink
         v-for="post in posts"
         :key="post.slug"
-        :to="{ name: 'public-writing-post', params: { slug: post.slug } }"
+        :to="{ name: 'blog-writing-post', params: { slug: post.slug } }"
         class="block border-b border-subtle pb-6 last:border-0"
       >
         <p class="text-xs text-muted">{{ post.date }}</p>
@@ -26,4 +30,5 @@ import { posts } from '@/data/posts'
       </RouterLink>
     </div>
   </div>
+  <BlogNoContent v-else />
 </template>
