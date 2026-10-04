@@ -23,6 +23,7 @@ import BaseCard from '@/components/ui/BaseCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { financeColorClasses, financeIcon } from '@/config/financeVisuals'
 import { mealTypeLabel } from '@/config/mealTypes'
+import { useAuth } from '@/composables/useAuth'
 import { recordTypes, type RecordType } from '@/config/recordTypes'
 import { formatCOP } from '@/lib/currency'
 import { formatShortDate, isoWeekday, parseIsoDate } from '@/lib/date'
@@ -51,11 +52,20 @@ const DEFAULT_TYPE_ID = 'weight'
 const route = useRoute()
 const router = useRouter()
 
-// El tipo activo vive en la URL. Sin param (o con uno invalido) se muestra
-// "weight" y se corrige la URL, para que cada vista tenga una sola direccion.
+const { can } = useAuth()
+
+// Solo los tipos de los modulos del usuario. Siempre hay al menos uno: la ruta
+// exige cualquiera de sus permisos (meta.permission, ver admin.routes.ts).
+const visibleTypes = computed(() => recordTypes.filter((type) => can(type.permission)))
+
+// El tipo activo vive en la URL. Sin param (o con uno invalido o sin permiso)
+// se muestra "weight" (o el primero visible) y se corrige la URL, para que cada
+// vista tenga una sola direccion.
 const activeType = computed<RecordType>(
   () =>
-    recordTypes.find((type) => type.id === route.params.type) ??
+    visibleTypes.value.find((type) => type.id === route.params.type) ??
+    visibleTypes.value.find((type) => type.id === DEFAULT_TYPE_ID) ??
+    visibleTypes.value.find((type) => type.implemented) ??
     recordTypes.find((type) => type.id === DEFAULT_TYPE_ID)!,
 )
 
@@ -368,7 +378,7 @@ watch(activeType, loadIfNeeded, { immediate: true })
 
     <div class="flex flex-wrap gap-2 border-b border-subtle pb-4">
       <button
-        v-for="type in recordTypes"
+        v-for="type in visibleTypes"
         :key="type.id"
         type="button"
         class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"

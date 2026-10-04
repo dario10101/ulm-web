@@ -1,5 +1,7 @@
 import { vi } from 'vitest'
 
+import type { Permission } from '../../src/config/permissions'
+
 type Reply = { status: number; body?: unknown }
 
 /**
@@ -27,4 +29,22 @@ export const ME = {
   email: 'ruben.d21pc@gmail.com',
   avatar_url: 'https://lh3.googleusercontent.com/a/photo',
   timezone: 'America/Bogota',
+  is_admin: false,
+  permissions: [] as Permission[],
+}
+
+/** Usuario con todos los permisos de dominio (como el admin). */
+export const ME_ALL = {
+  ...ME,
+  is_admin: true,
+  permissions: [
+    'finances',
+    'finances.ai',
+    'meals',
+    'meals.ai',
+    'planning',
+    'planning.ai',
+    'weight',
+    'weight.ai',
+  ] as Permission[],
 }

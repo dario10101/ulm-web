@@ -1,5 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
+import { useAuth } from '@/composables/useAuth'
 import { analyticsTypes } from '@/config/analyticsTypes'
+
+const { can } = useAuth()
+
+// Solo los analisis de los modulos del usuario.
+const visibleTypes = computed(() => analyticsTypes.filter((type) => can(type.permission)))
 </script>
 
 <template>
@@ -12,7 +20,7 @@ import { analyticsTypes } from '@/config/analyticsTypes'
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <component
         :is="type.implemented ? 'RouterLink' : 'div'"
-        v-for="type in analyticsTypes"
+        v-for="type in visibleTypes"
         :key="type.id"
         :to="type.implemented ? type.to : undefined"
         :title="type.implemented ? undefined : 'Coming soon'"

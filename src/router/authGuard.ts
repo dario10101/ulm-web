@@ -9,6 +9,7 @@ import { safeAdminPath } from '@/lib/redirect'
  *
  * - Rutas con `meta.requiresAuth` (todo /admin): sin sesion, a /login con
  *   `redirect` para volver despues a la misma pagina.
+ * - Rutas con `meta.permission` sin ese permiso: a admin-no-access.
  * - /login con sesion activa: directo a donde iba (o al dashboard).
  * - Un 401 de la API en medio del uso (la sesion vencio): a /login con
  *   `error=session_expired`.
@@ -17,7 +18,7 @@ import { safeAdminPath } from '@/lib/redirect'
  * esto solo evita mostrar pantallas que no van a poder cargar nada.
  */
 export function installAuthGuard(router: Router): void {
-  const { ensureLoaded, markSessionExpired } = useAuth()
+  const { ensureLoaded, markSessionExpired, can } = useAuth()
 
   router.beforeEach(async (to) => {
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
@@ -35,6 +36,9 @@ export function installAuthGuard(router: Router): void {
 
     if (requiresAuth && !me) {
       return { name: 'auth-login', query: { redirect: to.fullPath } }
+    }
+    if (requiresAuth && !can(to.meta.permission)) {
+      return { name: 'admin-no-access' }
     }
     if (isLogin && me) {
       return safeAdminPath(to.query.redirect) ?? { name: 'admin-dashboard' }

@@ -1,7 +1,8 @@
 import { computed, ref } from 'vue'
 
-import { getMe, logout as logoutRequest } from '@/services/authApi'
+import type { PermissionRequirement } from '@/config/permissions'
 import { ApiError } from '@/lib/http'
+import { getMe, logout as logoutRequest } from '@/services/authApi'
 import type { Me } from '@/types/user'
 
 /**
@@ -23,11 +24,25 @@ function setAnonymous(): void {
   status.value = 'anonymous'
 }
 
-/** Vuelve al estado inicial. Para los tests. */
-export function resetAuthState(): void {
-  user.value = null
-  status.value = 'unknown'
+/**
+ * Vuelve al estado inicial, o deja a `me` como usuario logueado sin pasar por
+ * la API. Para los tests.
+ */
+export function resetAuthState(me: Me | null = null): void {
+  user.value = me
+  status.value = me ? 'authenticated' : 'unknown'
   inFlight = null
+}
+
+/**
+ * ¿El usuario cumple `requirement`? Sin requisito, si. Una lista es "cualquiera
+ * de". Solo para mostrar u ocultar: el backend responde 403 igual.
+ */
+function can(requirement?: PermissionRequirement): boolean {
+  if (requirement === undefined) return true
+  const granted = user.value?.permissions ?? []
+  const required = typeof requirement === 'string' ? [requirement] : requirement
+  return required.some((permission) => granted.includes(permission))
 }
 
 export function useAuth() {
@@ -76,6 +91,8 @@ export function useAuth() {
     user,
     status,
     isAuthenticated: computed(() => status.value === 'authenticated'),
+    isAdmin: computed(() => user.value?.is_admin ?? false),
+    can,
     ensureLoaded,
     logout,
     /** La API respondio 401 en medio del uso: la sesion ya no existe. */

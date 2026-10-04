@@ -10,17 +10,44 @@ import {
   Settings,
 } from '@lucide/vue'
 
+import { ANALYTICS_PERMISSIONS } from '@/config/analyticsTypes'
+import { RECORD_PERMISSIONS } from '@/config/recordTypes'
 import type { NavItem } from '@/types/nav'
 
 // Seccion principal del sidebar (fija, arriba).
 export const mainNavItems: NavItem[] = [
   { label: 'Dashboard', to: { name: 'admin-dashboard' }, icon: LayoutDashboard },
-  { label: 'Add record', to: { name: 'admin-quick-add' }, icon: PlusCircle },
-  { label: 'View records', to: { name: 'admin-records' }, icon: Search },
-  { label: "Today's checklist", to: { name: 'admin-checklists' }, icon: ListChecks },
-  { label: 'Calendar', to: { name: 'admin-calendar' }, icon: CalendarDays },
+  {
+    label: 'Add record',
+    to: { name: 'admin-quick-add' },
+    icon: PlusCircle,
+    permission: RECORD_PERMISSIONS,
+  },
+  {
+    label: 'View records',
+    to: { name: 'admin-records' },
+    icon: Search,
+    permission: RECORD_PERMISSIONS,
+  },
+  {
+    label: "Today's checklist",
+    to: { name: 'admin-checklists' },
+    icon: ListChecks,
+    permission: 'planning',
+  },
+  {
+    label: 'Calendar',
+    to: { name: 'admin-calendar' },
+    icon: CalendarDays,
+    permission: 'planning',
+  },
   { label: 'Study & review', to: { name: 'admin-learning' }, icon: GraduationCap },
-  { label: 'Analytics', to: { name: 'admin-analytics' }, icon: BarChart3 },
+  {
+    label: 'Analytics',
+    to: { name: 'admin-analytics' },
+    icon: BarChart3,
+    permission: ANALYTICS_PERMISSIONS,
+  },
 ]
 
 // Seccion de configuracion del sidebar (fija, abajo).

@@ -7,6 +7,7 @@ import IncomeForm from '@/components/quick-add/IncomeForm.vue'
 import MealForm from '@/components/quick-add/MealForm.vue'
 import TaskForm from '@/components/quick-add/TaskForm.vue'
 import WeightForm from '@/components/quick-add/WeightForm.vue'
+import { useAuth } from '@/composables/useAuth'
 import { recordTypes, type RecordType } from '@/config/recordTypes'
 
 // Un form por tipo. Un tipo sin entrada aca no se puede seleccionar.
@@ -21,13 +22,20 @@ const formByType: Record<string, Component> = {
 const route = useRoute()
 const router = useRouter()
 
+const { can } = useAuth()
+
+// Solo los tipos de los modulos del usuario (los no implementados se ven
+// deshabilitados para todos).
+const visibleTypes = computed(() => recordTypes.filter((t) => can(t.permission)))
+
 // El tipo seleccionado vive en la URL (param opcional `type`), no en estado local.
 const selected = computed<RecordType | null>(
-  () => recordTypes.find((t) => t.implemented && t.id === route.params.type) ?? null,
+  () => visibleTypes.value.find((t) => t.implemented && t.id === route.params.type) ?? null,
 )
 const selectedForm = computed(() => (selected.value ? formByType[selected.value.id] : null))
 
-// Param invalido o tipo sin form todavia: volver al menu en vez de mostrar nada.
+// Param invalido, tipo sin form todavia o de un modulo sin permiso: volver al
+// menu en vez de mostrar nada.
 watch(
   () => route.params.type,
   (type) => {
@@ -69,7 +77,7 @@ onMounted(scrollToFormOnMobile)
       :class="selected ? 'sm:flex sm:flex-wrap sm:gap-2' : 'sm:grid-cols-4'"
     >
       <button
-        v-for="type in recordTypes"
+        v-for="type in visibleTypes"
         :key="type.id"
         type="button"
         :disabled="!type.implemented"

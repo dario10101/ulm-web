@@ -4,11 +4,16 @@ import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import FilterPanel from '@/components/layout/FilterPanel.vue'
-import { bottomNavItems, mainNavItems } from '@/config/nav'
+import { useAuth } from '@/composables/useAuth'
 import { useLayoutState } from '@/composables/useLayoutState'
+import { bottomNavItems, mainNavItems } from '@/config/nav'
 
 const route = useRoute()
 const { isSidebarOpen, isSidebarCollapsed, closeSidebar, toggleSidebarCollapsed } = useLayoutState()
+const { can } = useAuth()
+
+// Solo los modulos que el usuario puede usar (los demas responderian 403).
+const visibleMainItems = computed(() => mainNavItems.filter((item) => can(item.permission)))
 
 // En mobile el sidebar es un drawer: se cierra solo al cambiar de ruta.
 watch(
@@ -47,7 +52,7 @@ const activeLinkClass = 'bg-accent/15 text-accent-text'
     <!-- 1. Seccion principal -->
     <nav class="flex flex-col gap-1">
       <RouterLink
-        v-for="item in mainNavItems"
+        v-for="item in visibleMainItems"
         :key="item.label"
         :to="item.to"
         :class="linkClass"
