@@ -6,6 +6,7 @@ import AccessPanel from '@/components/params/AccessPanel.vue'
 import AppearancePanel from '@/components/params/AppearancePanel.vue'
 import CalendarEventsPanel from '@/components/params/CalendarEventsPanel.vue'
 import IconCatalogPanel from '@/components/params/IconCatalogPanel.vue'
+import UsersPanel from '@/components/params/UsersPanel.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import { useAuth } from '@/composables/useAuth'
 import {
@@ -150,6 +151,8 @@ const toggles = [
         </template>
 
         <AppearancePanel v-else-if="active.id === 'appearance'" />
+
+        <UsersPanel v-else-if="active.id === 'users'" />
 
         <IconCatalogPanel
           v-else-if="active.id === 'expense-categories'"

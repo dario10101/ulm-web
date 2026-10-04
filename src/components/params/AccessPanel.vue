@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ExternalLink, Terminal, UserPlus } from '@lucide/vue'
+import { ExternalLink, UserPlus, Users } from '@lucide/vue'
 import { onMounted, ref, shallowRef } from 'vue'
 
 import BaseCard from '@/components/ui/BaseCard.vue'
@@ -45,15 +45,19 @@ onMounted(async () => {
           <span
             class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent-text"
           >
-            <Terminal class="h-3.5 w-3.5" />
+            <Users class="h-3.5 w-3.5" />
           </span>
           <div class="min-w-0 text-sm">
             <p class="font-medium text-foreground">1. Invite them in ULM</p>
-            <p class="text-muted">From ulm-core: create the user, then grant each domain.</p>
-            <pre
-              class="mt-1.5 overflow-x-auto rounded-lg bg-background px-3 py-2 text-xs text-foreground"
-            ><code>python -m scripts.manage_users invite person@gmail.com
-python -m scripts.manage_users grant person@gmail.com finances</code></pre>
+            <p class="text-muted">
+              In
+              <RouterLink
+                :to="{ name: 'admin-settings', params: { section: 'users' } }"
+                class="font-medium text-accent-text hover:underline"
+                >Users</RouterLink
+              >: invite the email, then choose the modules they can use. From a terminal,
+              <code class="text-xs">python -m scripts.manage_users</code> does the same.
+            </p>
           </div>
         </li>
         <li class="flex gap-3">

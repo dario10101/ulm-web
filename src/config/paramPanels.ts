@@ -8,6 +8,7 @@ import {
   Shapes,
   Tags,
   UserRound,
+  Users,
 } from '@lucide/vue'
 import type { Component } from 'vue'
 
@@ -28,6 +29,7 @@ export interface SettingsSection {
 export const settingsSections: SettingsSection[] = [
   { id: 'general', label: 'General', icon: UserRound, group: 'Account', adminOnly: false },
   { id: 'appearance', label: 'Appearance', icon: Palette, group: 'Account', adminOnly: false },
+  { id: 'users', label: 'Users', icon: Users, group: 'System', adminOnly: true },
   {
     id: 'expense-categories',
     label: 'Expense categories',

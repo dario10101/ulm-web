@@ -10,7 +10,7 @@ Frontend de ULM (gestion personal: habitos, finanzas, contenido). Consume la API
 
 **Tema**: claro/oscuro por dispositivo (`useTheme`, localStorage + script inline en `index.html`). Los colores son variables CSS (`src/style.css`, canales RGB) mapeadas en `tailwind.config.js`: no usar hex fijos; la paleta por defecto de Tailwind necesita par claro/oscuro (`text-rose-600 dark:text-rose-400`).
 
-**Parametros**: paneles con URL propia en `/admin/settings/<section>` (System = solo admin) y `/admin/records/<type>/<panel>` (ver `config/paramPanels.ts`).
+**Parametros**: paneles con URL propia en `/admin/settings/<section>` (System = solo admin; ahi vive `users`, la administracion de usuarios y sus permisos por dominio) y `/admin/records/<type>/<panel>` (ver `config/paramPanels.ts`).
 
 **Idioma de UI**: `/blog/**` (sitio publico) esta en espanol. `/admin/**` y `/login/**` estan en ingles. El `lang` del `<html>` se actualiza por layout (`PublicLayout` pone `es`, `AppShellLayout`/`AuthLayout` ponen `en`).
 
