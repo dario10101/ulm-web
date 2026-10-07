@@ -3,10 +3,10 @@ import { ReceiptText } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 
 import BarList from '@/components/charts/BarList.vue'
-import ColumnChart from '@/components/charts/ColumnChart.vue'
 import DonutChart from '@/components/charts/DonutChart.vue'
 import ShareBar from '@/components/charts/ShareBar.vue'
-import type { ChartItem } from '@/components/charts/types'
+import StackedColumnChart, { type StackedItem } from '@/components/charts/StackedColumnChart.vue'
+import { FALLBACK_CHART_COLORS, type ChartItem } from '@/components/charts/types'
 import ExpenseFilterBar from '@/components/expenses/ExpenseFilterBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -44,18 +44,15 @@ const groupBy = computed<ExpenseGroupBy>(() => VIEW_GROUP_BY[props.view] ?? 'cat
 // en curso: un solo dia casi nunca da un grafico util.
 const filters = ref<ExpenseFilterState>(defaultExpenseFilters(new Date(), 'year'))
 
-// "Por mes"/"por año" comparan periodos: si el filtro de fecha los acota a
-// un solo mes/año, el grafico seria una sola columna. Al entrar a esas vistas
-// se abre el filtro al nivel que tiene sentido (el usuario puede volver a acotarlo).
+// "Por mes" compara meses: si el filtro de fecha lo acota a un solo mes, el
+// grafico seria una sola columna; al entrar se abre al año. "Por año" arranca
+// con el año en curso (pedido explicito): para comparar años, "Any year".
 watch(
   groupBy,
   (value) => {
     if (filters.value.dateMode !== 'ymd') return
     if (value === 'month' && filters.value.month) {
       filters.value = patchExpenseFilters(filters.value, { month: null })
-    }
-    if (value === 'year' && filters.value.year) {
-      filters.value = patchExpenseFilters(filters.value, { year: null })
     }
   },
   { immediate: true },
@@ -152,6 +149,101 @@ const yearItems = computed<ChartItem[]>(() => {
     return { key, label: key, value: bucket?.total ?? 0, meta: countLabel(bucket?.count ?? 0) }
   })
 })
+
+// --- Columnas apiladas por categoria (mes / año) ---
+
+// Cuantas categorias se distinguen por color; el resto va a "Other". Con mas
+// de ~8 colores los tonos se confunden y los segmentos chicos ni se ven.
+const TOP_CATEGORIES = 7
+const OTHER_KEY = '__other__'
+const OTHER_COLOR = 'text-slate-500 dark:text-slate-400'
+
+interface CategoryLegendEntry {
+  key: string
+  label: string
+  total: number
+  colorClass: string
+}
+
+/**
+ * Categorias del periodo completo, de mayor a menor: las primeras
+ * TOP_CATEGORIES con color propio y el resto sumado en "Other". El orden
+ * es tambien el de apilado, asi cada categoria queda a la misma altura
+ * relativa en todas las columnas.
+ */
+const categoryLegend = computed<CategoryLegendEntry[]>(() => {
+  const totals = new Map<
+    string,
+    { key: string; label: string; colorKey: string | null; total: number }
+  >()
+  for (const bucket of summary.value?.buckets ?? []) {
+    for (const segment of bucket.segments ?? []) {
+      const entry = totals.get(segment.key) ?? {
+        key: segment.key,
+        label: segment.label,
+        colorKey: segment.color_key,
+        total: 0,
+      }
+      entry.total += segment.total
+      totals.set(segment.key, entry)
+    }
+  }
+  const sorted = [...totals.values()].sort((a, b) => b.total - a.total)
+  const top = sorted.slice(0, TOP_CATEGORIES)
+  const rest = sorted.slice(TOP_CATEGORIES)
+
+  // Varias categorias comparten color en el catalogo (ej. dos "sky"): si ya
+  // lo usa otra del top, se toma uno libre de la paleta de respaldo.
+  const used = new Set<string>()
+  const entries: CategoryLegendEntry[] = top.map((entry) => {
+    let colorClass = entry.colorKey ? financeColorClasses(entry.colorKey).text : ''
+    if (!colorClass || used.has(colorClass)) {
+      colorClass = FALLBACK_CHART_COLORS.find((c) => !used.has(c)) ?? OTHER_COLOR
+    }
+    used.add(colorClass)
+    return { key: entry.key, label: entry.label, total: entry.total, colorClass }
+  })
+  if (rest.length) {
+    entries.push({
+      key: OTHER_KEY,
+      label: `Other (${rest.length})`,
+      total: rest.reduce((sum, entry) => sum + entry.total, 0),
+      colorClass: OTHER_COLOR,
+    })
+  }
+  return entries
+})
+
+function toStacked(item: ChartItem): StackedItem {
+  const bucket = summary.value?.buckets.find((b) => b.key === item.key)
+  const byKey = new Map<string, number>()
+  const topKeys = new Set(categoryLegend.value.map((e) => e.key))
+  for (const segment of bucket?.segments ?? []) {
+    const key = topKeys.has(segment.key) ? segment.key : OTHER_KEY
+    byKey.set(key, (byKey.get(key) ?? 0) + segment.total)
+  }
+  return {
+    key: item.key,
+    label: item.label,
+    meta: item.meta,
+    segments: categoryLegend.value
+      .filter((entry) => byKey.has(entry.key))
+      .map((entry) => ({
+        key: entry.key,
+        label: entry.label,
+        value: byKey.get(entry.key)!,
+        colorClass: entry.colorClass,
+      })),
+  }
+}
+
+const stackedMonthItems = computed(() => monthItems.value.map(toStacked))
+const stackedYearItems = computed(() => yearItems.value.map(toStacked))
+
+function shareOf(value: number): string {
+  const total = summary.value?.total ?? 0
+  return total ? `${Math.round((value / total) * 100)}%` : '—'
+}
 
 const now = new Date()
 const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -256,26 +348,60 @@ const untaggedShare = computed(() => {
             Monthly average
           </span>
         </template>
-        <ColumnChart
-          :items="monthItems"
+        <StackedColumnChart
+          :items="stackedMonthItems"
           :format="formatCOP"
           :axis-format="formatCompactCOP"
           :highlight-key="currentMonthKey"
           show-average
         />
+        <ul class="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-xs sm:grid-cols-2 lg:grid-cols-4">
+          <li
+            v-for="entry in categoryLegend"
+            :key="entry.key"
+            class="flex min-w-0 items-center gap-2"
+            data-test="category-legend"
+          >
+            <span class="h-2.5 w-2.5 shrink-0 rounded-sm bg-current" :class="entry.colorClass" />
+            <span class="min-w-0 flex-1 truncate text-foreground" :title="entry.label">
+              {{ entry.label }}
+            </span>
+            <span class="text-muted">{{ shareOf(entry.total) }}</span>
+            <span class="w-24 text-right tabular-nums text-foreground">
+              {{ formatCOP(entry.total) }}
+            </span>
+          </li>
+        </ul>
       </BaseCard>
 
       <BaseCard v-else title="Spending by year">
         <template #actions>
           <span class="text-xs text-muted">Change vs previous year</span>
         </template>
-        <ColumnChart
-          :items="yearItems"
+        <StackedColumnChart
+          :items="stackedYearItems"
           :format="formatCOP"
           :axis-format="formatCompactCOP"
-          color-class="text-ruby-text"
+          :increase-is-good="false"
           show-delta
         />
+        <ul class="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-xs sm:grid-cols-2 lg:grid-cols-4">
+          <li
+            v-for="entry in categoryLegend"
+            :key="entry.key"
+            class="flex min-w-0 items-center gap-2"
+            data-test="category-legend"
+          >
+            <span class="h-2.5 w-2.5 shrink-0 rounded-sm bg-current" :class="entry.colorClass" />
+            <span class="min-w-0 flex-1 truncate text-foreground" :title="entry.label">
+              {{ entry.label }}
+            </span>
+            <span class="text-muted">{{ shareOf(entry.total) }}</span>
+            <span class="w-24 text-right tabular-nums text-foreground">
+              {{ formatCOP(entry.total) }}
+            </span>
+          </li>
+        </ul>
       </BaseCard>
     </div>
   </div>

@@ -41,6 +41,26 @@ function forKind<T extends { type: IncomeCatalogType }>(items: T[], kind: Income
   ]
 }
 
+export interface BalanceKey {
+  sourceId: number
+  subcategoryId: number
+  /** "YYYY-MM" */
+  period: string
+}
+
+/** Clave del saldo de un registro de intereses ya guardado. */
+export function balanceKeyOf(record: {
+  source: { id: number }
+  subcategory: { id: number }
+  recorded_on: string
+}): BalanceKey {
+  return {
+    sourceId: record.source.id,
+    subcategoryId: record.subcategory.id,
+    period: record.recorded_on.slice(0, 7),
+  }
+}
+
 export function periodKey(year: number, monthIndex: number): string {
   return `${year}-${String(monthIndex + 1).padStart(2, '0')}`
 }
@@ -99,23 +119,38 @@ export function useIncomeOptions() {
     return sources.value.find((s) => s.id === sourceId)?.name ?? ''
   }
 
-  function endBalanceOf(sourceId: number, period: string): number | null {
+  // Clave del saldo: fuente + subcategoria (cada una es un producto con su
+  // propio saldo, ej. Tyba "MI CARRO" vs "MI RETIRO") + periodo.
+  function sameBalance(b: InterestEndBalance, key: BalanceKey): boolean {
     return (
-      endBalances.value.find((b) => b.source_id === sourceId && b.period === period)
-        ?.end_of_month_amount ?? null
+      b.source_id === key.sourceId &&
+      b.subcategory_id === key.subcategoryId &&
+      b.period === key.period
     )
+  }
+
+  function endBalanceOf(key: BalanceKey): number | null {
+    return endBalances.value.find((b) => sameBalance(b, key))?.end_of_month_amount ?? null
   }
 
   /**
    * Mantiene el cache al dia tras guardar/editar/borrar un mes de intereses,
    * sin volver a pedir las opciones. `endAmount` null quita el saldo del periodo.
    */
-  function setEndBalance(sourceId: number, period: string, endAmount: number | null): void {
-    const rest = endBalances.value.filter((b) => !(b.source_id === sourceId && b.period === period))
+  function setEndBalance(key: BalanceKey, endAmount: number | null): void {
+    const rest = endBalances.value.filter((b) => !sameBalance(b, key))
     endBalances.value =
       endAmount === null
         ? rest
-        : [...rest, { source_id: sourceId, period, end_of_month_amount: endAmount }]
+        : [
+            ...rest,
+            {
+              source_id: key.sourceId,
+              subcategory_id: key.subcategoryId,
+              period: key.period,
+              end_of_month_amount: endAmount,
+            },
+          ]
   }
 
   return {

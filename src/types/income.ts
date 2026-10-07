@@ -25,6 +25,8 @@ export interface IncomeSubcategoryOption {
 
 export interface InterestEndBalance {
   source_id: number
+  /** El saldo es de un producto/bolsillo (subcategoria), no de toda la fuente. */
+  subcategory_id: number
   /** "YYYY-MM" */
   period: string
   end_of_month_amount: number

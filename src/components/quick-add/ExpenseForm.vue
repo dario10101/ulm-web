@@ -9,6 +9,7 @@ import { financeColorClasses, financeIcon } from '@/config/financeVisuals'
 import { formatAmountInput, parseAmountInput } from '@/lib/currency'
 import { todayIsoDate } from '@/lib/date'
 import { ApiError } from '@/lib/http'
+import { uppercaseInputValue } from '@/lib/text'
 import { createExpense } from '@/services/expensesApi'
 
 // Formulario de gasto: end-to-end real contra la API (ver expensesApi).
@@ -126,12 +127,13 @@ onDeactivated(() => {
         <label class="text-sm">
           <span class="mb-1 block text-muted">Name *</span>
           <input
-            v-model="expenseName"
+            :value="expenseName"
             type="text"
-            placeholder="e.g. Weekly groceries"
+            placeholder="e.g. WEEKLY GROCERIES"
             maxlength="200"
             required
-            class="w-44 rounded-lg border border-subtle bg-surface px-2 py-1.5 text-sm"
+            class="w-44 rounded-lg border border-subtle bg-surface px-2 py-1.5 text-sm uppercase"
+            @input="expenseName = uppercaseInputValue($event)"
           />
         </label>
 

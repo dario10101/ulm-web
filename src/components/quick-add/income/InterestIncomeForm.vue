@@ -5,7 +5,7 @@ import TagPicker from '@/components/finance/TagPicker.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import CollapsibleNote from '@/components/ui/CollapsibleNote.vue'
 import CopAmountInput from '@/components/ui/CopAmountInput.vue'
-import { periodKey, useIncomeOptions } from '@/composables/useIncomeOptions'
+import { balanceKeyOf, periodKey, useIncomeOptions } from '@/composables/useIncomeOptions'
 import { withCurrent } from '@/lib/catalogOptions'
 import { formatCOP, parseAmountInput, toAmountInput } from '@/lib/currency'
 import { MONTH_NAMES_EN, parseIsoDate, previousMonth } from '@/lib/date'
@@ -147,9 +147,13 @@ watch(year, () => {
 
 const previousPeriod = computed(() => previousMonth(year.value, monthIndex.value))
 const previousEndBalance = computed<number | null>(() => {
-  if (!sourceId.value) return null
+  if (!sourceId.value || !subcategoryId.value) return null
   const { year: prevYear, monthIndex: prevMonth } = previousPeriod.value
-  return endBalanceOf(sourceId.value, periodKey(prevYear, prevMonth))
+  return endBalanceOf({
+    sourceId: sourceId.value,
+    subcategoryId: subcategoryId.value,
+    period: periodKey(prevYear, prevMonth),
+  })
 })
 const canUsePreviousBalance = computed(
   () =>
@@ -240,8 +244,8 @@ async function handleSubmit() {
       : await createInterestIncome(payload)
 
     // Cache de saldos finales al dia, sin volver a pedir las opciones.
-    if (previous) setEndBalance(previous.source.id, previous.recorded_on.slice(0, 7), null)
-    setEndBalance(result.source.id, result.recorded_on.slice(0, 7), result.end_of_month_amount)
+    if (previous) setEndBalance(balanceKeyOf(previous), null)
+    setEndBalance(balanceKeyOf(result), result.end_of_month_amount)
 
     emit('saved', result)
     if (!previous) {

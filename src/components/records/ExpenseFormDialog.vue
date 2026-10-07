@@ -8,6 +8,7 @@ import { financeColorClasses, financeIcon } from '@/config/financeVisuals'
 import { withCurrent } from '@/lib/catalogOptions'
 import { formatAmountInput, parseAmountInput, toAmountInput } from '@/lib/currency'
 import { ApiError } from '@/lib/http'
+import { uppercaseInputValue } from '@/lib/text'
 import { updateExpense } from '@/services/expensesApi'
 import type { Expense } from '@/types/expense'
 
@@ -151,11 +152,12 @@ onMounted(ensureExpenseOptionsLoaded)
         <label class="text-sm">
           <span class="mb-1 block text-muted">Name *</span>
           <input
-            v-model="expenseName"
+            :value="expenseName"
             type="text"
             maxlength="200"
             required
-            class="w-44 rounded-lg border border-subtle bg-background px-2 py-1.5 text-sm"
+            class="w-44 rounded-lg border border-subtle bg-background px-2 py-1.5 text-sm uppercase"
+            @input="expenseName = uppercaseInputValue($event)"
           />
         </label>
 

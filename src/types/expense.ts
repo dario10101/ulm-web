@@ -63,6 +63,14 @@ export interface ExpenseCreatePayload {
 
 export type ExpenseGroupBy = 'category' | 'tag' | 'payment_method' | 'month' | 'year'
 
+export interface ExpenseSummarySegment {
+  key: string
+  label: string
+  icon_key: string | null
+  color_key: string | null
+  total: number
+}
+
 export interface ExpenseSummaryBucket {
   /** id del catalogo ("none" = sin tag) o periodo ("2026-09" / "2026"). */
   key: string
@@ -71,6 +79,8 @@ export interface ExpenseSummaryBucket {
   color_key: string | null
   total: number
   count: number
+  /** Solo en month/year: desglose del periodo por categoria (mayor a menor). */
+  segments: ExpenseSummarySegment[]
 }
 
 export interface ExpenseSummary {

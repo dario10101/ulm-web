@@ -9,7 +9,7 @@ import InterestIncomeForm from '@/components/quick-add/income/InterestIncomeForm
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import { useIncomeOptions } from '@/composables/useIncomeOptions'
+import { balanceKeyOf, useIncomeOptions } from '@/composables/useIncomeOptions'
 import { formatCOP } from '@/lib/currency'
 import { MONTH_SHORT_EN, parseIsoDate } from '@/lib/date'
 import { ApiError } from '@/lib/http'
@@ -124,7 +124,7 @@ async function confirmDelete() {
   try {
     await deleteIncome(target.kind, target.record.id)
     if (target.kind === 'interest') {
-      setEndBalance(target.record.source.id, target.record.recorded_on.slice(0, 7), null)
+      setEndBalance(balanceKeyOf(target.record), null)
     }
     deleting.value = null
     // Si se borro el unico registro de la ultima pagina, retroceder una.

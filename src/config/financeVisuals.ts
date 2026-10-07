@@ -15,6 +15,7 @@ import {
   Apple,
   Armchair,
   ArrowRightLeft,
+  CircleHelp,
   Baby,
   Banknote,
   Bed,
@@ -91,6 +92,7 @@ import {
   TrendingUp,
   Tv,
   Umbrella,
+  Users,
   Utensils,
   Wallet,
   Wifi,
@@ -186,6 +188,8 @@ const FINANCE_ICONS: Record<string, Component> = {
   umbrella: Umbrella,
   wallet: Wallet,
   wine: Wine,
+  users: Users,
+  'circle-help': CircleHelp,
 }
 
 /** Icono generico si `icon_key` no calza con nada conocido (nunca deberia

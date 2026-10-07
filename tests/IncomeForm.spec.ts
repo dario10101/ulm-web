@@ -25,7 +25,9 @@ const OPTIONS: IncomeOptions = {
     { id: 5, source_id: 2, name: 'EXTRA', type: 'DIRECT' },
   ],
   tags: [{ id: 9, name: 'RECURRING', color_key: 'violet', status: 'ENABLED' }],
-  interest_end_balances: [{ source_id: 4, period: '2026-07', end_of_month_amount: 3_000_000 }],
+  interest_end_balances: [
+    { source_id: 4, subcategory_id: 3, period: '2026-07', end_of_month_amount: 3_000_000 },
+  ],
 }
 
 // El cache de opciones vive a nivel de modulo (useIncomeOptions): se
@@ -143,6 +145,7 @@ describe('InterestIncomeForm', () => {
     const { api, InterestIncomeForm } = await load()
     vi.mocked(api.createInterestIncome).mockResolvedValue({
       source: { id: 4 },
+      subcategory: { id: 3 },
       recorded_on: '2026-08-01',
       end_of_month_amount: 3_550_000,
     } as InterestIncome)
