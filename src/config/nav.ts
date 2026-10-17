@@ -9,6 +9,7 @@ import {
   PlusCircle,
   Search,
   Settings,
+  Sparkles,
 } from '@lucide/vue'
 
 import { ANALYTICS_PERMISSIONS } from '@/config/analyticsTypes'
@@ -49,6 +50,7 @@ export const mainNavItems: NavItem[] = [
     icon: BarChart3,
     permission: ANALYTICS_PERMISSIONS,
   },
+  { label: 'AI features', to: { name: 'admin-ai' }, icon: Sparkles, permission: 'ai' },
   { label: 'Blog', to: { name: 'admin-blog' }, icon: Newspaper, permission: 'blog' },
 ]
 

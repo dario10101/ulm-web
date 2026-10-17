@@ -11,6 +11,7 @@ export type Permission =
   | 'planning'
   | 'planning.ai'
   | 'blog'
+  | 'ai'
 
 /**
  * Lo que exige una ruta, un item del menu o un tipo de registro. Una lista
@@ -19,7 +20,7 @@ export type Permission =
  */
 export type PermissionRequirement = Permission | readonly Permission[]
 
-export type PermissionDomain = 'weight' | 'meals' | 'finances' | 'planning' | 'blog'
+export type PermissionDomain = 'weight' | 'meals' | 'finances' | 'planning' | 'blog' | 'ai'
 
 /**
  * Dominios con su permiso base y su avanzado (`.ai`), para la pantalla de
@@ -48,6 +49,8 @@ export const PERMISSION_DOMAINS: readonly {
     ai: 'planning.ai',
   },
   { id: 'blog', label: 'Blog', description: 'Public blog at /blog/<username>' },
+  // IA general (no el `.ai` de un dominio): gasta la key de OpenAI del servidor.
+  { id: 'ai', label: 'AI', description: 'AI features (uses the server OpenAI key)' },
 ]
 
 /** Union sin repetidos de los permisos de `items` (los que no piden ninguno no suman). */

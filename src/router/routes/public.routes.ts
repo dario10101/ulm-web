@@ -1,9 +1,10 @@
 import type { RouteRecordRaw } from 'vue-router'
 
 // Sitio publico, bajo /blog: la landing (descripcion de la app) y el blog de
-// cada usuario en /blog/<username>. Las secciones van debajo del username,
-// asi un username no choca con ellas (y los reservados, con rutas futuras;
-// ver ulm-core app/services/username.py).
+// cada usuario en /blog/<username>. Las secciones son dinamicas: cada una
+// tiene su slug (PLAN-BLOG.md, B12) y la pagina monta la vista de su tipo
+// (config/blogSectionTypes.ts). Viven debajo del username, asi que no chocan
+// con rutas de la app.
 export const publicRoutes: RouteRecordRaw[] = [
   {
     path: '',
@@ -14,29 +15,23 @@ export const publicRoutes: RouteRecordRaw[] = [
     path: ':username',
     children: [
       {
+        // Sin seccion: redirige a la primera del menu.
         path: '',
         name: 'blog-home',
-        component: () => import('@/views/public/HomePage.vue'),
+        component: () => import('@/views/public/blog/BlogIndexPage.vue'),
       },
       {
-        path: 'about',
-        name: 'blog-about',
-        component: () => import('@/views/public/AboutPage.vue'),
+        path: ':section',
+        name: 'blog-section',
+        component: () => import('@/views/public/blog/BlogSectionPage.vue'),
+        props: true,
       },
       {
-        path: 'projects',
-        name: 'blog-projects',
-        component: () => import('@/views/public/ProjectsPage.vue'),
-      },
-      {
-        path: 'writing',
-        name: 'blog-writing',
-        component: () => import('@/views/public/BlogListPage.vue'),
-      },
-      {
-        path: 'writing/:slug',
-        name: 'blog-writing-post',
-        component: () => import('@/views/public/BlogPostPage.vue'),
+        // Un elemento (.md) de una coleccion. Su URL no depende de la
+        // subseccion (B15): moverlo no rompe el link.
+        path: ':section/:item',
+        name: 'blog-item',
+        component: () => import('@/views/public/blog/BlogItemPage.vue'),
         props: true,
       },
     ],

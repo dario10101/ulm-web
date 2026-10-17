@@ -1,10 +1,10 @@
-<script setup lang="ts" generic="Item extends AdminCatalogItem">
+<script setup lang="ts" generic="Item extends CatalogItem">
 import { Archive, ArchiveRestore, Pencil, Plus, Trash2 } from '@lucide/vue'
 import { computed, ref } from 'vue'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
-import type { AdminCatalogItem } from '@/types/params'
+import type { CatalogItem } from '@/types/params'
 
 /**
  * Lista generica de un catalogo administrable: filas con visual (slot), uso,
@@ -38,7 +38,7 @@ const showArchived = ref(false)
 const archivedCount = computed(() => props.items.filter((i) => i.status === 'DISABLED').length)
 
 const visible = computed(() =>
-  showArchived.value ? props.items : props.items.filter((i) => i.status === 'ENABLED'),
+  showArchived.value ? props.items : props.items.filter((i) => i.status !== 'DISABLED'),
 )
 
 /** Filas con el encabezado de grupo donde cambia (si hay agrupacion). */
@@ -52,6 +52,8 @@ const rows = computed(() =>
 )
 
 function usageText(item: Item): string {
+  // Catalogo sin conteo de uso (ej. la plantilla): no hay nada que decir.
+  if (item.usage_count === undefined) return ''
   if (item.usage_count === 0) return 'Not used yet'
   return `Used in ${item.usage_count} record${item.usage_count === 1 ? '' : 's'}`
 }
@@ -112,7 +114,10 @@ function usageText(item: Item): string {
                 Archived
               </span>
             </p>
-            <p class="truncate text-xs text-muted">
+            <p
+              v-if="$slots.details || item.usage_count !== undefined"
+              class="truncate text-xs text-muted"
+            >
               <slot name="details" :item="item" />{{ usageText(item) }}
             </p>
           </div>

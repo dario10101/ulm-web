@@ -3,14 +3,13 @@ import { FileText } from '@lucide/vue'
 
 import EmptyState from '@/components/ui/EmptyState.vue'
 
-// Seccion de un blog sin contenido. Hoy es el caso de todo blog salvo el del
-// dueño del contenido de ejemplo (ver data/blogDemo.ts).
+// Seccion (o blog) sin nada publicado todavia.
+withDefaults(defineProps<{ title?: string; description?: string }>(), {
+  title: 'Todavía no hay contenido',
+  description: 'Esta sección del blog aún no tiene publicaciones.',
+})
 </script>
 
 <template>
-  <EmptyState
-    :icon="FileText"
-    title="Todavía no hay contenido"
-    description="Esta sección del blog aún no tiene publicaciones."
-  />
+  <EmptyState :icon="FileText" :title="title" :description="description" />
 </template>

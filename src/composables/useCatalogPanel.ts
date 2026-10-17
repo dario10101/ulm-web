@@ -2,7 +2,7 @@ import { computed, ref, shallowRef } from 'vue'
 
 import { ApiError } from '@/lib/http'
 import type { CatalogApi } from '@/services/paramsApi'
-import type { AdminCatalogItem } from '@/types/params'
+import type { CatalogItem } from '@/types/params'
 
 function messageOf(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback
@@ -18,7 +18,7 @@ function messageOf(err: unknown, fallback: string): string {
  * `onChanged` corre despues de cualquier escritura: los paneles invalidan ahi
  * los caches de opciones de los formularios (useExpenseOptions...).
  */
-export function useCatalogPanel<Item extends AdminCatalogItem, Payload>(
+export function useCatalogPanel<Item extends CatalogItem, Payload>(
   api: CatalogApi<Item, Payload>,
   // NoInfer: Payload sale de `api`; si no, TS lo deduciria del literal que
   // devuelve toPayload (sin `status`) y el save del panel no compilaria.
@@ -129,7 +129,7 @@ export function useCatalogPanel<Item extends AdminCatalogItem, Payload>(
     }
   }
 
-  const activeCount = computed(() => items.value.filter((i) => i.status === 'ENABLED').length)
+  const activeCount = computed(() => items.value.filter((i) => i.status !== 'DISABLED').length)
   const archivedCount = computed(() => items.value.length - activeCount.value)
 
   return {

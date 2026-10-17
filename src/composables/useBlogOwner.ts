@@ -1,14 +1,17 @@
 import { computed, inject, type ComputedRef, type InjectionKey } from 'vue'
 
+import type { PublicSection } from '@/types/blog'
+
 /**
- * Dueño del blog que se esta viendo (/blog/<username>). Lo resuelve
- * PublicLayout contra la API y lo provee a las paginas; null en la landing
- * (/blog) o mientras carga.
+ * Blog que se esta viendo (/blog/<username>). Lo resuelve PublicLayout contra
+ * la API (un solo request trae el menu y el contenido de las plantillas) y lo
+ * provee a las paginas; null en la landing (/blog) o mientras carga.
  */
 export interface BlogOwner {
   username: string
-  /** Si tiene el contenido de ejemplo quemado (ver data/blogDemo.ts). */
-  hasDemoContent: boolean
+  displayName: string | null
+  /** Solo las habilitadas, en el orden del menu. */
+  sections: PublicSection[]
 }
 
 export const blogOwnerKey: InjectionKey<ComputedRef<BlogOwner | null>> = Symbol('blogOwner')

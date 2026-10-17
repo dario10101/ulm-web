@@ -124,6 +124,67 @@ describe('paneles de parametros', () => {
     expect(wrapper.text()).toContain('"NEEDED" was archived')
   })
 
+  it('View records -> Expense administra las categorias propias del usuario', async () => {
+    mockApi({
+      'GET /finances/expense-categories': {
+        status: 200,
+        body: [
+          {
+            id: 5,
+            name: 'Food',
+            icon_key: 'utensils',
+            color_key: 'yellow',
+            status: 'ENABLED',
+            usage_count: 12,
+          },
+        ],
+      },
+    })
+    const { wrapper } = await mountAdminRoute('/admin/records/expense/categories', 'admin-records')
+
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(
+      expect.arrayContaining(['Tags', 'Categories']),
+    )
+    expect(wrapper.text()).toContain('Food')
+    expect(wrapper.text()).toContain('Used in 12 records')
+    // Usada: borrarla la archiva.
+    await wrapper.find('button[title="Delete Food"]').trigger('click')
+    expect(wrapper.find('[role="alertdialog"]').text()).toContain('archived')
+  })
+
+  it('la plantilla de categorias del admin no se archiva: borrar es borrar', async () => {
+    const api = mockApi({
+      'GET /system/expense-categories': {
+        status: 200,
+        body: [{ id: 3, name: 'Food', icon_key: 'utensils', color_key: 'yellow' }],
+      },
+      'DELETE /system/expense-categories/3': { status: 200, body: { result: 'DELETED' } },
+    })
+    const { wrapper } = await mountAdminRoute(
+      '/admin/settings/expense-categories',
+      'admin-settings',
+      ME_ALL,
+    )
+
+    expect(wrapper.text()).toContain('Food')
+    expect(wrapper.text()).not.toContain('Not used yet')
+    await wrapper.find('button[title="Delete Food"]').trigger('click')
+    const dialog = wrapper.find('[role="alertdialog"]')
+    expect(dialog.text()).toContain('deleted permanently')
+    expect(dialog.text()).not.toContain('archived')
+    await dialog
+      .findAll('button')
+      .find((b) => b.text() === 'Delete')!
+      .trigger('click')
+    await flushPromises()
+
+    expect(api).toHaveBeenCalledWith(
+      '/api/v1/system/expense-categories/3',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+    expect(wrapper.text()).toContain('"Food" was deleted')
+  })
+
   it('Settings oculta las secciones de sistema a quien no es admin', async () => {
     mockApi({})
     const me = { ...ME, permissions: ['finances' as const] }

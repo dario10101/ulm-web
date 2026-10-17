@@ -3,11 +3,13 @@ import { ArrowLeft } from '@lucide/vue'
 import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import IconCatalogPanel from '@/components/params/IconCatalogPanel.vue'
 import IncomeSourcesPanel from '@/components/params/IncomeSourcesPanel.vue'
 import IncomeSubcategoriesPanel from '@/components/params/IncomeSubcategoriesPanel.vue'
 import TagsPanel from '@/components/params/TagsPanel.vue'
 import { recordParamPanels } from '@/config/paramPanels'
 import { recordTypes } from '@/config/recordTypes'
+import { expenseCategoriesApi } from '@/services/paramsApi'
 
 /**
  * Parametros de un dominio, abiertos desde "View records"
@@ -67,6 +69,13 @@ watch(
 
     <div class="max-w-3xl">
       <TagsPanel v-if="active.id === 'tags'" />
+      <IconCatalogPanel
+        v-else-if="active.id === 'categories'"
+        :api="expenseCategoriesApi"
+        title="Expense categories"
+        noun="category"
+        empty-text="No categories yet. Add one to start recording expenses."
+      />
       <IncomeSourcesPanel v-else-if="active.id === 'sources'" />
       <IncomeSubcategoriesPanel v-else-if="active.id === 'subcategories'" />
     </div>

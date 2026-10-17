@@ -39,6 +39,7 @@ export const ME_ALL = {
   ...ME,
   is_admin: true,
   permissions: [
+    'ai',
     'blog',
     'finances',
     'finances.ai',

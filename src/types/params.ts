@@ -13,10 +13,18 @@ export interface CatalogDeleteResponse {
   result: CatalogDeleteResult
 }
 
-/** Lo comun a todo item administrable (para el panel generico). */
-export interface AdminCatalogItem {
+/** Lo minimo para listarse en el panel generico. Sin `status` ni
+ * `usage_count` es un catalogo que no se archiva: borrar es borrar (ej. la
+ * plantilla de categorias para usuarios nuevos). */
+export interface CatalogItem {
   id: number
   name: string
+  status?: CatalogStatus
+  usage_count?: number
+}
+
+/** Item con borrado hibrido (tags, categorias del usuario, fuentes...). */
+export interface AdminCatalogItem extends CatalogItem {
   status: CatalogStatus
   /** Registros que lo usan: decide si "Delete" borra o archiva. */
   usage_count: number
@@ -48,13 +56,23 @@ export interface IncomeSubcategoryWritePayload {
   status?: CatalogStatus
 }
 
-/** Categoria de gasto o metodo de pago (mismos campos). */
+/** Categoria de gasto del usuario o metodo de pago (mismos campos). */
 export interface IconCatalogAdmin extends CategoryOption, AdminCatalogItem {}
+
+/** Categoria de la plantilla para usuarios nuevos: sin status ni uso. */
+export interface DefaultCategory extends CatalogItem {
+  icon_key: string
+  color_key: string
+}
+
+/** Lo que lista IconCatalogPanel: cualquiera de los dos anteriores. */
+export type IconCatalogItem = IconCatalogAdmin | DefaultCategory
 
 export interface IconCatalogWritePayload {
   name: string
   icon_key: string
   color_key: string
+  /** No aplica a la plantilla (el backend lo ignora ahi). */
   status?: CatalogStatus
 }
 

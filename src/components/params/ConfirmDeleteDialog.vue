@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import BaseButton from '@/components/ui/BaseButton.vue'
-import type { AdminCatalogItem } from '@/types/params'
+import type { CatalogItem } from '@/types/params'
 
 /**
  * Confirmacion del borrado hibrido: le dice al usuario, antes de confirmar,
- * si el item se va a borrar o a archivar (depende de si tiene registros).
+ * si el item se va a borrar o a archivar (depende de si tiene registros). Un
+ * item sin `usage_count` es de un catalogo que no se archiva: siempre se borra.
  */
 defineProps<{
-  item: AdminCatalogItem | null
+  item: CatalogItem | null
   saving: boolean
   error: string | null
 }>()
@@ -33,6 +34,9 @@ const emit = defineEmits<{ close: []; confirm: [] }>()
         It's used in {{ item.usage_count }} record{{ item.usage_count === 1 ? '' : 's' }}, so it
         will be <strong class="text-foreground">archived</strong> instead of deleted: hidden from
         forms, but kept in your history and analytics. You can restore it later.
+      </p>
+      <p v-else-if="item.usage_count === undefined" class="text-sm text-muted">
+        It will be <strong class="text-foreground">deleted permanently</strong>.
       </p>
       <p v-else class="text-sm text-muted">
         No record uses it, so it will be

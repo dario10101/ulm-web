@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { FileQuestion } from '@lucide/vue'
+import { FileQuestion, Menu, X } from '@lucide/vue'
 import { computed, onMounted, provide, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import UserMenu from '@/components/layout/UserMenu.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { blogOwnerKey, type BlogOwner } from '@/composables/useBlogOwner'
-import { hasDemoContent } from '@/data/blogDemo'
+import { isKnownSectionType } from '@/config/blogSectionTypes'
 import { ApiError } from '@/lib/http'
 import { getPublicBlog } from '@/services/publicBlogApi'
 
@@ -35,6 +35,8 @@ provide(
 watch(
   username,
   async (requested) => {
+    // Ya cargado (ej. tras corregir la URL a la forma canonica): no se repite.
+    if (requested && owner.value?.username === requested) return
     owner.value = null
     if (!requested) {
       state.value = 'ready'
@@ -45,7 +47,12 @@ watch(
       const blog = await getPublicBlog(requested)
       // Se navego a otro blog mientras cargaba: esta respuesta ya no aplica.
       if (username.value !== requested) return
-      owner.value = { username: blog.username, hasDemoContent: hasDemoContent(blog.username) }
+      owner.value = {
+        username: blog.username,
+        displayName: blog.display_name,
+        // Un tipo que el front todavia no sabe pintar no sale en el menu.
+        sections: blog.sections.filter((section) => isKnownSectionType(section.type)),
+      }
       state.value = 'ready'
       // La URL canonica va en minusculas (/blog/Ruben -> /blog/ruben).
       if (blog.username !== requested) {
@@ -59,66 +66,94 @@ watch(
   { immediate: true },
 )
 
-const navLinks = [
-  { label: 'Inicio', name: 'blog-home' },
-  { label: 'Sobre mí', name: 'blog-about' },
-  { label: 'Proyectos', name: 'blog-projects' },
-  { label: 'Escritos', name: 'blog-writing' },
-]
+// Seccion activa en el menu, tambien dentro de uno de sus elementos (la ruta
+// del elemento es hermana de la de la seccion, asi que RouterLink no la marca).
+const activeSection = computed(() =>
+  typeof route.params.section === 'string' ? route.params.section.toLowerCase() : null,
+)
+
+// Menu de secciones: horizontal desde `sm`; en movil, desplegable (hasta 6
+// botones no caben en una fila).
+const menuOpen = ref(false)
+watch(
+  () => route.fullPath,
+  () => {
+    menuOpen.value = false
+  },
+)
 </script>
 
 <template>
   <div class="flex min-h-screen flex-col bg-background">
+    <!-- Encabezado a todo el ancho: marca a la izquierda, acciones a la
+         derecha y el menu en el medio. Desde `lg` todo en una fila; antes, el
+         menu (hasta 6 secciones) no cabe y pasa a un desplegable debajo. -->
     <header class="border-b border-subtle">
-      <div class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-y-3 px-6 py-5">
+      <div class="flex flex-wrap items-center gap-x-8 gap-y-3 px-6 py-4">
         <RouterLink
           v-if="owner"
           :to="{ name: 'blog-home', params: { username: owner.username } }"
-          class="font-semibold text-foreground"
+          class="shrink-0 font-semibold text-foreground"
         >
-          @{{ owner.username }}
+          {{ owner.displayName || `@${owner.username}` }}
         </RouterLink>
-        <RouterLink v-else :to="{ name: 'public-home' }" class="font-semibold text-foreground">
+        <RouterLink
+          v-else
+          :to="{ name: 'public-home' }"
+          class="shrink-0 font-semibold text-foreground"
+        >
           Unified Life Manager
         </RouterLink>
 
-        <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
-          <nav
-            v-if="owner"
-            class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-muted"
+        <div class="ml-auto flex shrink-0 items-center gap-3 lg:order-last">
+          <button
+            v-if="owner?.sections.length"
+            type="button"
+            class="rounded-md p-1.5 text-muted hover:bg-surface-hover lg:hidden"
+            :aria-expanded="menuOpen"
+            aria-controls="blog-sections"
+            aria-label="Secciones del blog"
+            @click="menuOpen = !menuOpen"
           >
-            <RouterLink
-              v-for="link in navLinks"
-              :key="link.name"
-              :to="{ name: link.name, params: { username: owner.username } }"
-              class="hover:text-foreground"
-              active-class="text-foreground"
-            >
-              {{ link.label }}
-            </RouterLink>
-          </nav>
-
-          <div
-            class="flex items-center gap-3"
-            :class="{ 'sm:border-l sm:border-subtle sm:pl-5': owner }"
+            <X v-if="menuOpen" class="h-5 w-5" />
+            <Menu v-else class="h-5 w-5" />
+          </button>
+          <RouterLink
+            :to="{ name: 'admin-dashboard' }"
+            class="rounded-lg border border-subtle px-3 py-1.5 text-sm font-medium text-muted hover:bg-surface hover:text-foreground"
           >
-            <RouterLink
-              :to="{ name: 'admin-dashboard' }"
-              class="rounded-lg border border-subtle px-3 py-1.5 text-sm font-medium text-muted hover:bg-surface hover:text-foreground"
-            >
-              Admin
-            </RouterLink>
-            <UserMenu
-              account-label="Ajustes de la cuenta"
-              log-out-label="Cerrar sesión"
-              sign-in-label="Iniciar sesión"
-            />
-          </div>
+            Admin
+          </RouterLink>
+          <UserMenu
+            account-label="Ajustes de la cuenta"
+            log-out-label="Cerrar sesión"
+            sign-in-label="Iniciar sesión"
+          />
         </div>
+
+        <nav
+          v-if="owner?.sections.length"
+          id="blog-sections"
+          class="w-full flex-col gap-1 text-sm font-medium text-muted lg:flex lg:w-auto lg:flex-1 lg:flex-row lg:justify-center lg:gap-x-6"
+          :class="menuOpen ? 'flex' : 'hidden'"
+        >
+          <RouterLink
+            v-for="section in owner.sections"
+            :key="section.slug"
+            :to="{
+              name: 'blog-section',
+              params: { username: owner.username, section: section.slug },
+            }"
+            class="whitespace-nowrap rounded-md px-2 py-1.5 hover:text-foreground lg:px-0 lg:py-0"
+            :class="{ 'text-foreground': activeSection === section.slug }"
+          >
+            {{ section.label }}
+          </RouterLink>
+        </nav>
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
+    <main class="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
       <EmptyState
         v-if="state === 'not-found'"
         :icon="FileQuestion"

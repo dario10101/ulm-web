@@ -106,12 +106,27 @@ export const adminRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    // Administracion del blog propio. Exige username (la pagina lo pide si
-    // falta): sin el, el blog no tiene URL.
+    path: 'ai',
+    name: 'admin-ai',
+    component: () => import('@/views/admin/AiPage.vue'),
+    meta: { permission: 'ai' },
+  },
+  {
+    // Administracion del blog propio: resumen (ajustes + secciones del menu).
+    // Exige username (la pagina lo pide si falta): sin el, el blog no tiene URL.
     path: 'blog',
     name: 'admin-blog',
-    component: () => import('@/views/admin/BlogAdminPage.vue'),
+    component: () => import('@/views/admin/blog/BlogAdminPage.vue'),
     meta: { permission: 'blog' },
+  },
+  {
+    // Editor de una seccion (/admin/blog/sections/<id>): formulario de su
+    // plantilla y, en colecciones, subsecciones y .md.
+    path: 'blog/sections/:sectionId',
+    name: 'admin-blog-section',
+    component: () => import('@/views/admin/blog/BlogSectionEditPage.vue'),
+    props: true,
+    meta: { permission: 'blog', navActive: 'admin-blog' },
   },
   {
     // Cada seccion tiene su URL (/admin/settings/appearance). Las de "System"

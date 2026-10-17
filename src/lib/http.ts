@@ -45,9 +45,12 @@ async function request<T>(
 ): Promise<T> {
   // Sin `credentials`: la API es del mismo origen (proxy de Vite en desarrollo,
   // mismo dominio en produccion), y en ese caso fetch ya manda la cookie.
+  // Con FormData (subida de archivos) no se fija Content-Type: el navegador
+  // pone multipart/form-data con su `boundary`, que sin el no se puede leer.
+  const isForm = init?.body instanceof FormData
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers: { ...(isForm ? {} : { 'Content-Type': 'application/json' }), ...init?.headers },
   })
 
   if (response.status === 401 && !options.skipUnauthorizedHandler) {
@@ -69,6 +72,11 @@ export function getJson<T>(path: string, options?: RequestOptions): Promise<T> {
 
 export function postJson<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'POST', body: JSON.stringify(body) })
+}
+
+/** POST multipart (ej. subir un .md). Ver el manejo de FormData en `request`. */
+export function postForm<T>(path: string, form: FormData): Promise<T> {
+  return request<T>(path, { method: 'POST', body: form })
 }
 
 export function putJson<T>(path: string, body: unknown): Promise<T> {

@@ -32,7 +32,7 @@ export const settingsSections: SettingsSection[] = [
   { id: 'users', label: 'Users', icon: Users, group: 'System', adminOnly: true },
   {
     id: 'expense-categories',
-    label: 'Expense categories',
+    label: 'Default categories',
     icon: Shapes,
     group: 'System',
     adminOnly: true,
@@ -63,11 +63,12 @@ export interface RecordParamPanel {
 }
 
 const TAGS: RecordParamPanel = { id: 'tags', label: 'Tags', icon: Tags }
+const EXPENSE_CATEGORIES: RecordParamPanel = { id: 'categories', label: 'Categories', icon: Shapes }
 
 /** Paneles por tipo de registro (id de config/recordTypes.ts). Los tags son
  * los mismos en gastos e ingresos: el panel es uno, accesible desde ambos. */
 export const recordParamPanels: Record<string, RecordParamPanel[]> = {
-  expense: [TAGS],
+  expense: [TAGS, EXPENSE_CATEGORIES],
   income: [
     TAGS,
     { id: 'sources', label: 'Sources', icon: Landmark },

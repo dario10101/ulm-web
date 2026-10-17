@@ -10,24 +10,26 @@ import { useCatalogPanel } from '@/composables/useCatalogPanel'
 import { useExpenseOptions } from '@/composables/useExpenseOptions'
 import { financeColorClasses, financeIcon } from '@/config/financeVisuals'
 import type { CatalogApi } from '@/services/paramsApi'
-import type { IconCatalogAdmin, IconCatalogWritePayload } from '@/types/params'
+import type { IconCatalogItem, IconCatalogWritePayload } from '@/types/params'
 
 /**
- * Categorias de gasto y metodos de pago: catalogos globales (solo admin) con
- * los mismos campos (nombre, color, icono). `noun` es como se llama un item
- * ("category", "payment method").
+ * Catalogos con nombre, color e icono: las categorias de gasto del usuario
+ * ("View records"), la plantilla de categorias para usuarios nuevos y los
+ * metodos de pago (Settings, solo admin). `noun` es como se llama un item
+ * ("category", "payment method"); `hint` aclara a quien afecta un cambio.
  */
 const props = defineProps<{
-  api: CatalogApi<IconCatalogAdmin, IconCatalogWritePayload>
+  api: CatalogApi<IconCatalogItem, IconCatalogWritePayload>
   title: string
   noun: string
   emptyText: string
+  hint?: string
 }>()
 
 const expenseOptions = useExpenseOptions()
 
 const panel = useCatalogPanel(props.api, {
-  toPayload: (item: IconCatalogAdmin) => ({
+  toPayload: (item: IconCatalogItem) => ({
     name: item.name,
     icon_key: item.icon_key,
     color_key: item.color_key,
@@ -47,7 +49,7 @@ function openCreate() {
   panel.openCreate()
 }
 
-function openEdit(item: IconCatalogAdmin) {
+function openEdit(item: IconCatalogItem) {
   name.value = item.name
   colorKey.value = item.color_key
   iconKey.value = item.icon_key
@@ -134,7 +136,7 @@ onMounted(panel.load)
         <span class="mb-1.5 block text-muted">Icon</span>
         <IconPicker v-model="iconKey" :color-key="colorKey" />
       </div>
-      <p class="text-xs text-muted">Shared by every user: changes apply to everyone's records.</p>
+      <p v-if="hint" class="text-xs text-muted">{{ hint }}</p>
     </ParamDialog>
 
     <ConfirmDeleteDialog

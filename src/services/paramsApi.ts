@@ -5,6 +5,7 @@ import type {
   CatalogDeleteResponse,
   CldEvent,
   CldEventWritePayload,
+  DefaultCategory,
   IconCatalogAdmin,
   IconCatalogWritePayload,
   IncomeSourceAdmin,
@@ -39,6 +40,9 @@ function catalogApi<Item, Payload>(path: string): CatalogApi<Item, Payload> {
 
 // --- Del dominio (permiso finances, datos del propio usuario) ---
 
+export const expenseCategoriesApi = catalogApi<IconCatalogAdmin, IconCatalogWritePayload>(
+  '/finances/expense-categories',
+)
 export const tagsApi = catalogApi<TagAdmin, TagWritePayload>('/finances/tags')
 export const incomeSourcesApi = catalogApi<IncomeSourceAdmin, IncomeSourceWritePayload>(
   '/finances/income-sources',
@@ -50,7 +54,8 @@ export const incomeSubcategoriesApi = catalogApi<
 
 // --- Del sistema (solo admin) ---
 
-export const expenseCategoriesApi = catalogApi<IconCatalogAdmin, IconCatalogWritePayload>(
+/** Plantilla que se copia a cada usuario nuevo; DELETE siempre borra. */
+export const defaultExpenseCategoriesApi = catalogApi<DefaultCategory, IconCatalogWritePayload>(
   '/system/expense-categories',
 )
 export const paymentMethodsApi = catalogApi<IconCatalogAdmin, IconCatalogWritePayload>(

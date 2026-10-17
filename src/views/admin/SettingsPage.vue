@@ -15,7 +15,7 @@ import {
   settingsSections,
   type SettingsSection,
 } from '@/config/paramPanels'
-import { expenseCategoriesApi, paymentMethodsApi } from '@/services/paramsApi'
+import { defaultExpenseCategoriesApi, paymentMethodsApi } from '@/services/paramsApi'
 
 // /admin solo se ve con sesion (router/authGuard.ts), asi que user ya esta cargado.
 const { user, isAdmin } = useAuth()
@@ -160,10 +160,11 @@ const toggles = [
         <IconCatalogPanel
           v-else-if="active.id === 'expense-categories'"
           key="expense-categories"
-          :api="expenseCategoriesApi"
-          title="Expense categories"
+          :api="defaultExpenseCategoriesApi"
+          title="Default expense categories"
           noun="category"
-          empty-text="No categories yet."
+          empty-text="No default categories yet: new users will start without categories."
+          hint="Template for new users: each one gets a copy when they sign up. Existing users keep their own categories."
         />
 
         <IconCatalogPanel
@@ -173,6 +174,7 @@ const toggles = [
           title="Payment methods"
           noun="payment method"
           empty-text="No payment methods yet."
+          hint="Shared by every user: changes apply to everyone's records."
         />
 
         <CalendarEventsPanel
