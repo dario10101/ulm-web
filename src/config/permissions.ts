@@ -11,6 +11,7 @@ export type Permission =
   | 'planning'
   | 'planning.ai'
   | 'blog'
+  | 'english'
   | 'ai'
 
 /**
@@ -20,7 +21,8 @@ export type Permission =
  */
 export type PermissionRequirement = Permission | readonly Permission[]
 
-export type PermissionDomain = 'weight' | 'meals' | 'finances' | 'planning' | 'blog' | 'ai'
+export type PermissionDomain =
+  'weight' | 'meals' | 'finances' | 'planning' | 'blog' | 'english' | 'ai'
 
 /**
  * Dominios con su permiso base y su avanzado (`.ai`), para la pantalla de
@@ -49,6 +51,7 @@ export const PERMISSION_DOMAINS: readonly {
     ai: 'planning.ai',
   },
   { id: 'blog', label: 'Blog', description: 'Public blog at /blog/<username>' },
+  { id: 'english', label: 'English', description: 'English practice (vocabulary to speaking)' },
   // IA general (no el `.ai` de un dominio): gasta la key de OpenAI del servidor.
   { id: 'ai', label: 'AI', description: 'AI features (uses the server OpenAI key)' },
 ]

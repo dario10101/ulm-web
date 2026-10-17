@@ -6,6 +6,7 @@ import UsernameCard from '@/components/account/UsernameCard.vue'
 import AccessPanel from '@/components/params/AccessPanel.vue'
 import AppearancePanel from '@/components/params/AppearancePanel.vue'
 import CalendarEventsPanel from '@/components/params/CalendarEventsPanel.vue'
+import EnglishBankPanel from '@/components/params/EnglishBankPanel.vue'
 import IconCatalogPanel from '@/components/params/IconCatalogPanel.vue'
 import UsersPanel from '@/components/params/UsersPanel.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
@@ -181,6 +182,8 @@ const toggles = [
           v-else-if="active.id === 'calendar-events'"
           v-model:year="calendarYear"
         />
+
+        <EnglishBankPanel v-else-if="active.id === 'english-bank'" />
 
         <AccessPanel v-else-if="active.id === 'access'" />
       </div>

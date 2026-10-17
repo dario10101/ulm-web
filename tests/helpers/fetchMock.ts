@@ -41,6 +41,7 @@ export const ME_ALL = {
   permissions: [
     'ai',
     'blog',
+    'english',
     'finances',
     'finances.ai',
     'meals',
