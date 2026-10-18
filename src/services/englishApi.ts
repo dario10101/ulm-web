@@ -1,5 +1,6 @@
 import { getJson, patchJson, postForm, postJson, putJson } from '@/lib/http'
 import type {
+  EnglishFeedback,
   EnglishLevel,
   EnglishPractice,
   EnglishPracticeSaved,
@@ -56,4 +57,9 @@ export function transcribeSpeech(input: {
   form.append('phase', input.phase)
   form.append('duration_seconds', input.seconds.toFixed(1))
   return postForm<EnglishSpeechResult>('/english/speech', form)
+}
+
+/** Feedback de la practica (1 llamada al LLM; si ya existe, el guardado sin costo). */
+export function requestFeedback(practiceId: number): Promise<EnglishFeedback> {
+  return postJson<EnglishFeedback>(`/english/practices/${practiceId}/feedback`, {})
 }

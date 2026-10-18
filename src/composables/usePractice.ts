@@ -1,8 +1,13 @@
 import { computed, reactive, ref, shallowRef } from 'vue'
 
 import { ApiError } from '@/lib/http'
-import { getNextPractice, savePractice, setPracticeMastered } from '@/services/englishApi'
-import type { EnglishPractice, EnglishPracticeSaved } from '@/types/english'
+import {
+  getNextPractice,
+  requestFeedback,
+  savePractice,
+  setPracticeMastered,
+} from '@/services/englishApi'
+import type { EnglishFeedback, EnglishPractice, EnglishPracticeSaved } from '@/types/english'
 
 /**
  * Maquina de estados de una practica (ENGLISH-TEACHER-PLAN.md, seccion 8).
@@ -55,6 +60,9 @@ export function usePractice(options: { speaking?: boolean } = {}) {
   const mastered = ref(false)
   const saving = ref(false)
   const error = ref<string | null>(null)
+  const feedback = shallowRef<EnglishFeedback | null>(null)
+  const feedbackLoading = ref(false)
+  const feedbackError = ref<string | null>(null)
 
   function fail(err: unknown, fallback: string) {
     error.value = err instanceof ApiError ? err.message : fallback
@@ -64,6 +72,8 @@ export function usePractice(options: { speaking?: boolean } = {}) {
     step.value = 'loading'
     error.value = null
     saved.value = null
+    feedback.value = null
+    feedbackError.value = null
     Object.assign(results, emptyResults())
     try {
       practice.value = await getNextPractice()
@@ -157,6 +167,20 @@ export function usePractice(options: { speaking?: boolean } = {}) {
     }
   }
 
+  /** Pide el feedback (gasta tokens; el backend lo guarda y no vuelve a cobrar). */
+  async function loadFeedback() {
+    if (!saved.value || feedbackLoading.value) return
+    feedbackLoading.value = true
+    feedbackError.value = null
+    try {
+      feedback.value = await requestFeedback(saved.value.id)
+    } catch (err) {
+      feedbackError.value = err instanceof ApiError ? err.message : 'Could not get the feedback.'
+    } finally {
+      feedbackLoading.value = false
+    }
+  }
+
   const stepIndex = computed(() =>
     ['vocabulary', 'listening', 'writing', 'speaking'].indexOf(step.value),
   )
@@ -170,6 +194,9 @@ export function usePractice(options: { speaking?: boolean } = {}) {
     mastered,
     saving,
     error,
+    feedback,
+    feedbackLoading,
+    feedbackError,
     speakingEnabled,
     start,
     completeVocabulary,
@@ -178,5 +205,6 @@ export function usePractice(options: { speaking?: boolean } = {}) {
     completeSpeaking,
     persist,
     setMastered,
+    loadFeedback,
   }
 }

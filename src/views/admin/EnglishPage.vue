@@ -4,6 +4,7 @@ import { computed, onMounted, ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import ClosingStep from '@/components/english/ClosingStep.vue'
+import FeedbackPanel from '@/components/english/FeedbackPanel.vue'
 import ListeningStep from '@/components/english/ListeningStep.vue'
 import SpeakingStep from '@/components/english/SpeakingStep.vue'
 import VocabularyStep from '@/components/english/VocabularyStep.vue'
@@ -28,7 +29,7 @@ const settings = shallowRef<EnglishSettings | null>(null)
 const settingsError = ref<string | null>(null)
 
 const flow = usePractice()
-const { step, stepIndex, practice, mastered, saving, error } = flow
+const { step, stepIndex, practice, mastered, saving, error, feedback, feedbackLoading } = flow
 
 const lang = computed(() => practice.value?.config.instructions_lang ?? 'en')
 const texts = computed(() => practiceTexts(lang.value))
@@ -160,10 +161,31 @@ function finish() {
               :mastered="mastered"
               :mastered-repeat="practice.mastered_repeat"
               :saving="saving"
-              :feedback-enabled="false"
+              :feedback-enabled="!!flow.saved.value && !feedback && !feedbackLoading"
+              @feedback="flow.loadFeedback()"
               @update:mastered="flow.setMastered"
               @finish="finish"
               @new-practice="flow.start()"
+            />
+            <p
+              v-if="feedbackLoading"
+              class="mt-4 text-center text-sm text-muted"
+              data-test="feedback-loading"
+            >
+              {{ texts.feedbackLoading }}
+            </p>
+            <p
+              v-if="flow.feedbackError.value"
+              role="alert"
+              class="mt-4 text-center text-sm text-ruby-text"
+            >
+              {{ flow.feedbackError.value }}
+            </p>
+            <FeedbackPanel
+              v-if="feedback"
+              class="mt-6 border-t border-subtle pt-6"
+              :feedback="feedback"
+              :texts="texts"
             />
             <div v-if="error" class="mt-4 space-y-2 text-center">
               <p role="alert" class="text-sm text-ruby-text" data-test="save-error">{{ error }}</p>

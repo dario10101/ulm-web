@@ -137,3 +137,20 @@ export interface EnglishSpeechResult {
   match_pct: number | null
   diff: EnglishDiffOp[] | null
 }
+
+export interface EnglishCorrection {
+  original: string
+  corrected: string
+  explanation: string
+}
+
+export interface EnglishFeedback {
+  summary: string
+  vocabulary: string
+  writing_corrections: EnglishCorrection[]
+  reading_observations: string[]
+  speaking_corrections: EnglishCorrection[]
+  answered_question: boolean
+  tips: string[]
+  model: string
+}
