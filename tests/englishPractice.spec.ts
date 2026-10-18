@@ -4,9 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { usePractice } from '@/composables/usePractice'
 import { checkAnswer, letterSlots, practiceTexts } from '@/lib/englishPractice'
 import {
+  dismissLevelSuggestion,
   getEnglishSettings,
   getNextPractice,
   savePractice,
+  setEnglishLevel,
   setPracticeMastered,
 } from '@/services/englishApi'
 import type { EnglishPractice, EnglishSettings } from '@/types/english'
@@ -19,6 +21,7 @@ import EnglishPage from '../src/views/admin/EnglishPage.vue'
 vi.mock('@/services/englishApi', () => ({
   getEnglishSettings: vi.fn(),
   setEnglishLevel: vi.fn(),
+  dismissLevelSuggestion: vi.fn(),
   getNextPractice: vi.fn(),
   savePractice: vi.fn(),
   setPracticeMastered: vi.fn(),
@@ -59,6 +62,7 @@ const SETTINGS: EnglishSettings = {
   level: 'A1',
   levels: [{ level: 'A1', ready_words: 10, available: true }],
   level_completed: false,
+  suggestion: null,
 }
 
 const texts = practiceTexts('en')
@@ -280,5 +284,48 @@ describe('EnglishPage', () => {
     expect(wrapper.find('[data-test="current-level"]').text()).toBe('A1')
     expect(wrapper.find('[data-test="vocab-image"]').attributes('src')).toBe(PRACTICE.image!.url)
     expect(wrapper.text()).toContain(practiceTexts('es').vocabularyInstruction)
+  })
+})
+
+describe('EnglishPage level suggestion', () => {
+  const SUGGESTING: EnglishSettings = {
+    ...SETTINGS,
+    levels: [
+      { level: 'A1', ready_words: 10, available: true },
+      { level: 'A2', ready_words: 10, available: true },
+    ],
+    suggestion: { direction: 'up', level: 'A2', reason: 'performance' },
+  }
+
+  it('shows the suggestion in Spanish for A1 and changes the level', async () => {
+    vi.mocked(getEnglishSettings).mockResolvedValue(structuredClone(SUGGESTING))
+    vi.mocked(setEnglishLevel).mockResolvedValue({ ...SUGGESTING, level: 'A2', suggestion: null })
+    const wrapper = mount(EnglishPage, { global: { stubs } })
+    await flushPromises()
+
+    const banner = wrapper.find('[data-test="level-suggestion"]')
+    expect(banner.text()).toContain(practiceTexts('es').suggestUp)
+    expect(banner.text()).toContain('A2')
+
+    await wrapper.find('[data-test="accept-suggestion"]').trigger('click')
+    await flushPromises()
+
+    expect(setEnglishLevel).toHaveBeenCalledWith('A2')
+    expect(getNextPractice).toHaveBeenCalledTimes(2)
+    expect(wrapper.find('[data-test="level-suggestion"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="current-level"]').text()).toBe('A2')
+  })
+
+  it('hides the suggestion with "not now"', async () => {
+    vi.mocked(getEnglishSettings).mockResolvedValue(structuredClone(SUGGESTING))
+    vi.mocked(dismissLevelSuggestion).mockResolvedValue({ ...SUGGESTING, suggestion: null })
+    const wrapper = mount(EnglishPage, { global: { stubs } })
+    await flushPromises()
+
+    await wrapper.find('[data-test="dismiss-suggestion"]').trigger('click')
+    await flushPromises()
+
+    expect(dismissLevelSuggestion).toHaveBeenCalled()
+    expect(wrapper.find('[data-test="level-suggestion"]').exists()).toBe(false)
   })
 })

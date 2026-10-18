@@ -65,12 +65,21 @@ export interface EnglishLevelAvailability {
   available: boolean
 }
 
+export interface EnglishLevelSuggestion {
+  direction: 'up' | 'down'
+  level: EnglishLevel
+  /** performance: por las ultimas practicas; completed: domino todo el nivel. */
+  reason: 'performance' | 'completed'
+}
+
 export interface EnglishSettings {
   /** Nulo hasta que el usuario elige su nivel. */
   level: EnglishLevel | null
   levels: EnglishLevelAvailability[]
   /** Ya domina todas las palabras de su nivel: se repiten (D19). */
   level_completed: boolean
+  /** Sugerencia de subir o bajar de nivel (reglas del backend); null si no aplica. */
+  suggestion: EnglishLevelSuggestion | null
 }
 
 export interface EnglishLevelConfig {

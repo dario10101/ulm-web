@@ -19,6 +19,11 @@ export function setEnglishLevel(level: EnglishLevel): Promise<EnglishSettings> {
   return putJson<EnglishSettings>('/english/settings', { level })
 }
 
+/** "No por ahora": no se vuelve a sugerir hasta juntar 10 practicas nuevas. */
+export function dismissLevelSuggestion(): Promise<EnglishSettings> {
+  return postJson<EnglishSettings>('/english/settings/level-suggestion/dismiss', {})
+}
+
 /** Elige la palabra y trae la practica entera. No guarda nada (D8). */
 export function getNextPractice(): Promise<EnglishPractice> {
   return getJson<EnglishPractice>('/english/practices/next')

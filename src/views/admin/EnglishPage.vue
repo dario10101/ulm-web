@@ -15,14 +15,15 @@ import BaseCard from '@/components/ui/BaseCard.vue'
 import { usePractice } from '@/composables/usePractice'
 import { practiceTexts } from '@/lib/englishPractice'
 import { ApiError } from '@/lib/http'
-import { getEnglishSettings } from '@/services/englishApi'
+import { dismissLevelSuggestion, getEnglishSettings, setEnglishLevel } from '@/services/englishApi'
 import type { EnglishSettings } from '@/types/english'
 
 /**
  * Pagina de estudio de ingles (ENGLISH-TEACHER-PLAN.md, seccion 3): una
  * practica por palabra, vocabulario -> listening -> writing -> speaking ->
- * cierre. El
- * nivel se elige en Settings -> English (boton arriba a la derecha).
+ * cierre. El nivel se elige en Settings -> English (boton arriba a la
+ * derecha); arriba de la practica puede aparecer la sugerencia de cambiarlo
+ * (reglas del backend, seccion 4.1).
  */
 const router = useRouter()
 const settings = shallowRef<EnglishSettings | null>(null)
@@ -40,15 +41,60 @@ const steps = computed(() => [
   ...(flow.speakingEnabled ? [texts.value.stepSpeaking] : []),
 ])
 
-onMounted(async () => {
+// Textos de la pagina segun el nivel del usuario (la practica usa los suyos).
+const pageTexts = computed(() =>
+  practiceTexts(settings.value?.level === 'A1' || settings.value?.level === 'A2' ? 'es' : 'en'),
+)
+const suggestionText = computed(() => {
+  const suggestion = settings.value?.suggestion
+  if (!suggestion) return ''
+  if (suggestion.reason === 'completed') return pageTexts.value.suggestCompleted
+  return suggestion.direction === 'up' ? pageTexts.value.suggestUp : pageTexts.value.suggestDown
+})
+const suggestionBusy = ref(false)
+
+async function loadSettings(): Promise<boolean> {
   try {
     settings.value = await getEnglishSettings()
+    return true
   } catch (err) {
     settingsError.value = err instanceof ApiError ? err.message : 'Could not load your level.'
-    return
+    return false
   }
-  if (settings.value.level) await flow.start()
+}
+
+onMounted(async () => {
+  if ((await loadSettings()) && settings.value?.level) await flow.start()
 })
+
+/** Nueva practica: refresca el nivel (la sugerencia puede haber cambiado). */
+async function newPractice() {
+  await loadSettings()
+  await flow.start()
+}
+
+async function acceptSuggestion() {
+  const target = settings.value?.suggestion?.level
+  if (!target) return
+  suggestionBusy.value = true
+  try {
+    settings.value = await setEnglishLevel(target)
+    await flow.start()
+  } catch (err) {
+    settingsError.value = err instanceof ApiError ? err.message : 'Could not change your level.'
+  } finally {
+    suggestionBusy.value = false
+  }
+}
+
+async function dismissSuggestion() {
+  suggestionBusy.value = true
+  try {
+    settings.value = await dismissLevelSuggestion()
+  } finally {
+    suggestionBusy.value = false
+  }
+}
 
 function finish() {
   router.push({ name: 'admin-dashboard' })
@@ -91,8 +137,33 @@ function finish() {
     </BaseCard>
 
     <template v-else-if="settings">
+      <div
+        v-if="settings.suggestion"
+        class="flex flex-wrap items-center gap-3 rounded-lg bg-accent/10 px-4 py-3 text-sm text-accent-text"
+        data-test="level-suggestion"
+      >
+        <span class="flex-1">
+          {{ suggestionText }} <strong>{{ settings.suggestion.level }}</strong
+          >.
+        </span>
+        <BaseButton
+          :disabled="suggestionBusy"
+          data-test="accept-suggestion"
+          @click="acceptSuggestion"
+        >
+          {{ pageTexts.changeLevel }}
+        </BaseButton>
+        <BaseButton
+          variant="ghost"
+          :disabled="suggestionBusy"
+          data-test="dismiss-suggestion"
+          @click="dismissSuggestion"
+        >
+          {{ pageTexts.notNow }}
+        </BaseButton>
+      </div>
       <p
-        v-if="settings.level_completed"
+        v-else-if="settings.level_completed"
         class="rounded-lg bg-accent/10 px-4 py-2 text-sm text-accent-text"
         data-test="level-completed"
       >
@@ -165,7 +236,7 @@ function finish() {
               @feedback="flow.loadFeedback()"
               @update:mastered="flow.setMastered"
               @finish="finish"
-              @new-practice="flow.start()"
+              @new-practice="newPractice"
             />
             <p
               v-if="feedbackLoading"

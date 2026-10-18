@@ -88,6 +88,11 @@ const TEXTS = {
     answeredQuestion: 'You answered the question.',
     missedQuestion: 'You did not answer the question.',
     saving: 'Saving...',
+    suggestUp: 'Your level seems easy for you. Try',
+    suggestDown: 'Your level seems hard right now. Try',
+    suggestCompleted: 'You mastered every word of your level. Try',
+    changeLevel: 'Change level',
+    notNow: 'Not now',
   },
   es: {
     stepVocabulary: 'Vocabulario',
@@ -140,6 +145,11 @@ const TEXTS = {
     answeredQuestion: 'Respondiste la pregunta.',
     missedQuestion: 'No respondiste la pregunta.',
     saving: 'Guardando...',
+    suggestUp: 'Tu nivel parece fácil para ti. Prueba',
+    suggestDown: 'Tu nivel parece difícil por ahora. Prueba',
+    suggestCompleted: 'Dominaste todas las palabras de tu nivel. Prueba',
+    changeLevel: 'Cambiar de nivel',
+    notNow: 'Ahora no',
   },
 } as const
 
