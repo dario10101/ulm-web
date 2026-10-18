@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 
 import ClosingStep from '@/components/english/ClosingStep.vue'
 import ListeningStep from '@/components/english/ListeningStep.vue'
+import SpeakingStep from '@/components/english/SpeakingStep.vue'
 import VocabularyStep from '@/components/english/VocabularyStep.vue'
 import WritingStep from '@/components/english/WritingStep.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
@@ -18,14 +19,15 @@ import type { EnglishSettings } from '@/types/english'
 
 /**
  * Pagina de estudio de ingles (ENGLISH-TEACHER-PLAN.md, seccion 3): una
- * practica por palabra, vocabulario -> listening -> writing -> cierre. El
+ * practica por palabra, vocabulario -> listening -> writing -> speaking ->
+ * cierre. El
  * nivel se elige en Settings -> English (boton arriba a la derecha).
  */
 const router = useRouter()
 const settings = shallowRef<EnglishSettings | null>(null)
 const settingsError = ref<string | null>(null)
 
-const flow = usePractice({ speaking: false })
+const flow = usePractice()
 const { step, stepIndex, practice, mastered, saving, error } = flow
 
 const lang = computed(() => practice.value?.config.instructions_lang ?? 'en')
@@ -145,6 +147,12 @@ function finish() {
             :practice="practice"
             :texts="texts"
             @complete="flow.completeWriting"
+          />
+          <SpeakingStep
+            v-else-if="step === 'speaking'"
+            :practice="practice"
+            :texts="texts"
+            @complete="flow.completeSpeaking"
           />
           <template v-else-if="step === 'closing'">
             <ClosingStep

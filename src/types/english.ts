@@ -122,3 +122,18 @@ export interface EnglishPracticeSaved {
   mastered: boolean
   was_mastered: boolean
 }
+
+export interface EnglishDiffOp {
+  /** equal: leida bien; missing: no la dijo; extra: de mas; changed: dijo otra. */
+  kind: 'equal' | 'missing' | 'extra' | 'changed'
+  expected: string[]
+  said: string[]
+}
+
+export interface EnglishSpeechResult {
+  transcript: string
+  duration_seconds: number
+  /** Solo en la lectura. */
+  match_pct: number | null
+  diff: EnglishDiffOp[] | null
+}
