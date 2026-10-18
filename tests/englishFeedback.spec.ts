@@ -18,6 +18,7 @@ vi.mock('@/services/englishApi', () => ({
 const FEEDBACK: EnglishFeedback = {
   summary: 'Good job.',
   vocabulary: 'You knew the word.',
+  dictation: 'You missed the article.',
   writing_corrections: [
     { original: 'I has a dog', corrected: 'I have a dog', explanation: 'Use have with I.' },
   ],
@@ -47,7 +48,7 @@ async function closedPractice() {
   await flow.start()
   flow.completeVocabulary({ revealed: false, usedSynonym: false })
   flow.completeListening(false)
-  await flow.completeWriting('I has a dog.')
+  await flow.completeWriting({ dictation: '', answer: 'I has a dog.' })
   return flow
 }
 
@@ -93,5 +94,8 @@ describe('FeedbackPanel', () => {
     expect(correction.text()).toContain('I have a dog')
     expect(wrapper.find('[data-test="tips"]').text()).toBe('Review have/has.')
     expect(wrapper.text()).toContain(texts.missedQuestion)
+    expect(wrapper.find('[data-test="feedback-dictation"]').text()).toContain(
+      'You missed the article.',
+    )
   })
 })

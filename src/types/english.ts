@@ -117,6 +117,8 @@ export interface EnglishPracticeWrite {
   vocab_revealed: boolean
   vocab_used_synonym: boolean
   listening_text_shown: boolean
+  /** Dictado (fase 1 del writing); la coincidencia la calcula el backend. */
+  dictation_text: string | null
   writing_text: string
   reading_transcript: string | null
   reading_match_pct: number | null
@@ -156,10 +158,19 @@ export interface EnglishCorrection {
 export interface EnglishFeedback {
   summary: string
   vocabulary: string
+  /** Comentario del dictado; vacio si no hay nada que decir. */
+  dictation: string
   writing_corrections: EnglishCorrection[]
   reading_observations: string[]
   speaking_corrections: EnglishCorrection[]
   answered_question: boolean
   tips: string[]
   model: string
+}
+
+/** Dictado comparado con la frase del listening (sin LLM, sin costo). */
+export interface EnglishDictationResult {
+  match_pct: number
+  diff: EnglishDiffOp[]
+  expected: string
 }

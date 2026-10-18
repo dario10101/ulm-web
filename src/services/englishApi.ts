@@ -1,5 +1,6 @@
 import { getJson, patchJson, postForm, postJson, putJson } from '@/lib/http'
 import type {
+  EnglishDictationResult,
   EnglishFeedback,
   EnglishLevel,
   EnglishPractice,
@@ -67,4 +68,12 @@ export function transcribeSpeech(input: {
 /** Feedback de la practica (1 llamada al LLM; si ya existe, el guardado sin costo). */
 export function requestFeedback(practiceId: number): Promise<EnglishFeedback> {
   return postJson<EnglishFeedback>(`/english/practices/${practiceId}/feedback`, {})
+}
+
+/** Fase 1 del writing: compara el dictado con la frase escuchada. No guarda nada. */
+export function checkDictation(contentId: number, text: string): Promise<EnglishDictationResult> {
+  return postJson<EnglishDictationResult>('/english/dictation/check', {
+    content_id: contentId,
+    text,
+  })
 }

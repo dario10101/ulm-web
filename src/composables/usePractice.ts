@@ -27,6 +27,7 @@ export interface PracticeResults {
   vocabRevealed: boolean
   vocabUsedSynonym: boolean
   listeningTextShown: boolean
+  dictationText: string | null
   writingText: string
   readingTranscript: string | null
   readingMatchPct: number | null
@@ -40,6 +41,7 @@ function emptyResults(): PracticeResults {
     vocabRevealed: false,
     vocabUsedSynonym: false,
     listeningTextShown: false,
+    dictationText: null,
     writingText: '',
     readingTranscript: null,
     readingMatchPct: null,
@@ -96,8 +98,9 @@ export function usePractice(options: { speaking?: boolean } = {}) {
     step.value = 'writing'
   }
 
-  async function completeWriting(text: string) {
-    results.writingText = text.trim()
+  async function completeWriting(outcome: { dictation: string; answer: string }) {
+    results.dictationText = outcome.dictation.trim() || null
+    results.writingText = outcome.answer.trim()
     if (speakingEnabled) {
       step.value = 'speaking'
     } else {
@@ -140,6 +143,7 @@ export function usePractice(options: { speaking?: boolean } = {}) {
         vocab_revealed: results.vocabRevealed,
         vocab_used_synonym: results.vocabUsedSynonym,
         listening_text_shown: results.listeningTextShown,
+        dictation_text: results.dictationText,
         writing_text: results.writingText,
         reading_transcript: results.readingTranscript,
         reading_match_pct: results.readingMatchPct,

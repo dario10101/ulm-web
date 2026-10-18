@@ -2,6 +2,7 @@
 import { Mic, Square } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 
+import WordDiff from '@/components/english/WordDiff.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import type { PracticeTexts } from '@/lib/englishPractice'
 import { ApiError } from '@/lib/http'
@@ -214,25 +215,7 @@ onBeforeUnmount(() => {
       <p v-if="current.match_pct !== null" class="text-sm text-foreground" data-test="match">
         {{ texts.match }}: <strong>{{ current.match_pct }}%</strong>
       </p>
-      <p v-if="current.diff" class="text-sm leading-relaxed" lang="en" data-test="diff">
-        <template v-for="(op, index) in current.diff" :key="index">
-          <span v-if="op.kind === 'equal'" class="text-foreground"
-            >{{ op.expected.join(' ') }}
-          </span>
-          <template v-else>
-            <span
-              v-if="op.expected.length"
-              class="text-rose-600 line-through dark:text-rose-400"
-              data-test="diff-expected"
-              >{{ op.expected.join(' ') }}</span
-            >
-            <span v-if="op.said.length" class="italic text-muted" data-test="diff-said">
-              {{ op.kind === 'extra' ? '+' : '→' }} {{ op.said.join(' ') }}</span
-            >
-            {{ ' ' }}
-          </template>
-        </template>
-      </p>
+      <WordDiff v-if="current.diff" :ops="current.diff" />
       <div v-else>
         <p class="text-xs font-medium text-muted">{{ texts.youSaid }}</p>
         <p class="text-sm text-foreground" lang="en" data-test="transcript">

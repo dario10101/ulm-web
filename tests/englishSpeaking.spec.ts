@@ -167,7 +167,7 @@ describe('usePractice with speaking', () => {
     await flow.start()
     flow.completeVocabulary({ revealed: false, usedSynonym: false })
     flow.completeListening(false)
-    await flow.completeWriting('I like dogs.')
+    await flow.completeWriting({ dictation: 'The big dog', answer: 'I like dogs.' })
     expect(flow.step.value).toBe('speaking')
 
     await flow.completeSpeaking({

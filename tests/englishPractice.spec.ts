@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { usePractice } from '@/composables/usePractice'
 import { checkAnswer, letterSlots, practiceTexts } from '@/lib/englishPractice'
 import {
+  checkDictation,
   dismissLevelSuggestion,
   getEnglishSettings,
   getNextPractice,
@@ -22,6 +23,7 @@ vi.mock('@/services/englishApi', () => ({
   getEnglishSettings: vi.fn(),
   setEnglishLevel: vi.fn(),
   dismissLevelSuggestion: vi.fn(),
+  checkDictation: vi.fn(),
   getNextPractice: vi.fn(),
   savePractice: vi.fn(),
   setPracticeMastered: vi.fn(),
@@ -76,6 +78,17 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({ id: 50, mastered: true, was_mastered: false })
   vi.mocked(getEnglishSettings).mockReset().mockResolvedValue(structuredClone(SETTINGS))
+  vi.mocked(checkDictation)
+    .mockReset()
+    .mockResolvedValue({
+      match_pct: 83.3,
+      expected: PRACTICE.listening_sentence,
+      diff: [
+        { kind: 'equal', expected: ['i', 'eat'], said: ['i', 'eat'] },
+        { kind: 'missing', expected: ['ice'], said: [] },
+        { kind: 'equal', expected: ['cream', 'in', 'summer'], said: ['cream', 'in', 'summer'] },
+      ],
+    })
 })
 
 // --- Logica pura ---
@@ -115,7 +128,10 @@ describe('usePractice', () => {
 
     flow.completeVocabulary({ revealed: true, usedSynonym: false })
     flow.completeListening(true)
-    await flow.completeWriting('  I eat it in summer.  ')
+    await flow.completeWriting({
+      dictation: ' I eat ice cream ',
+      answer: '  I eat it in summer.  ',
+    })
 
     expect(flow.step.value).toBe('closing')
     expect(savePractice).toHaveBeenCalledWith({
@@ -124,6 +140,7 @@ describe('usePractice', () => {
       vocab_revealed: true,
       vocab_used_synonym: false,
       listening_text_shown: true,
+      dictation_text: 'I eat ice cream',
       writing_text: 'I eat it in summer.',
       reading_transcript: null,
       reading_match_pct: null,
@@ -144,7 +161,7 @@ describe('usePractice', () => {
     await flow.start()
     flow.completeVocabulary({ revealed: false, usedSynonym: false })
     flow.completeListening(false)
-    await flow.completeWriting('I eat it in summer.')
+    await flow.completeWriting({ dictation: '', answer: 'I eat it in summer.' })
 
     expect(vi.mocked(savePractice).mock.calls[0][0].mastered).toBe(true)
   })
@@ -248,17 +265,49 @@ describe('ListeningStep', () => {
 })
 
 describe('WritingStep', () => {
-  it('enables continue once the minimum is reached and shows the Spanish prompt', async () => {
+  async function passDictation(wrapper: ReturnType<typeof mount>) {
+    await wrapper.find('[data-test="dictation-text"]').setValue('I eat ice cream in summer')
+    await wrapper.find('[data-test="check"]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-test="continue"]').trigger('click')
+  }
+
+  it('checks the dictation against the listening sentence before the answer', async () => {
     const wrapper = mount(WritingStep, { props: { practice: PRACTICE, texts } })
 
+    expect(wrapper.find('[data-test="writing-text"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="check"]').attributes('disabled')).toBeDefined()
+    await wrapper.find('[data-test="dictation-text"]').setValue('I eat cream in summer')
+    await wrapper.find('[data-test="check"]').trigger('click')
+    await flushPromises()
+
+    expect(checkDictation).toHaveBeenCalledWith(9, 'I eat cream in summer')
+    expect(wrapper.find('[data-test="dictation-match"]').text()).toContain('83.3%')
+    expect(wrapper.find('[data-test="diff-expected"]').text()).toBe('ice')
+    expect(wrapper.find('[data-test="dictation-expected"]').text()).toBe(
+      PRACTICE.listening_sentence,
+    )
+    // Revisado, no se puede editar: se ve la frase correcta.
+    expect(wrapper.find('[data-test="dictation-text"]').attributes('disabled')).toBeDefined()
+
+    await wrapper.find('[data-test="continue"]').trigger('click')
+    expect(wrapper.find('[data-test="writing-prompt"]').exists()).toBe(true)
+  })
+
+  it('enables continue once the minimum is reached and shows the Spanish prompt', async () => {
+    const wrapper = mount(WritingStep, { props: { practice: PRACTICE, texts } })
+    await passDictation(wrapper)
+
     expect(wrapper.find('[data-test="writing-prompt-es"]').text()).toBe(PRACTICE.writing_prompt_es)
-    await wrapper.find('textarea').setValue('too short')
+    await wrapper.find('[data-test="writing-text"]').setValue('too short')
     expect(wrapper.find('[data-test="continue"]').attributes('disabled')).toBeDefined()
 
-    await wrapper.find('textarea').setValue('long enough now')
+    await wrapper.find('[data-test="writing-text"]').setValue('long enough now')
     expect(wrapper.find('[data-test="continue"]').attributes('disabled')).toBeUndefined()
     await wrapper.find('[data-test="continue"]').trigger('click')
-    expect(wrapper.emitted('complete')).toEqual([['long enough now']])
+    expect(wrapper.emitted('complete')).toEqual([
+      [{ dictation: 'I eat ice cream in summer', answer: 'long enough now' }],
+    ])
   })
 })
 

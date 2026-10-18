@@ -19,6 +19,13 @@ function hasItems(items: EnglishCorrection[] | string[]): boolean {
     <p class="text-sm text-foreground" data-test="feedback-summary">{{ feedback.summary }}</p>
     <p class="text-sm text-muted">{{ feedback.vocabulary }}</p>
 
+    <div v-if="feedback.dictation" data-test="feedback-dictation">
+      <h4 class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
+        {{ texts.feedbackDictation }}
+      </h4>
+      <p class="text-sm text-foreground">{{ feedback.dictation }}</p>
+    </div>
+
     <div>
       <h4 class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
         {{ texts.feedbackWriting }}
