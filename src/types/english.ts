@@ -55,3 +55,70 @@ export interface EnglishWordPage {
   items: EnglishWordAdmin[]
   total: number
 }
+
+// --- Practica (/english) ---
+
+export interface EnglishLevelAvailability {
+  level: EnglishLevel
+  ready_words: number
+  /** Con banco suficiente para elegirlo. */
+  available: boolean
+}
+
+export interface EnglishSettings {
+  /** Nulo hasta que el usuario elige su nivel. */
+  level: EnglishLevel | null
+  levels: EnglishLevelAvailability[]
+  /** Ya domina todas las palabras de su nivel: se repiten (D19). */
+  level_completed: boolean
+}
+
+export interface EnglishLevelConfig {
+  first_letter_hint: boolean
+  tts_rate: number
+  writing_min_chars: number
+  free_speaking_seconds: number
+  /** 'es' en A1-A2: instrucciones en español. */
+  instructions_lang: 'es' | 'en'
+}
+
+/** Todo lo de una practica, incluida la respuesta (la validacion es del front, D10). */
+export interface EnglishPractice {
+  word_id: number
+  content_id: number
+  level: EnglishLevel
+  lemma: string
+  accepted_answers: string[]
+  pos: string
+  image: EnglishImage | null
+  listening_sentence: string
+  writing_prompt: string
+  writing_prompt_es: string | null
+  reading_text: string
+  reading_question: string
+  /** Palabra ya dominada que se repite: no se muestra el check (D19/D20). */
+  mastered_repeat: boolean
+  config: EnglishLevelConfig
+}
+
+/** La practica completa, enviada al llegar al cierre (D21). */
+export interface EnglishPracticeWrite {
+  word_id: number
+  content_id: number
+  vocab_revealed: boolean
+  vocab_used_synonym: boolean
+  listening_text_shown: boolean
+  writing_text: string
+  reading_transcript: string | null
+  reading_match_pct: number | null
+  free_transcript: string | null
+  speaking_skipped: boolean
+  audio_seconds: number
+  mastered: boolean
+}
+
+export interface EnglishPracticeSaved {
+  id: number
+  mastered: boolean
+  was_mastered: boolean
+}

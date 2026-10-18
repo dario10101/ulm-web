@@ -3,6 +3,7 @@ import {
   CalendarDays,
   GraduationCap,
   HelpCircle,
+  Languages,
   LayoutDashboard,
   ListChecks,
   Newspaper,
@@ -44,6 +45,12 @@ export const mainNavItems: NavItem[] = [
     permission: 'planning',
   },
   { label: 'Study & review', to: { name: 'admin-learning' }, icon: GraduationCap },
+  {
+    label: 'English',
+    to: { name: 'admin-english' },
+    icon: Languages,
+    permission: 'english',
+  },
   {
     label: 'Analytics',
     to: { name: 'admin-analytics' },

@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   CreditCard,
+  GraduationCap,
   KeyRound,
   Landmark,
   Languages,
@@ -12,6 +13,8 @@ import {
   Users,
 } from '@lucide/vue'
 import type { Component } from 'vue'
+
+import type { Permission } from '@/config/permissions'
 
 /**
  * Paneles de parametros. Cada uno tiene su URL:
@@ -25,11 +28,21 @@ export interface SettingsSection {
   icon: Component
   group: 'Account' | 'System'
   adminOnly: boolean
+  /** Solo con este permiso de dominio (ej. el nivel de ingles). */
+  permission?: Permission
 }
 
 export const settingsSections: SettingsSection[] = [
   { id: 'general', label: 'General', icon: UserRound, group: 'Account', adminOnly: false },
   { id: 'appearance', label: 'Appearance', icon: Palette, group: 'Account', adminOnly: false },
+  {
+    id: 'english',
+    label: 'English',
+    icon: GraduationCap,
+    group: 'Account',
+    adminOnly: false,
+    permission: 'english',
+  },
   { id: 'users', label: 'Users', icon: Users, group: 'System', adminOnly: true },
   {
     id: 'expense-categories',

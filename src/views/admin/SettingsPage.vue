@@ -7,6 +7,7 @@ import AccessPanel from '@/components/params/AccessPanel.vue'
 import AppearancePanel from '@/components/params/AppearancePanel.vue'
 import CalendarEventsPanel from '@/components/params/CalendarEventsPanel.vue'
 import EnglishBankPanel from '@/components/params/EnglishBankPanel.vue'
+import EnglishLevelPanel from '@/components/params/EnglishLevelPanel.vue'
 import IconCatalogPanel from '@/components/params/IconCatalogPanel.vue'
 import UsersPanel from '@/components/params/UsersPanel.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
@@ -19,12 +20,12 @@ import {
 import { defaultExpenseCategoriesApi, paymentMethodsApi } from '@/services/paramsApi'
 
 // /admin solo se ve con sesion (router/authGuard.ts), asi que user ya esta cargado.
-const { user, isAdmin } = useAuth()
+const { user, isAdmin, can } = useAuth()
 const route = useRoute()
 const router = useRouter()
 
 const visibleSections = computed(() =>
-  settingsSections.filter((s) => !s.adminOnly || isAdmin.value),
+  settingsSections.filter((s) => (!s.adminOnly || isAdmin.value) && can(s.permission)),
 )
 
 const groups = computed(() =>
@@ -155,6 +156,8 @@ const toggles = [
         </template>
 
         <AppearancePanel v-else-if="active.id === 'appearance'" />
+
+        <EnglishLevelPanel v-else-if="active.id === 'english'" />
 
         <UsersPanel v-else-if="active.id === 'users'" />
 

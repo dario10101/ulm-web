@@ -75,6 +75,13 @@ export const adminRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/admin/LearningPage.vue'),
   },
   {
+    // Practica de ingles: una palabra por practica (ENGLISH-TEACHER-PLAN.md).
+    path: 'english',
+    name: 'admin-english',
+    component: () => import('@/views/admin/EnglishPage.vue'),
+    meta: { permission: 'english' },
+  },
+  {
     path: 'analytics',
     name: 'admin-analytics',
     component: () => import('@/views/admin/AnalyticsPage.vue'),
