@@ -26,6 +26,7 @@ export type PracticeStep =
 export interface PracticeResults {
   vocabRevealed: boolean
   vocabUsedSynonym: boolean
+  vocabHintUsed: boolean
   listeningTextShown: boolean
   dictationText: string | null
   writingText: string
@@ -40,6 +41,7 @@ function emptyResults(): PracticeResults {
   return {
     vocabRevealed: false,
     vocabUsedSynonym: false,
+    vocabHintUsed: false,
     listeningTextShown: false,
     dictationText: null,
     writingText: '',
@@ -87,9 +89,14 @@ export function usePractice(options: { speaking?: boolean } = {}) {
     }
   }
 
-  function completeVocabulary(outcome: { revealed: boolean; usedSynonym: boolean }) {
+  function completeVocabulary(outcome: {
+    revealed: boolean
+    usedSynonym: boolean
+    hintUsed?: boolean
+  }) {
     results.vocabRevealed = outcome.revealed
     results.vocabUsedSynonym = outcome.usedSynonym
+    results.vocabHintUsed = outcome.hintUsed ?? false
     step.value = 'listening'
   }
 
@@ -142,6 +149,7 @@ export function usePractice(options: { speaking?: boolean } = {}) {
         content_id: practice.value.content_id,
         vocab_revealed: results.vocabRevealed,
         vocab_used_synonym: results.vocabUsedSynonym,
+        vocab_hint_used: results.vocabHintUsed,
         listening_text_shown: results.listeningTextShown,
         dictation_text: results.dictationText,
         writing_text: results.writingText,

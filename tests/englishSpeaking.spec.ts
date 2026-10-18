@@ -35,6 +35,7 @@ const PRACTICE: EnglishPractice = {
   writing_prompt_es: null,
   reading_text: 'The big dog runs fast. It likes the park. Do you have a pet?',
   reading_question: 'Do you have a pet?',
+  hint: null,
   mastered_repeat: false,
   config: {
     first_letter_hint: false,

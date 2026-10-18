@@ -8,17 +8,21 @@ import type { EnglishPractice } from '@/types/english'
 /**
  * Paso 1: imagen sin la palabra escrita; una casilla por letra. Al completar
  * todas se valida sola, sin boton (D9: sin tiempo limite ni registro de
- * intentos). Mientras no este bien se puede ver la palabra; bien o revelada,
- * se habilita continuar.
+ * intentos). Antes de rendirse hay una pista (D34: en español en A1-A2) y
+ * mientras no este bien se puede ver la palabra; bien o revelada, se habilita
+ * continuar. Usar la pista no cambia el check "la domino": acerto solo.
  */
 const props = defineProps<{ practice: EnglishPractice; texts: PracticeTexts }>()
-const emit = defineEmits<{ complete: [outcome: { revealed: boolean; usedSynonym: boolean }] }>()
+const emit = defineEmits<{
+  complete: [outcome: { revealed: boolean; usedSynonym: boolean; hintUsed: boolean }]
+}>()
 
 type State = 'typing' | 'wrong' | 'correct' | 'synonym' | 'revealed'
 
 const slots = computed(() => letterSlots(props.practice.lemma))
 const letters = ref<string[]>(slots.value.map((slot) => (slot.fixed ? slot.char : '')))
 const state = ref<State>('typing')
+const hintShown = ref(false)
 const inputs = ref<HTMLInputElement[]>([])
 
 const done = computed(() => ['correct', 'synonym', 'revealed'].includes(state.value))
@@ -97,7 +101,11 @@ function reveal() {
 }
 
 function proceed() {
-  emit('complete', { revealed: state.value === 'revealed', usedSynonym: state.value === 'synonym' })
+  emit('complete', {
+    revealed: state.value === 'revealed',
+    usedSynonym: state.value === 'synonym',
+    hintUsed: hintShown.value,
+  })
 }
 
 focusSlot(firstEditable.value)
@@ -137,6 +145,14 @@ focusSlot(firstEditable.value)
     </p>
     <p v-if="practice.pos === 'verb'" class="text-center text-xs text-muted">
       {{ texts.verbHint }}
+    </p>
+
+    <p
+      v-if="hintShown && practice.hint"
+      class="mx-auto max-w-md rounded-lg bg-surface-hover px-3 py-2 text-center text-sm text-foreground"
+      data-test="vocab-hint"
+    >
+      <span class="font-medium text-muted">{{ texts.hint }}:</span> {{ practice.hint }}
     </p>
 
     <div class="flex flex-wrap justify-center gap-1.5" data-test="vocab-slots">
@@ -186,6 +202,14 @@ focusSlot(firstEditable.value)
     </p>
 
     <div class="flex justify-center gap-2">
+      <BaseButton
+        v-if="!done && practice.hint && !hintShown"
+        variant="ghost"
+        data-test="show-hint"
+        @click="hintShown = true"
+      >
+        {{ texts.showHint }}
+      </BaseButton>
       <BaseButton v-if="!done" variant="secondary" data-test="show-word" @click="reveal">
         {{ texts.showWord }}
       </BaseButton>

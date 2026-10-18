@@ -50,6 +50,7 @@ export const PRACTICE: EnglishPractice = {
   writing_prompt_es: 'Escribe cuándo comes helado.',
   reading_text: 'I eat ice cream in summer. It is cold. Do you like it?',
   reading_question: 'Do you like it?',
+  hint: 'Postre frío y dulce.',
   mastered_repeat: false,
   config: {
     first_letter_hint: true,
@@ -139,6 +140,7 @@ describe('usePractice', () => {
       content_id: 9,
       vocab_revealed: true,
       vocab_used_synonym: false,
+      vocab_hint_used: false,
       listening_text_shown: true,
       dictation_text: 'I eat ice cream',
       writing_text: 'I eat it in summer.',
@@ -156,14 +158,17 @@ describe('usePractice', () => {
     expect(flow.mastered.value).toBe(true)
   })
 
-  it('starts the check marked when the word was guessed', async () => {
+  it('starts the check marked when the word was guessed, even with the hint', async () => {
     const flow = usePractice({ speaking: false })
     await flow.start()
-    flow.completeVocabulary({ revealed: false, usedSynonym: false })
+    flow.completeVocabulary({ revealed: false, usedSynonym: false, hintUsed: true })
     flow.completeListening(false)
     await flow.completeWriting({ dictation: '', answer: 'I eat it in summer.' })
 
-    expect(vi.mocked(savePractice).mock.calls[0][0].mastered).toBe(true)
+    expect(vi.mocked(savePractice).mock.calls[0][0]).toMatchObject({
+      mastered: true,
+      vocab_hint_used: true,
+    })
   })
 
   it('shows the error when there is no practice to load', async () => {
@@ -201,7 +206,32 @@ describe('VocabularyStep', () => {
     expect(wrapper.find('[data-test="vocab-feedback"]').text()).toBe(texts.correct)
     await wrapper.find('[data-test="continue"]').trigger('click')
 
-    expect(wrapper.emitted('complete')).toEqual([[{ revealed: false, usedSynonym: false }]])
+    expect(wrapper.emitted('complete')).toEqual([
+      [{ revealed: false, usedSynonym: false, hintUsed: false }],
+    ])
+  })
+
+  it('shows the hint on demand and reports it was used', async () => {
+    const wrapper = mount(VocabularyStep, { props: { practice: PRACTICE, texts } })
+    expect(wrapper.find('[data-test="vocab-hint"]').exists()).toBe(false)
+
+    await wrapper.find('[data-test="show-hint"]').trigger('click')
+    expect(wrapper.find('[data-test="vocab-hint"]').text()).toContain('Postre frío y dulce.')
+    expect(wrapper.find('[data-test="show-hint"]').exists()).toBe(false)
+
+    await typeWord(wrapper, 'icecream')
+    await wrapper.find('[data-test="continue"]').trigger('click')
+    expect(wrapper.emitted('complete')).toEqual([
+      [{ revealed: false, usedSynonym: false, hintUsed: true }],
+    ])
+  })
+
+  it('has no hint button when the word has no hint', () => {
+    const wrapper = mount(VocabularyStep, {
+      props: { practice: { ...PRACTICE, hint: null }, texts },
+    })
+
+    expect(wrapper.find('[data-test="show-hint"]').exists()).toBe(false)
   })
 
   it('reveals the word and lets the user continue', async () => {
@@ -210,7 +240,9 @@ describe('VocabularyStep', () => {
     await wrapper.find('[data-test="show-word"]').trigger('click')
     await wrapper.find('[data-test="continue"]').trigger('click')
 
-    expect(wrapper.emitted('complete')).toEqual([[{ revealed: true, usedSynonym: false }]])
+    expect(wrapper.emitted('complete')).toEqual([
+      [{ revealed: true, usedSynonym: false, hintUsed: false }],
+    ])
   })
 
   it('accepts a synonym and shows the target word', async () => {
@@ -221,7 +253,9 @@ describe('VocabularyStep', () => {
 
     expect(wrapper.find('[data-test="vocab-feedback"]').text()).toContain('sofa')
     await wrapper.find('[data-test="continue"]').trigger('click')
-    expect(wrapper.emitted('complete')).toEqual([[{ revealed: false, usedSynonym: true }]])
+    expect(wrapper.emitted('complete')).toEqual([
+      [{ revealed: false, usedSynonym: true, hintUsed: false }],
+    ])
   })
 })
 

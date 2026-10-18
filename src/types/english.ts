@@ -105,6 +105,8 @@ export interface EnglishPractice {
   writing_prompt_es: string | null
   reading_text: string
   reading_question: string
+  /** Pista del vocabulario (español en A1-A2), detras de "Ver pista". */
+  hint: string | null
   /** Palabra ya dominada que se repite: no se muestra el check (D19/D20). */
   mastered_repeat: boolean
   config: EnglishLevelConfig
@@ -116,6 +118,7 @@ export interface EnglishPracticeWrite {
   content_id: number
   vocab_revealed: boolean
   vocab_used_synonym: boolean
+  vocab_hint_used: boolean
   listening_text_shown: boolean
   /** Dictado (fase 1 del writing); la coincidencia la calcula el backend. */
   dictation_text: string | null
