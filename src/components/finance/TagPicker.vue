@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import NewCatalogLink from '@/components/finance/NewCatalogLink.vue'
 import { financeColorClasses } from '@/config/financeVisuals'
 import type { ExpenseTagOption } from '@/types/expense'
 
-// Multi-seleccion de tags de finanzas (los mismos para gastos e ingresos):
-// el chip se colorea/descolorea al toggle, igual que en "New expense".
-defineProps<{ tags: ExpenseTagOption[] }>()
+// Multi-seleccion de tags de finanzas (los mismos para gastos e ingresos, y
+// por usuario): el chip se colorea/descolorea al toggle. `manageType` (id de
+// config/recordTypes.ts) muestra el enlace "+ New" a su panel de tags (solo en
+// el alta: en la edicion no se sale del registro).
+defineProps<{ tags: ExpenseTagOption[]; manageType?: string }>()
 
 const selected = defineModel<number[]>({ required: true })
 
@@ -17,7 +20,11 @@ function toggle(tagId: number) {
 
 <template>
   <div class="text-sm">
-    <span class="mb-2 block text-muted">Tags (optional)</span>
+    <!-- "+ New" en la linea del titulo (ver NewCatalogLink): no se mezcla con los chips. -->
+    <div class="mb-2 flex items-center justify-between gap-2">
+      <span class="text-muted">Tags (optional)</span>
+      <NewCatalogLink v-if="manageType" :type="manageType" panel="tags" noun="tag" />
+    </div>
     <p v-if="!tags.length" class="text-xs text-muted">No tags yet.</p>
     <div class="flex flex-wrap gap-1.5">
       <button

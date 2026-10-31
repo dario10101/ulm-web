@@ -95,6 +95,33 @@ describe('paneles de parametros', () => {
     expect(wrapper.text()).toContain('Show archived (1)')
   })
 
+  it('el Back vuelve a la pagina que abrio el panel (?from=) y las pestañas lo conservan', async () => {
+    mockApi({ 'GET /finances/tags': { status: 200, body: [TAG] } })
+    const { wrapper } = await mountAdminRoute(
+      '/admin/records/expense/tags?from=/admin/quick-add/expense',
+      'admin-records',
+    )
+
+    const back = wrapper.findAll('a').find((a) => a.text() === 'Back')!
+    expect(back.attributes('href')).toBe('/admin/quick-add/expense')
+    const categoriesTab = wrapper.findAll('a').find((a) => a.text() === 'Categories')!
+    expect(categoriesTab.attributes('href')).toBe(
+      '/admin/records/expense/categories?from=/admin/quick-add/expense',
+    )
+  })
+
+  it('un ?from= fuera del area privada se ignora (open redirect)', async () => {
+    mockApi({ 'GET /finances/tags': { status: 200, body: [TAG] } })
+    const { wrapper } = await mountAdminRoute(
+      '/admin/records/expense/tags?from=https://evil.example.com',
+      'admin-records',
+    )
+
+    const back = wrapper.findAll('a').find((a) => a.text().startsWith('Back'))!
+    expect(back.text()).toBe('Back to expense records')
+    expect(back.attributes('href')).toBe('/admin/records/expense')
+  })
+
   it('un panel que el tipo no tiene vuelve a sus registros', async () => {
     mockApi({})
     const { router } = await mountAdminRoute('/admin/records/expense/sources', 'admin-records')
@@ -150,6 +177,53 @@ describe('paneles de parametros', () => {
     // Usada: borrarla la archiva.
     await wrapper.find('button[title="Delete Food"]').trigger('click')
     expect(wrapper.find('[role="alertdialog"]').text()).toContain('archived')
+  })
+
+  it('View records -> Expense administra los metodos de pago propios', async () => {
+    mockApi({
+      'GET /finances/payment-methods': {
+        status: 200,
+        body: [
+          {
+            id: 8,
+            name: 'Nequi',
+            icon_key: 'smartphone',
+            color_key: 'violet',
+            status: 'ENABLED',
+            usage_count: 0,
+          },
+        ],
+      },
+    })
+    const { wrapper } = await mountAdminRoute(
+      '/admin/records/expense/payment-methods',
+      'admin-records',
+    )
+
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(
+      expect.arrayContaining(['Tags', 'Categories', 'Payment methods']),
+    )
+    expect(wrapper.text()).toContain('Nequi')
+    expect(wrapper.text()).toContain('Not used yet')
+  })
+
+  it('Settings administra la plantilla de fuentes de ingreso (sin archivado)', async () => {
+    mockApi({
+      'GET /system/income-sources': {
+        status: 200,
+        body: [{ id: 1, name: 'Salary', type: 'DIRECT', subcategory_count: 3 }],
+      },
+    })
+    const { wrapper } = await mountAdminRoute(
+      '/admin/settings/income-sources',
+      'admin-settings',
+      ME_ALL,
+    )
+
+    expect(wrapper.text()).toContain('Default income sources')
+    expect(wrapper.text()).toContain('Salary')
+    expect(wrapper.text()).toContain('3 subcategories')
+    expect(wrapper.text()).not.toContain('Not used yet')
   })
 
   it('la plantilla de categorias del admin no se archiva: borrar es borrar', async () => {

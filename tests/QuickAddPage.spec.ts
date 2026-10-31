@@ -14,9 +14,13 @@ function typeMenuClass(wrapper: VueWrapper): string {
 
 describe('QuickAddPage', () => {
   beforeEach(() => {
-    global.fetch = vi.fn(() =>
-      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([]) }),
-    ) as unknown as typeof fetch
+    // Listas vacias, salvo las opciones de gasto, que son un objeto.
+    global.fetch = vi.fn((url: string) => {
+      const body = String(url).includes('/expenses/options')
+        ? { categories: [], payment_methods: [], tags: [] }
+        : []
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body) })
+    }) as unknown as typeof fetch
   })
 
   it('sin tipo en la URL muestra solo el menu, en grilla', async () => {

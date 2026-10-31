@@ -8,24 +8,49 @@ import ParamDialog from '@/components/params/ParamDialog.vue'
 import { useCatalogPanel } from '@/composables/useCatalogPanel'
 import { useIncomeOptions } from '@/composables/useIncomeOptions'
 import { ApiError } from '@/lib/http'
-import { incomeSourcesApi, incomeSubcategoriesApi } from '@/services/paramsApi'
-import type { IncomeSourceAdmin, IncomeSubcategoryAdmin } from '@/types/params'
+import { type CatalogApi, incomeSourcesApi, incomeSubcategoriesApi } from '@/services/paramsApi'
+import type {
+  IncomeSourceItem,
+  IncomeSourceWritePayload,
+  IncomeSubcategoryItem,
+  IncomeSubcategoryWritePayload,
+} from '@/types/params'
+
+/**
+ * Subcategorias de ingreso, agrupadas por fuente. Por defecto las del usuario;
+ * Settings lo reutiliza con las APIs de la plantilla (subcategorias y sus
+ * fuentes) y un `hint`.
+ */
+const props = withDefaults(
+  defineProps<{
+    api?: CatalogApi<IncomeSubcategoryItem, IncomeSubcategoryWritePayload>
+    sourcesApi?: CatalogApi<IncomeSourceItem, IncomeSourceWritePayload>
+    title?: string
+    hint?: string
+  }>(),
+  {
+    api: () => incomeSubcategoriesApi,
+    sourcesApi: () => incomeSourcesApi,
+    title: 'Income subcategories',
+    hint: undefined,
+  },
+)
 
 const incomeOptions = useIncomeOptions()
 
-const panel = useCatalogPanel(incomeSubcategoriesApi, {
-  toPayload: (sub: IncomeSubcategoryAdmin) => ({ name: sub.name, source_id: sub.source_id }),
+const panel = useCatalogPanel(props.api, {
+  toPayload: (sub: IncomeSubcategoryItem) => ({ name: sub.name, source_id: sub.source_id }),
   onChanged: incomeOptions.invalidate,
 })
 const { dialogOpen, editing, saving, formError, deleting, deleteSaving, deleteError } = panel
 
 // Fuentes (incluidas las archivadas) para agrupar y para elegir en el formulario.
-const sources = shallowRef<IncomeSourceAdmin[]>([])
+const sources = shallowRef<IncomeSourceItem[]>([])
 const sourcesError = ref<string | null>(null)
 
 async function loadSources() {
   try {
-    sources.value = await incomeSourcesApi.list()
+    sources.value = await props.sourcesApi.list()
   } catch (err) {
     sourcesError.value = err instanceof ApiError ? err.message : 'Could not load the sources.'
   }
@@ -46,7 +71,7 @@ const sortedItems = computed(() => {
   )
 })
 
-const activeSources = computed(() => sources.value.filter((s) => s.status === 'ENABLED'))
+const activeSources = computed(() => sources.value.filter((s) => s.status !== 'DISABLED'))
 
 const name = ref('')
 const sourceId = ref<number | null>(null)
@@ -60,7 +85,7 @@ function openCreate() {
   panel.openCreate()
 }
 
-function openEdit(sub: IncomeSubcategoryAdmin) {
+function openEdit(sub: IncomeSubcategoryItem) {
   name.value = sub.name
   sourceId.value = sub.source_id
   panel.openEdit(sub)
@@ -77,7 +102,7 @@ onMounted(() => Promise.all([panel.load(), loadSources()]))
 <template>
   <div>
     <CatalogList
-      title="Income subcategories"
+      :title="title"
       add-label="Add subcategory"
       empty-text="No subcategories yet. Each one belongs to a source (e.g. BONUS under Salary)."
       :items="sortedItems"
@@ -139,6 +164,7 @@ onMounted(() => Promise.all([panel.load(), loadSources()]))
           class="w-full rounded-lg border border-subtle bg-background px-3 py-2 text-sm"
         />
       </label>
+      <p v-if="hint" class="text-xs text-muted">{{ hint }}</p>
     </ParamDialog>
 
     <ConfirmDeleteDialog

@@ -9,12 +9,17 @@ import IncomeSubcategoriesPanel from '@/components/params/IncomeSubcategoriesPan
 import TagsPanel from '@/components/params/TagsPanel.vue'
 import { recordParamPanels } from '@/config/paramPanels'
 import { recordTypes } from '@/config/recordTypes'
-import { expenseCategoriesApi } from '@/services/paramsApi'
+import { safeAdminPath } from '@/lib/redirect'
+import { expenseCategoriesApi, paymentMethodsApi } from '@/services/paramsApi'
 
 /**
  * Parametros de un dominio, abiertos desde "View records"
  * (/admin/records/income/sources). Cada panel tiene su URL; las pestañas
  * permiten saltar entre los del mismo tipo de registro.
+ *
+ * `?from=` es la pagina que abrio el panel (ej. "+ New" en Add record): el
+ * "Back" vuelve ahi. Viene de la URL, asi que solo se acepta una ruta del
+ * area privada (safeAdminPath, contra open redirect); si no, a los registros.
  */
 const route = useRoute()
 const router = useRouter()
@@ -22,6 +27,7 @@ const router = useRouter()
 const recordType = computed(() => recordTypes.find((t) => t.id === route.params.type))
 const panels = computed(() => recordParamPanels[String(route.params.type)] ?? [])
 const active = computed(() => panels.value.find((p) => p.id === route.params.panel) ?? null)
+const returnPath = computed(() => safeAdminPath(route.query.from))
 
 // Tipo sin paneles o panel inexistente: de vuelta a los registros de ese tipo.
 watch(
@@ -37,11 +43,11 @@ watch(
   <div v-if="active && recordType" class="space-y-6">
     <div>
       <RouterLink
-        :to="{ name: 'admin-records', params: { type: recordType.id } }"
+        :to="returnPath ?? { name: 'admin-records', params: { type: recordType.id } }"
         class="mb-2 inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
       >
         <ArrowLeft class="h-4 w-4" />
-        Back to {{ recordType.label.toLowerCase() }} records
+        {{ returnPath ? 'Back' : `Back to ${recordType.label.toLowerCase()} records` }}
       </RouterLink>
       <h1 class="text-xl font-semibold text-foreground">{{ recordType.label }} settings</h1>
       <p class="text-sm text-muted">
@@ -54,7 +60,11 @@ watch(
       <RouterLink
         v-for="panel in panels"
         :key="panel.id"
-        :to="{ name: 'admin-record-params', params: { type: recordType.id, panel: panel.id } }"
+        :to="{
+          name: 'admin-record-params',
+          params: { type: recordType.id, panel: panel.id },
+          query: returnPath ? { from: returnPath } : {},
+        }"
         class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
         :class="
           active.id === panel.id
@@ -75,6 +85,13 @@ watch(
         title="Expense categories"
         noun="category"
         empty-text="No categories yet. Add one to start recording expenses."
+      />
+      <IconCatalogPanel
+        v-else-if="active.id === 'payment-methods'"
+        :api="paymentMethodsApi"
+        title="Payment methods"
+        noun="payment method"
+        empty-text="No payment methods yet. Add one to start recording expenses."
       />
       <IncomeSourcesPanel v-else-if="active.id === 'sources'" />
       <IncomeSubcategoriesPanel v-else-if="active.id === 'subcategories'" />

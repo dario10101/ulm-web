@@ -10,6 +10,7 @@ import { useCatalogPanel } from '@/composables/useCatalogPanel'
 import { useExpenseOptions } from '@/composables/useExpenseOptions'
 import { useIncomeOptions } from '@/composables/useIncomeOptions'
 import { financeColorClasses } from '@/config/financeVisuals'
+import { uppercaseInputValue } from '@/lib/text'
 import { tagsApi } from '@/services/paramsApi'
 import type { TagAdmin } from '@/types/params'
 
@@ -84,11 +85,12 @@ onMounted(panel.load)
       <label class="block text-sm">
         <span class="mb-1 block text-muted">Name *</span>
         <input
-          v-model="name"
+          :value="name"
           type="text"
           maxlength="60"
           required
-          class="w-full rounded-lg border border-subtle bg-background px-3 py-2 text-sm"
+          class="w-full rounded-lg border border-subtle bg-background px-3 py-2 text-sm uppercase"
+          @input="name = uppercaseInputValue($event)"
         />
       </label>
       <div class="text-sm">

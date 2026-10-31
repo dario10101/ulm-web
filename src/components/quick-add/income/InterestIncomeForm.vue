@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onDeactivated, onMounted, ref, watch } from 'vue'
 
+import NewCatalogLink from '@/components/finance/NewCatalogLink.vue'
 import TagPicker from '@/components/finance/TagPicker.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import CollapsibleNote from '@/components/ui/CollapsibleNote.vue'
@@ -276,10 +277,14 @@ const modes: { id: EntryMode; label: string }[] = [
   <form class="space-y-5" @submit.prevent="handleSubmit">
     <!-- Fila 1: que producto, que mes y como se obtiene el interes. -->
     <div class="flex flex-wrap items-end gap-6">
-      <label class="text-sm">
-        <span class="mb-1 block text-muted">Source *</span>
+      <div class="w-48 text-sm">
+        <div class="mb-1 flex items-center justify-between gap-2">
+          <span class="text-muted">Source *</span>
+          <NewCatalogLink v-if="!isEdit" type="income" panel="sources" noun="source" />
+        </div>
         <select
           v-model="sourceId"
+          aria-label="Source"
           data-test="interest-source"
           class="w-48 rounded-lg border border-subtle bg-surface px-2 py-1.5 text-sm"
         >
@@ -287,7 +292,7 @@ const modes: { id: EntryMode; label: string }[] = [
             {{ source.name }}
           </option>
         </select>
-      </label>
+      </div>
 
       <div class="text-sm">
         <span class="mb-1 block text-muted">Period *</span>
@@ -341,7 +346,10 @@ const modes: { id: EntryMode; label: string }[] = [
     </div>
 
     <div class="text-sm">
-      <span class="mb-1 block text-muted">Subcategory *</span>
+      <div class="mb-1 flex items-center justify-between gap-2">
+        <span class="text-muted">Subcategory *</span>
+        <NewCatalogLink v-if="!isEdit" type="income" panel="subcategories" noun="subcategory" />
+      </div>
       <p v-if="sourceId && !subcategories.length" class="py-1.5 text-xs text-muted">
         This source has no subcategories.
       </p>
@@ -436,7 +444,7 @@ const modes: { id: EntryMode; label: string }[] = [
 
     <CollapsibleNote v-model="note" />
 
-    <TagPicker v-model="tagIds" :tags="tagOptions" />
+    <TagPicker v-model="tagIds" :tags="tagOptions" :manage-type="isEdit ? undefined : 'income'" />
 
     <div class="flex items-center gap-3" :class="isEdit && 'flex-row-reverse'">
       <BaseButton type="submit" :disabled="submitting">

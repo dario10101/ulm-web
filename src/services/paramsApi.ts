@@ -5,7 +5,9 @@ import type {
   CatalogDeleteResponse,
   CldEvent,
   CldEventWritePayload,
-  DefaultCategory,
+  DefaultIconCatalog,
+  DefaultIncomeSource,
+  DefaultIncomeSubcategory,
   IconCatalogAdmin,
   IconCatalogWritePayload,
   IncomeSourceAdmin,
@@ -43,6 +45,9 @@ function catalogApi<Item, Payload>(path: string): CatalogApi<Item, Payload> {
 export const expenseCategoriesApi = catalogApi<IconCatalogAdmin, IconCatalogWritePayload>(
   '/finances/expense-categories',
 )
+export const paymentMethodsApi = catalogApi<IconCatalogAdmin, IconCatalogWritePayload>(
+  '/finances/payment-methods',
+)
 export const tagsApi = catalogApi<TagAdmin, TagWritePayload>('/finances/tags')
 export const incomeSourcesApi = catalogApi<IncomeSourceAdmin, IncomeSourceWritePayload>(
   '/finances/income-sources',
@@ -52,15 +57,22 @@ export const incomeSubcategoriesApi = catalogApi<
   IncomeSubcategoryWritePayload
 >('/finances/income-subcategories')
 
-// --- Del sistema (solo admin) ---
+// --- Del sistema (solo admin): plantillas que se copian a cada usuario nuevo.
+// DELETE siempre borra (nada las referencia).
 
-/** Plantilla que se copia a cada usuario nuevo; DELETE siempre borra. */
-export const defaultExpenseCategoriesApi = catalogApi<DefaultCategory, IconCatalogWritePayload>(
+export const defaultExpenseCategoriesApi = catalogApi<DefaultIconCatalog, IconCatalogWritePayload>(
   '/system/expense-categories',
 )
-export const paymentMethodsApi = catalogApi<IconCatalogAdmin, IconCatalogWritePayload>(
+export const defaultPaymentMethodsApi = catalogApi<DefaultIconCatalog, IconCatalogWritePayload>(
   '/system/payment-methods',
 )
+export const defaultIncomeSourcesApi = catalogApi<DefaultIncomeSource, IncomeSourceWritePayload>(
+  '/system/income-sources',
+)
+export const defaultIncomeSubcategoriesApi = catalogApi<
+  DefaultIncomeSubcategory,
+  IncomeSubcategoryWritePayload
+>('/system/income-subcategories')
 
 export function getAccessInfo(): Promise<AccessInfo> {
   return getJson<AccessInfo>('/system/access')

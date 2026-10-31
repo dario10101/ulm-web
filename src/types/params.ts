@@ -50,6 +50,21 @@ export interface IncomeSourceWritePayload {
 
 export interface IncomeSubcategoryAdmin extends IncomeSubcategoryOption, AdminCatalogItem {}
 
+/** Fuente de la plantilla para usuarios nuevos: sin status ni uso. */
+export interface DefaultIncomeSource extends CatalogItem {
+  type: IncomeCatalogType
+  subcategory_count: number
+}
+
+/** Subcategoria de la plantilla para usuarios nuevos: sin status ni uso. */
+export interface DefaultIncomeSubcategory extends CatalogItem {
+  source_id: number
+}
+
+/** Lo que listan los paneles de ingreso: del usuario o de la plantilla. */
+export type IncomeSourceItem = IncomeSourceAdmin | DefaultIncomeSource
+export type IncomeSubcategoryItem = IncomeSubcategoryAdmin | DefaultIncomeSubcategory
+
 export interface IncomeSubcategoryWritePayload {
   name: string
   source_id: number
@@ -59,14 +74,14 @@ export interface IncomeSubcategoryWritePayload {
 /** Categoria de gasto del usuario o metodo de pago (mismos campos). */
 export interface IconCatalogAdmin extends CategoryOption, AdminCatalogItem {}
 
-/** Categoria de la plantilla para usuarios nuevos: sin status ni uso. */
-export interface DefaultCategory extends CatalogItem {
+/** Categoria o metodo de pago de la plantilla para usuarios nuevos: sin status ni uso. */
+export interface DefaultIconCatalog extends CatalogItem {
   icon_key: string
   color_key: string
 }
 
 /** Lo que lista IconCatalogPanel: cualquiera de los dos anteriores. */
-export type IconCatalogItem = IconCatalogAdmin | DefaultCategory
+export type IconCatalogItem = IconCatalogAdmin | DefaultIconCatalog
 
 export interface IconCatalogWritePayload {
   name: string

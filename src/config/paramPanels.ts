@@ -53,8 +53,22 @@ export const settingsSections: SettingsSection[] = [
   },
   {
     id: 'payment-methods',
-    label: 'Payment methods',
+    label: 'Default payment methods',
     icon: CreditCard,
+    group: 'System',
+    adminOnly: true,
+  },
+  {
+    id: 'income-sources',
+    label: 'Default sources',
+    icon: Landmark,
+    group: 'System',
+    adminOnly: true,
+  },
+  {
+    id: 'income-subcategories',
+    label: 'Default subcategories',
+    icon: ListTree,
     group: 'System',
     adminOnly: true,
   },
@@ -85,11 +99,16 @@ export interface RecordParamPanel {
 
 const TAGS: RecordParamPanel = { id: 'tags', label: 'Tags', icon: Tags }
 const EXPENSE_CATEGORIES: RecordParamPanel = { id: 'categories', label: 'Categories', icon: Shapes }
+const PAYMENT_METHODS: RecordParamPanel = {
+  id: 'payment-methods',
+  label: 'Payment methods',
+  icon: CreditCard,
+}
 
 /** Paneles por tipo de registro (id de config/recordTypes.ts). Los tags son
  * los mismos en gastos e ingresos: el panel es uno, accesible desde ambos. */
 export const recordParamPanels: Record<string, RecordParamPanel[]> = {
-  expense: [TAGS, EXPENSE_CATEGORIES],
+  expense: [TAGS, EXPENSE_CATEGORIES, PAYMENT_METHODS],
   income: [
     TAGS,
     { id: 'sources', label: 'Sources', icon: Landmark },

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onDeactivated, onMounted, ref, watch } from 'vue'
 
+import NewCatalogLink from '@/components/finance/NewCatalogLink.vue'
 import TagPicker from '@/components/finance/TagPicker.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import CollapsibleNote from '@/components/ui/CollapsibleNote.vue'
@@ -182,10 +183,14 @@ onDeactivated(() => {
 
     <!-- Fila 2: de donde viene y que tipo de ingreso es. -->
     <div class="flex flex-wrap items-end gap-6">
-      <label class="text-sm">
-        <span class="mb-1 block text-muted">Source *</span>
+      <div class="w-48 text-sm">
+        <div class="mb-1 flex items-center justify-between gap-2">
+          <span class="text-muted">Source *</span>
+          <NewCatalogLink v-if="!isEdit" type="income" panel="sources" noun="source" />
+        </div>
         <select
           v-model="sourceId"
+          aria-label="Source"
           data-test="direct-source"
           class="w-48 rounded-lg border border-subtle bg-surface px-2 py-1.5 text-sm"
           :class="sourceId ? '' : 'text-muted'"
@@ -195,10 +200,13 @@ onDeactivated(() => {
             {{ source.name }}
           </option>
         </select>
-      </label>
+      </div>
 
       <div class="text-sm">
-        <span class="mb-1 block text-muted">Subcategory *</span>
+        <div class="mb-1 flex items-center justify-between gap-2">
+          <span class="text-muted">Subcategory *</span>
+          <NewCatalogLink v-if="!isEdit" type="income" panel="subcategories" noun="subcategory" />
+        </div>
         <p v-if="!sourceId" class="py-1.5 text-xs text-muted">Select a source first.</p>
         <p v-else-if="!subcategories.length" class="py-1.5 text-xs text-muted">
           This source has no subcategories.
@@ -225,7 +233,7 @@ onDeactivated(() => {
 
     <CollapsibleNote v-model="note" />
 
-    <TagPicker v-model="tagIds" :tags="tagOptions" />
+    <TagPicker v-model="tagIds" :tags="tagOptions" :manage-type="isEdit ? undefined : 'income'" />
 
     <div class="flex items-center gap-3" :class="isEdit && 'flex-row-reverse'">
       <BaseButton type="submit" :disabled="submitting">

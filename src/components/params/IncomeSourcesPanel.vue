@@ -8,14 +8,28 @@ import ParamDialog from '@/components/params/ParamDialog.vue'
 import { useCatalogPanel } from '@/composables/useCatalogPanel'
 import { useIncomeOptions } from '@/composables/useIncomeOptions'
 import { INCOME_TYPE_OPTIONS, incomeTypeLabel } from '@/lib/incomeParams'
-import { incomeSourcesApi } from '@/services/paramsApi'
+import { type CatalogApi, incomeSourcesApi } from '@/services/paramsApi'
 import type { IncomeCatalogType } from '@/types/income'
-import type { IncomeSourceAdmin } from '@/types/params'
+import type { IncomeSourceAdmin, IncomeSourceItem, IncomeSourceWritePayload } from '@/types/params'
+
+/**
+ * Fuentes de ingreso. Por defecto las del usuario ("View records"); Settings
+ * lo reutiliza con la API de la plantilla para usuarios nuevos (sin
+ * archivado ni uso) y un `hint` que aclara a quien afecta.
+ */
+const props = withDefaults(
+  defineProps<{
+    api?: CatalogApi<IncomeSourceItem, IncomeSourceWritePayload>
+    title?: string
+    hint?: string
+  }>(),
+  { api: () => incomeSourcesApi, title: 'Income sources', hint: undefined },
+)
 
 const incomeOptions = useIncomeOptions()
 
-const panel = useCatalogPanel(incomeSourcesApi, {
-  toPayload: (source: IncomeSourceAdmin) => ({ name: source.name, type: source.type }),
+const panel = useCatalogPanel(props.api, {
+  toPayload: (source: IncomeSourceItem) => ({ name: source.name, type: source.type }),
   onChanged: incomeOptions.invalidate,
 })
 const { dialogOpen, editing, saving, formError, deleting, deleteSaving, deleteError } = panel
@@ -29,7 +43,7 @@ function openCreate() {
   panel.openCreate()
 }
 
-function openEdit(source: IncomeSourceAdmin) {
+function openEdit(source: IncomeSourceItem) {
   name.value = source.name
   type.value = source.type
   panel.openEdit(source)
@@ -45,7 +59,7 @@ onMounted(panel.load)
 <template>
   <div>
     <CatalogList
-      title="Income sources"
+      :title="title"
       add-label="Add source"
       empty-text="No sources yet. A source is where money comes from (a salary, a savings account)."
       :items="panel.items.value"
@@ -66,7 +80,7 @@ onMounted(panel.load)
         {{ incomeTypeLabel(item.type) }} · {{ item.subcategory_count }} subcategor{{
           item.subcategory_count === 1 ? 'y' : 'ies'
         }}
-        ·
+        <template v-if="item.usage_count !== undefined">·</template>
       </template>
     </CatalogList>
 
@@ -109,6 +123,7 @@ onMounted(panel.load)
           </label>
         </div>
       </fieldset>
+      <p v-if="hint" class="text-xs text-muted">{{ hint }}</p>
       <p v-if="editing && editing.usage_count" class="text-xs text-muted">
         This source has records: its type can only widen to cover them (e.g. to "Both").
       </p>

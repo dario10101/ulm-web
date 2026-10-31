@@ -2,6 +2,8 @@
 import { X } from '@lucide/vue'
 import { onDeactivated, onMounted, ref } from 'vue'
 
+import NewCatalogLink from '@/components/finance/NewCatalogLink.vue'
+import TagPicker from '@/components/finance/TagPicker.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import { useExpenseOptions } from '@/composables/useExpenseOptions'
@@ -41,12 +43,6 @@ function onExpenseAmountInput(event: Event) {
   // Si el formato no cambia el valor (ej. un tercer decimal), Vue no
   // re-renderiza y quedaria visible el caracter que se acaba de descartar.
   input.value = expenseValue.value
-}
-
-function toggleExpenseTag(tagId: number) {
-  expenseTagIds.value = expenseTagIds.value.includes(tagId)
-    ? expenseTagIds.value.filter((id) => id !== tagId)
-    : [...expenseTagIds.value, tagId]
 }
 
 function openExpenseNote() {
@@ -168,7 +164,13 @@ onDeactivated(() => {
 
       <!-- Fila 2: payment method, en su propia fila. -->
       <div class="text-sm">
-        <span class="mb-1 block text-muted">Payment method *</span>
+        <div class="mb-1 flex items-center justify-between gap-2">
+          <span class="text-muted">Payment method *</span>
+          <NewCatalogLink type="expense" panel="payment-methods" noun="payment method" />
+        </div>
+        <p v-if="!expensePaymentMethods.length" class="text-xs text-muted">
+          No payment methods yet.
+        </p>
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="method in expensePaymentMethods"
@@ -198,9 +200,14 @@ onDeactivated(() => {
         </div>
       </div>
 
-      <!-- Fila 3: categoria, siempre en su propia fila (22 opciones no caben con el resto). -->
+      <!-- Fila 3: categoria, siempre en su propia fila (22 opciones no caben con el resto).
+           "+ New" va en la linea del titulo: no le quita una celda a la grilla. -->
       <div class="text-sm">
-        <span class="mb-2 block text-muted">Category *</span>
+        <div class="mb-2 flex items-center justify-between gap-2">
+          <span class="text-muted">Category *</span>
+          <NewCatalogLink type="expense" panel="categories" noun="category" />
+        </div>
+        <p v-if="!expenseCategories.length" class="text-xs text-muted">No categories yet.</p>
         <div class="grid grid-cols-3 gap-1.5 sm:grid-cols-5 md:grid-cols-6">
           <button
             v-for="category in expenseCategories"
@@ -259,30 +266,8 @@ onDeactivated(() => {
         </div>
       </div>
 
-      <!-- Tags al final: multi-seleccion, el chip se colorea/descolorea al toggle. -->
-      <div class="text-sm">
-        <span class="mb-2 block text-muted">Tags (optional)</span>
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="tag in expenseTagChoices"
-            :key="tag.id"
-            type="button"
-            class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
-            :class="
-              expenseTagIds.includes(tag.id)
-                ? [
-                    financeColorClasses(tag.color_key).bg,
-                    financeColorClasses(tag.color_key).text,
-                    financeColorClasses(tag.color_key).border,
-                  ]
-                : 'border-subtle text-muted hover:border-accent-text/50'
-            "
-            @click="toggleExpenseTag(tag.id)"
-          >
-            {{ tag.name }}
-          </button>
-        </div>
-      </div>
+      <!-- Tags al final: multi-seleccion, con enlace para crear uno nuevo. -->
+      <TagPicker v-model="expenseTagIds" :tags="expenseTagChoices" manage-type="expense" />
 
       <div class="flex items-center gap-3">
         <BaseButton type="submit" :disabled="expenseSubmitting">

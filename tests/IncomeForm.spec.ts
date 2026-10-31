@@ -1,7 +1,28 @@
-import { flushPromises, mount } from '@vue/test-utils'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { config, flushPromises, mount } from '@vue/test-utils'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createMemoryHistory, createRouter } from 'vue-router'
 
 import type { IncomeOptions, InterestIncome } from '../src/types/income'
+
+// TagPicker arma el enlace "New" con la ruta actual (?from=): los forms
+// necesitan un router, como en la app.
+const router = createRouter({
+  history: createMemoryHistory(),
+  routes: [
+    {
+      path: '/admin/records/:type/:panel',
+      name: 'admin-record-params',
+      component: { render: () => null },
+    },
+    { path: '/:pathMatch(.*)*', component: { render: () => null } },
+  ],
+})
+beforeAll(() => {
+  config.global.plugins.push(router)
+})
+afterAll(() => {
+  config.global.plugins.splice(config.global.plugins.indexOf(router), 1)
+})
 
 vi.mock('@/services/incomesApi', () => ({
   getIncomeOptions: vi.fn(),
@@ -222,5 +243,27 @@ describe('InterestIncomeForm', () => {
     expect(input(wrapper, 'interest-value').readOnly).toBe(false)
     expect((wrapper.get('textarea').element as HTMLTextAreaElement).value).toBe('Banco')
     expect(wrapper.text()).toContain('Cancel')
+    // Editando no se ofrece salir a crear fuentes, subcategorias ni tags.
+    expect(wrapper.text()).not.toContain('+ New')
+  })
+})
+
+describe('+ New en el alta de ingresos', () => {
+  it('lleva al panel de fuentes, subcategorias y tags con ?from=', async () => {
+    const { DirectIncomeForm } = await load()
+    await router.push('/admin/quick-add/income')
+    const wrapper = mount(DirectIncomeForm)
+    await flushPromises()
+
+    const hrefs = wrapper
+      .findAll('a')
+      .filter((a) => a.text() === '+ New')
+      .map((a) => a.attributes('href'))
+    const from = '?from=/admin/quick-add/income'
+    expect(hrefs).toEqual([
+      `/admin/records/income/sources${from}`,
+      `/admin/records/income/subcategories${from}`,
+      `/admin/records/income/tags${from}`,
+    ])
   })
 })

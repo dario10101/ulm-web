@@ -9,6 +9,8 @@ import CalendarEventsPanel from '@/components/params/CalendarEventsPanel.vue'
 import EnglishBankPanel from '@/components/params/EnglishBankPanel.vue'
 import EnglishLevelPanel from '@/components/params/EnglishLevelPanel.vue'
 import IconCatalogPanel from '@/components/params/IconCatalogPanel.vue'
+import IncomeSourcesPanel from '@/components/params/IncomeSourcesPanel.vue'
+import IncomeSubcategoriesPanel from '@/components/params/IncomeSubcategoriesPanel.vue'
 import UsersPanel from '@/components/params/UsersPanel.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import { useAuth } from '@/composables/useAuth'
@@ -17,7 +19,12 @@ import {
   settingsSections,
   type SettingsSection,
 } from '@/config/paramPanels'
-import { defaultExpenseCategoriesApi, paymentMethodsApi } from '@/services/paramsApi'
+import {
+  defaultExpenseCategoriesApi,
+  defaultIncomeSourcesApi,
+  defaultIncomeSubcategoriesApi,
+  defaultPaymentMethodsApi,
+} from '@/services/paramsApi'
 
 // /admin solo se ve con sesion (router/authGuard.ts), asi que user ya esta cargado.
 const { user, isAdmin, can } = useAuth()
@@ -174,11 +181,28 @@ const toggles = [
         <IconCatalogPanel
           v-else-if="active.id === 'payment-methods'"
           key="payment-methods"
-          :api="paymentMethodsApi"
-          title="Payment methods"
+          :api="defaultPaymentMethodsApi"
+          title="Default payment methods"
           noun="payment method"
-          empty-text="No payment methods yet."
-          hint="Shared by every user: changes apply to everyone's records."
+          empty-text="No default payment methods yet: new users will start without them."
+          hint="Template for new users: each one gets a copy when they sign up. Existing users keep their own payment methods."
+        />
+
+        <IncomeSourcesPanel
+          v-else-if="active.id === 'income-sources'"
+          key="income-sources"
+          :api="defaultIncomeSourcesApi"
+          title="Default income sources"
+          hint="Template for new users: each one gets a copy when they sign up. Existing users keep their own sources."
+        />
+
+        <IncomeSubcategoriesPanel
+          v-else-if="active.id === 'income-subcategories'"
+          key="income-subcategories"
+          :api="defaultIncomeSubcategoriesApi"
+          :sources-api="defaultIncomeSourcesApi"
+          title="Default income subcategories"
+          hint="Template for new users: each one gets a copy when they sign up. Existing users keep their own subcategories."
         />
 
         <CalendarEventsPanel
