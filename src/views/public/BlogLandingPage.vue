@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarDays, ListChecks, Newspaper, Scale, Wallet } from '@lucide/vue'
+import { CalendarDays, Languages, ListChecks, Newspaper, Scale, Wallet } from '@lucide/vue'
 
 // Borrador: descripcion de la app para quien entra a /blog sin un usuario.
 // Texto quemado, igual que el resto del sitio por ahora.
@@ -8,6 +8,7 @@ const modules = [
   { label: 'Calendario', icon: CalendarDays },
   { label: 'Finanzas', icon: Wallet },
   { label: 'Peso y comidas', icon: Scale },
+  { label: 'Estudio de inglés', icon: Languages },
   { label: 'Blog personal', icon: Newspaper },
 ]
 </script>
