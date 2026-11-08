@@ -1,0 +1,20 @@
+// Deploy de ulm-web como Worker con archivos estaticos (Cloudflare).
+// Build: `npm run build` (genera dist/). Deploy: `npx wrangler deploy`.
+// Local: `npx wrangler dev` sirve dist/ + el proxy en http://localhost:8787.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ulm-web",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-05-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // SPA: una ruta que no es un archivo (/finances, /blog/x) devuelve
+    // index.html y el router de Vue resuelve.
+    "not_found_handling": "single-page-application",
+    // Solo /api/* pasa por el Worker (proxy al backend); el resto lo sirve
+    // Cloudflare directo, sin consumir invocaciones del Worker.
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true }
+}
