@@ -1,0 +1,9 @@
+# Cabeceras de seguridad de Cloudflare Pages (se copia tal cual a dist/).
+# CSP queda pendiente (T9): hay que inventariar antes los origenes de imagenes
+# del English (ARASAAC, Openverse, Pexels) para no romperlos.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  Permissions-Policy: camera=(), geolocation=(), microphone=(self)
