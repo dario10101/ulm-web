@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import UserMenu from '@/components/layout/UserMenu.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { useAuth } from '@/composables/useAuth'
 import { blogOwnerKey, type BlogOwner } from '@/composables/useBlogOwner'
 import { isKnownSectionType } from '@/config/blogSectionTypes'
 import { ApiError } from '@/lib/http'
@@ -17,6 +18,8 @@ onMounted(() => {
 
 const route = useRoute()
 const router = useRouter()
+// UserMenu ya pide /me al montarse; aca solo se lee el mismo estado.
+const { user } = useAuth()
 
 // Sin username en la URL es la landing (/blog): no hay blog que resolver.
 const username = computed(() =>
@@ -89,18 +92,20 @@ watch(
          derecha y el menu en el medio. Desde `lg` todo en una fila; antes, el
          menu (hasta 6 secciones) no cabe y pasa a un desplegable debajo. -->
     <header class="border-b border-subtle">
-      <div class="flex flex-wrap items-center gap-x-8 gap-y-3 px-6 py-4">
+      <!-- La marca usa basis-0 + truncate en movil: asi flex-wrap no la manda
+           a otra linea y comparte fila con las acciones, cortandose si no cabe. -->
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 sm:gap-x-8 sm:px-6 sm:py-4">
         <RouterLink
           v-if="owner"
           :to="{ name: 'blog-home', params: { username: owner.username } }"
-          class="shrink-0 font-semibold text-foreground"
+          class="min-w-0 flex-1 basis-0 truncate font-semibold text-foreground lg:flex-none lg:basis-auto"
         >
           {{ owner.displayName || `@${owner.username}` }}
         </RouterLink>
         <RouterLink
           v-else
           :to="{ name: 'public-home' }"
-          class="shrink-0 font-semibold text-foreground"
+          class="min-w-0 flex-1 basis-0 truncate font-semibold text-foreground lg:flex-none lg:basis-auto"
         >
           Unified Life Manager
         </RouterLink>
@@ -118,7 +123,10 @@ watch(
             <X v-if="menuOpen" class="h-5 w-5" />
             <Menu v-else class="h-5 w-5" />
           </button>
+          <!-- Solo con sesion: a un anonimo el admin lo manda al login, que ya
+               tiene su propio enlace. -->
           <RouterLink
+            v-if="user"
             :to="{ name: 'admin-dashboard' }"
             class="rounded-lg border border-subtle px-3 py-1.5 text-sm font-medium text-muted hover:bg-surface hover:text-foreground"
           >

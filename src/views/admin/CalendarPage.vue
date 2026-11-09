@@ -443,26 +443,53 @@ async function addToChecklist(occurrence: CalendarTaskOccurrence) {
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
-        <BaseButton variant="secondary" type="button" @click="goToToday">Today</BaseButton>
-        <BaseButton variant="primary" type="button" @click="openAddTask">
+      <!-- En mobile los botones no caben con su texto completo y se partian en
+           dos lineas: ahi van mas compactos y el "+" ya dice "Add" (el nombre
+           completo queda en aria-label). flex-wrap: si igual no caben, baja el
+           ultimo entero en vez de aplastar los demas. max-sm:* gana sobre el
+           px-4/gap-2 de BaseButton porque las variantes van despues en el CSS. -->
+      <div class="flex flex-wrap items-center gap-2">
+        <BaseButton
+          variant="secondary"
+          type="button"
+          class="whitespace-nowrap max-sm:px-3"
+          @click="goToToday"
+        >
+          Today
+        </BaseButton>
+        <BaseButton
+          variant="primary"
+          type="button"
+          aria-label="Add task"
+          class="whitespace-nowrap max-sm:gap-1 max-sm:px-3"
+          @click="openAddTask"
+        >
           <Plus class="h-4 w-4" />
-          Add task
+          <span class="sm:hidden">Task</span>
+          <span class="hidden sm:inline">Add task</span>
         </BaseButton>
         <BaseButton
           v-if="viewMode !== 'YEARLY'"
           variant="primary"
           type="button"
+          aria-label="Add event"
+          class="whitespace-nowrap max-sm:gap-1 max-sm:px-3"
           @click="openAddEvent"
         >
           <Plus class="h-4 w-4" />
-          Add event
+          <span class="sm:hidden">Event</span>
+          <span class="hidden sm:inline">Add event</span>
         </BaseButton>
 
         <EventTypeFilter v-if="viewMode === 'YEARLY'" v-model="selectedEventTypes" />
 
         <div class="relative">
-          <BaseButton variant="secondary" type="button" @click="viewMenuOpen = !viewMenuOpen">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            class="whitespace-nowrap max-sm:gap-1 max-sm:px-3"
+            @click="viewMenuOpen = !viewMenuOpen"
+          >
             {{ viewLabel(viewMode) }}
             <ChevronDown class="h-4 w-4" />
           </BaseButton>

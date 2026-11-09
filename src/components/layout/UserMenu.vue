@@ -92,9 +92,10 @@ async function logOut() {
   <RouterLink
     v-else-if="status === 'anonymous'"
     :to="{ name: 'auth-login' }"
-    class="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-foreground"
+    class="-m-1.5 flex items-center gap-1.5 rounded-md p-1.5 text-sm font-medium text-muted hover:text-foreground sm:m-0 sm:p-0"
   >
-    <LogIn class="h-4 w-4" />
-    {{ signInLabel }}
+    <!-- En movil solo el icono (el texto queda para lectores de pantalla). -->
+    <LogIn class="h-5 w-5 sm:h-4 sm:w-4" />
+    <span class="sr-only sm:not-sr-only">{{ signInLabel }}</span>
   </RouterLink>
 </template>

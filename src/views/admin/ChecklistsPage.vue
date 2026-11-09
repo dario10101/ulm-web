@@ -365,6 +365,15 @@ async function submitCreateWeek() {
   }
 }
 
+// Atajos de categoria (solo mobile): bajan hasta la tarjeta. Sin animacion si
+// el sistema pide reducir movimiento.
+function scrollToCategory(categoryId: number | string) {
+  const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  document
+    .getElementById(`category-${categoryId}`)
+    ?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
+}
+
 onMounted(load)
 </script>
 
@@ -480,124 +489,150 @@ onMounted(load)
         </button>
       </div>
 
-      <!-- Columnas por categoria: apiladas en mobile (pagina scrollea normal),
-           en fila (como excel) desde sm, cada una con altura fija que llena
-           la pantalla y scroll propio si las tareas no entran. -->
-      <div
-        class="grid grid-cols-1 gap-4 sm:min-h-0 sm:flex-1 sm:auto-cols-[260px] sm:grid-flow-col sm:grid-cols-none sm:overflow-x-auto sm:pb-2"
-      >
-        <section
-          v-for="category in categories"
-          :key="category.id"
-          class="flex flex-col rounded-xl border border-subtle bg-surface p-3 sm:h-full sm:overflow-hidden"
+      <!-- Envoltorio solo de mobile: contiene la barra de atajos y las tarjetas,
+           asi la barra queda sticky mientras se recorren todas. Desde sm es
+           `contents` (no existe para el layout) y la grilla sigue siendo hija
+           directa del flex de la pagina. -->
+      <div class="flex flex-col gap-3 sm:contents">
+        <!-- Atajos a cada categoria; sm:hidden = mismo breakpoint en que las
+             tarjetas dejan de apilarse. top-14 = alto del TopBar. -->
+        <nav
+          v-if="categories.length > 1"
+          aria-label="Jump to category"
+          class="sticky top-14 z-10 -mx-4 flex gap-2 overflow-x-auto border-b border-subtle bg-background px-4 py-2 sm:hidden"
         >
-          <h3 class="mb-2 shrink-0 text-sm font-semibold text-foreground">{{ category.name }}</h3>
-
-          <div class="space-y-3 sm:min-h-0 sm:flex-1 sm:overflow-y-auto">
-            <div v-for="importance in ['HIGH', 'STANDARD'] as Importance[]" :key="importance">
-              <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-accent-text">
-                {{ importance === 'HIGH' ? 'High priority (2 pts)' : 'Standard (1 pt)' }}
-              </p>
-
-              <p v-if="!tasksFor(category.id, importance).length" class="text-xs text-muted">
-                No tasks.
-              </p>
-
-              <ul v-else class="space-y-1">
-                <li
-                  v-for="task in tasksFor(category.id, importance)"
-                  :key="task.id"
-                  class="flex items-center gap-1.5 rounded-md px-1.5 py-1 transition-colors"
-                  :class="{
-                    'bg-success/15': task.status === 'COMPLETE',
-                    'bg-ruby/15': task.status === 'FAILED',
-                  }"
-                >
-                  <span
-                    v-if="task.detail"
-                    class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-text"
-                    title="Has details"
-                  />
-                  <span
-                    class="min-w-0 flex-1 truncate text-sm text-foreground"
-                    :class="{
-                      'text-muted line-through': task.status !== 'PENDING',
-                      'cursor-pointer': mode === 'TRACK',
-                    }"
-                    :title="task.name"
-                    @click="openDetailModal(task)"
-                  >
-                    {{ task.name }}
-                  </span>
-                  <div class="flex shrink-0 items-center gap-0.5">
-                    <template v-if="mode === 'TRACK'">
-                      <button
-                        type="button"
-                        title="Mark completed"
-                        class="rounded p-1 transition-colors"
-                        :class="
-                          task.status === 'COMPLETE'
-                            ? 'bg-success text-white'
-                            : 'text-muted hover:bg-surface-hover hover:text-success-text'
-                        "
-                        @click="setStatus(task, 'COMPLETE')"
-                      >
-                        <Check class="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        title="Mark not achieved"
-                        class="rounded p-1 transition-colors"
-                        :class="
-                          task.status === 'FAILED'
-                            ? 'bg-ruby text-white'
-                            : 'text-muted hover:bg-surface-hover hover:text-ruby-text'
-                        "
-                        @click="setStatus(task, 'FAILED')"
-                      >
-                        <X class="h-3.5 w-3.5" />
-                      </button>
-                    </template>
-                    <template v-else>
-                      <button
-                        type="button"
-                        title="Edit task"
-                        class="rounded p-1 text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-                        @click="openEditTaskForm(task)"
-                      >
-                        <Pencil class="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        title="Delete task"
-                        class="rounded p-1 text-muted transition-colors hover:bg-surface-hover hover:text-ruby-text"
-                        @click="handleDeleteTask(task)"
-                      >
-                        <Trash2 class="h-3.5 w-3.5" />
-                      </button>
-                    </template>
-                  </div>
-                </li>
-              </ul>
-
-              <button
-                type="button"
-                class="mt-1 flex items-center gap-1 text-xs text-muted hover:text-accent-text"
-                @click="openCreateTaskForm(category.id, importance)"
-              >
-                <Plus class="h-3.5 w-3.5" />
-                Add task
-              </button>
-            </div>
-          </div>
-
-          <div
-            class="mt-2 flex shrink-0 items-center justify-between border-t border-subtle pt-2 text-sm"
+          <button
+            v-for="category in categories"
+            :key="category.id"
+            type="button"
+            class="shrink-0 whitespace-nowrap rounded-full border border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-muted hover:bg-surface-hover hover:text-foreground"
+            @click="scrollToCategory(category.id)"
           >
-            <span class="text-muted">Total</span>
-            <span class="font-semibold text-foreground">{{ totalFor(category.id) }} pts</span>
-          </div>
-        </section>
+            {{ category.name }}
+          </button>
+        </nav>
+
+        <!-- Columnas por categoria: apiladas en mobile (pagina scrollea normal),
+             en fila (como excel) desde sm, cada una con altura fija que llena
+             la pantalla y scroll propio si las tareas no entran. -->
+        <div
+          class="grid grid-cols-1 gap-4 sm:min-h-0 sm:flex-1 sm:auto-cols-[260px] sm:grid-flow-col sm:grid-cols-none sm:overflow-x-auto sm:pb-2"
+        >
+          <!-- scroll-mt: al saltar, deja la tarjeta debajo del TopBar + la barra de atajos. -->
+          <section
+            v-for="category in categories"
+            :id="`category-${category.id}`"
+            :key="category.id"
+            class="flex scroll-mt-28 flex-col rounded-xl border border-subtle bg-surface p-3 sm:h-full sm:scroll-mt-0 sm:overflow-hidden"
+          >
+            <h3 class="mb-2 shrink-0 text-sm font-semibold text-foreground">{{ category.name }}</h3>
+
+            <div class="space-y-3 sm:min-h-0 sm:flex-1 sm:overflow-y-auto">
+              <div v-for="importance in ['HIGH', 'STANDARD'] as Importance[]" :key="importance">
+                <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-accent-text">
+                  {{ importance === 'HIGH' ? 'High priority (2 pts)' : 'Standard (1 pt)' }}
+                </p>
+
+                <p v-if="!tasksFor(category.id, importance).length" class="text-xs text-muted">
+                  No tasks.
+                </p>
+
+                <ul v-else class="space-y-1">
+                  <li
+                    v-for="task in tasksFor(category.id, importance)"
+                    :key="task.id"
+                    class="flex items-center gap-1.5 rounded-md px-1.5 py-1 transition-colors"
+                    :class="{
+                      'bg-success/15': task.status === 'COMPLETE',
+                      'bg-ruby/15': task.status === 'FAILED',
+                    }"
+                  >
+                    <span
+                      v-if="task.detail"
+                      class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-text"
+                      title="Has details"
+                    />
+                    <span
+                      class="min-w-0 flex-1 truncate text-sm text-foreground"
+                      :class="{
+                        'text-muted line-through': task.status !== 'PENDING',
+                        'cursor-pointer': mode === 'TRACK',
+                      }"
+                      :title="task.name"
+                      @click="openDetailModal(task)"
+                    >
+                      {{ task.name }}
+                    </span>
+                    <div class="flex shrink-0 items-center gap-0.5">
+                      <template v-if="mode === 'TRACK'">
+                        <button
+                          type="button"
+                          title="Mark completed"
+                          class="rounded p-1 transition-colors"
+                          :class="
+                            task.status === 'COMPLETE'
+                              ? 'bg-success text-white'
+                              : 'text-muted hover:bg-surface-hover hover:text-success-text'
+                          "
+                          @click="setStatus(task, 'COMPLETE')"
+                        >
+                          <Check class="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Mark not achieved"
+                          class="rounded p-1 transition-colors"
+                          :class="
+                            task.status === 'FAILED'
+                              ? 'bg-ruby text-white'
+                              : 'text-muted hover:bg-surface-hover hover:text-ruby-text'
+                          "
+                          @click="setStatus(task, 'FAILED')"
+                        >
+                          <X class="h-3.5 w-3.5" />
+                        </button>
+                      </template>
+                      <template v-else>
+                        <button
+                          type="button"
+                          title="Edit task"
+                          class="rounded p-1 text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                          @click="openEditTaskForm(task)"
+                        >
+                          <Pencil class="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Delete task"
+                          class="rounded p-1 text-muted transition-colors hover:bg-surface-hover hover:text-ruby-text"
+                          @click="handleDeleteTask(task)"
+                        >
+                          <Trash2 class="h-3.5 w-3.5" />
+                        </button>
+                      </template>
+                    </div>
+                  </li>
+                </ul>
+
+                <button
+                  type="button"
+                  class="mt-1 flex items-center gap-1 text-xs text-muted hover:text-accent-text"
+                  @click="openCreateTaskForm(category.id, importance)"
+                >
+                  <Plus class="h-3.5 w-3.5" />
+                  Add task
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="mt-2 flex shrink-0 items-center justify-between border-t border-subtle pt-2 text-sm"
+            >
+              <span class="text-muted">Total</span>
+              <span class="font-semibold text-foreground">{{ totalFor(category.id) }} pts</span>
+            </div>
+          </section>
+        </div>
       </div>
     </template>
 

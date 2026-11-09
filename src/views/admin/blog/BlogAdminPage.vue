@@ -248,7 +248,7 @@ async function confirmDelete() {
           <li
             v-for="(section, index) in sections"
             :key="section.id"
-            class="flex flex-wrap items-center gap-x-3 gap-y-2 py-3"
+            class="flex items-center gap-3 py-3"
             data-test="section-row"
           >
             <MoveButtons
@@ -257,45 +257,51 @@ async function confirmDelete() {
               :label="section.label"
               @move="(delta) => reorder(index, delta)"
             />
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-foreground">{{ section.label }}</p>
-              <p class="text-xs text-muted">
-                /{{ section.slug }} · {{ SECTION_TYPE_LABELS[section.type] ?? section.type }}
-              </p>
+            <!-- En movil, datos arriba y controles debajo; desde `sm`, una fila. -->
+            <div class="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium text-foreground">{{ section.label }}</p>
+                <p class="truncate text-xs text-muted">
+                  /{{ section.slug }} · {{ SECTION_TYPE_LABELS[section.type] ?? section.type }}
+                </p>
+              </div>
+              <div class="flex items-center gap-3">
+                <!-- En movil sobra: el checkbox "Show" ya dice si esta habilitada. -->
+                <BaseBadge class="hidden sm:inline" :tone="section.enabled ? 'accent' : 'neutral'">
+                  {{ section.enabled ? 'Enabled' : 'Disabled' }}
+                </BaseBadge>
+                <label
+                  class="flex items-center gap-1.5 text-xs text-muted"
+                  :title="
+                    !section.enabled && atLimit ? `Up to ${maxEnabled} enabled sections` : undefined
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    class="h-4 w-4 accent-cta disabled:opacity-40"
+                    :checked="section.enabled"
+                    :disabled="!section.enabled && atLimit"
+                    :aria-label="`${section.label} enabled`"
+                    @change="toggle(section)"
+                  />
+                  Show
+                </label>
+                <RouterLink
+                  :to="{ name: 'admin-blog-section', params: { sectionId: section.id } }"
+                  class="inline-flex items-center gap-1 rounded-lg border border-subtle px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
+                >
+                  <Pencil class="h-3.5 w-3.5" /> Edit
+                </RouterLink>
+                <button
+                  type="button"
+                  class="rounded p-1.5 text-muted hover:bg-surface-hover hover:text-ruby-text"
+                  :aria-label="`Delete ${section.label}`"
+                  @click="((deleting = section), (deleteError = null))"
+                >
+                  <Trash2 class="h-4 w-4" />
+                </button>
+              </div>
             </div>
-            <BaseBadge :tone="section.enabled ? 'accent' : 'neutral'">
-              {{ section.enabled ? 'Enabled' : 'Disabled' }}
-            </BaseBadge>
-            <label
-              class="flex items-center gap-1.5 text-xs text-muted"
-              :title="
-                !section.enabled && atLimit ? `Up to ${maxEnabled} enabled sections` : undefined
-              "
-            >
-              <input
-                type="checkbox"
-                class="h-4 w-4 accent-cta disabled:opacity-40"
-                :checked="section.enabled"
-                :disabled="!section.enabled && atLimit"
-                :aria-label="`${section.label} enabled`"
-                @change="toggle(section)"
-              />
-              Show
-            </label>
-            <RouterLink
-              :to="{ name: 'admin-blog-section', params: { sectionId: section.id } }"
-              class="inline-flex items-center gap-1 rounded-lg border border-subtle px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
-            >
-              <Pencil class="h-3.5 w-3.5" /> Edit
-            </RouterLink>
-            <button
-              type="button"
-              class="rounded p-1.5 text-muted hover:bg-surface-hover hover:text-ruby-text"
-              :aria-label="`Delete ${section.label}`"
-              @click="((deleting = section), (deleteError = null))"
-            >
-              <Trash2 class="h-4 w-4" />
-            </button>
           </li>
         </ul>
       </BaseCard>
