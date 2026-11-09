@@ -14,7 +14,7 @@
     "not_found_handling": "single-page-application",
     // Solo /api/* pasa por el Worker (proxy al backend); el resto lo sirve
     // Cloudflare directo, sin consumir invocaciones del Worker.
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*"],
   },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
 }

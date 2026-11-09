@@ -14,13 +14,26 @@ import { ME, mockApi } from './helpers/fetchMock'
 
 const withPermissions = (...permissions: Permission[]) => ({ ...ME, permissions })
 
+// Cuerpo vacio con la forma que espera cada endpoint que no devuelve una
+// lista. Un [] ahi rompe el render fuera del test (rawMeals.value no iterable,
+// categories undefined) y vitest termina con error aunque los tests pasen.
+const EMPTY_PAGE = { items: [], total: 0, page: 1, page_size: 50, total_pages: 0 }
+const EMPTY_BODIES: Record<string, unknown> = {
+  '/meals/': EMPTY_PAGE,
+  '/weights/': EMPTY_PAGE,
+  '/expenses/': EMPTY_PAGE,
+  '/expenses/options': { categories: [], payment_methods: [], tags: [] },
+}
+
 function okForEverything() {
-  global.fetch = (() =>
-    Promise.resolve({
+  global.fetch = ((input: string) => {
+    const path = input.replace(/^\/api\/v1/, '').split('?')[0]
+    return Promise.resolve({
       ok: true,
       status: 200,
-      json: () => Promise.resolve([]),
-    })) as unknown as typeof fetch
+      json: () => Promise.resolve(EMPTY_BODIES[path] ?? []),
+    })
+  }) as unknown as typeof fetch
 }
 
 describe('can', () => {

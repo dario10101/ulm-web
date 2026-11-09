@@ -194,7 +194,14 @@ async function submit() {
           <span class="text-muted">Portion size</span>
           <span class="font-medium text-foreground">{{ mealPortion }}%</span>
         </div>
-        <input v-model.number="mealPortion" type="range" min="0" max="100" step="5" class="input-range w-56" />
+        <input
+          v-model.number="mealPortion"
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          class="input-range w-56"
+        />
       </div>
 
       <div class="space-y-2">
@@ -217,7 +224,11 @@ async function submit() {
           No components yet — add one, or just log a drink below.
         </p>
 
-        <div v-for="component in mealComponents" :key="component.id" class="flex items-center gap-2">
+        <div
+          v-for="component in mealComponents"
+          :key="component.id"
+          class="flex items-center gap-2"
+        >
           <input
             v-model="component.name"
             type="text"
@@ -233,7 +244,9 @@ async function submit() {
             max="100"
             class="input-range w-28 shrink-0"
           />
-          <span class="w-9 shrink-0 text-right text-xs text-muted">{{ finalPercent(component) }}%</span>
+          <span class="w-9 shrink-0 text-right text-xs text-muted"
+            >{{ finalPercent(component) }}%</span
+          >
           <button
             type="button"
             title="Remove component"
