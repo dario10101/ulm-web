@@ -21,7 +21,7 @@ withDefaults(
 )
 
 const router = useRouter()
-const { user, status, ensureLoaded, logout } = useAuth()
+const { user, ensureLoaded, logout } = useAuth()
 
 // Si la foto de Google no carga (sin red, URL vencida) se cae a la inicial.
 const avatarFailed = ref(false)
@@ -89,8 +89,11 @@ async function logOut() {
     </div>
   </details>
 
+  <!-- Mientras /me no responde (en prod puede tardar segundos por el arranque
+       en frio de Cloud Run) se ofrece el login igual: es lo mas probable, y si
+       resulta que hay sesion se cambia por el avatar. -->
   <RouterLink
-    v-else-if="status === 'anonymous'"
+    v-else
     :to="{ name: 'auth-login' }"
     class="-m-1.5 flex items-center gap-1.5 rounded-md p-1.5 text-sm font-medium text-muted hover:text-foreground sm:m-0 sm:p-0"
   >

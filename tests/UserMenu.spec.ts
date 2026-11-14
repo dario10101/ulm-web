@@ -87,4 +87,12 @@ describe('UserMenu', () => {
     expect(wrapper.find('details').exists()).toBe(false)
     expect(wrapper.text()).toContain('Sign in')
   })
+
+  it('ofrece iniciar sesion mientras /me no responde', async () => {
+    global.fetch = (() => new Promise(() => {})) as typeof fetch
+
+    const { wrapper } = await mountMenu()
+
+    expect(wrapper.text()).toContain('Sign in')
+  })
 })

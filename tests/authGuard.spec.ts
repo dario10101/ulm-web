@@ -75,20 +75,13 @@ describe('authGuard', () => {
     expect(fetch).not.toHaveBeenCalled()
   })
 
-  it('/login con sesion activa va directo a la pagina pedida', async () => {
-    mockApi({ 'GET /me': { status: 200, body: ME } })
+  it('/login no espera a /me (la pagina redirige sola si hay sesion)', async () => {
+    const fetch = mockApi({})
 
-    const router = await routerAt('/login?redirect=/admin/records/meal')
+    const router = await routerAt('/login')
 
-    expect(router.currentRoute.value.fullPath).toBe('/admin/records/meal')
-  })
-
-  it('un redirect fuera de /admin se ignora', async () => {
-    mockApi({ 'GET /me': { status: 200, body: ME } })
-
-    const router = await routerAt('/login?redirect=https://evil.example')
-
-    expect(router.currentRoute.value.name).toBe('admin-dashboard')
+    expect(router.currentRoute.value.name).toBe('auth-login')
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('si la API no responde deja pasar (la pagina muestra su error)', async () => {

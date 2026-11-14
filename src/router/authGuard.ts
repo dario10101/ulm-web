@@ -2,7 +2,6 @@ import type { Router } from 'vue-router'
 
 import { useAuth } from '@/composables/useAuth'
 import { setUnauthorizedHandler } from '@/lib/http'
-import { safeAdminPath } from '@/lib/redirect'
 
 /**
  * Engancha el login al router:
@@ -10,7 +9,8 @@ import { safeAdminPath } from '@/lib/redirect'
  * - Rutas con `meta.requiresAuth` (todo /admin): sin sesion, a /login con
  *   `redirect` para volver despues a la misma pagina.
  * - Rutas con `meta.permission` sin ese permiso: a admin-no-access.
- * - /login con sesion activa: directo a donde iba (o al dashboard).
+ * - /login no espera a /me: se muestra al instante y la propia pagina
+ *   redirige si resulta que hay sesion (views/auth/LoginPage.vue).
  * - Un 401 de la API en medio del uso (la sesion vencio): a /login con
  *   `error=session_expired`.
  *
@@ -22,8 +22,7 @@ export function installAuthGuard(router: Router): void {
 
   router.beforeEach(async (to) => {
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
-    const isLogin = to.name === 'auth-login'
-    if (!requiresAuth && !isLogin) return true
+    if (!requiresAuth) return true
 
     let me
     try {
@@ -34,14 +33,11 @@ export function installAuthGuard(router: Router): void {
       return true
     }
 
-    if (requiresAuth && !me) {
+    if (!me) {
       return { name: 'auth-login', query: { redirect: to.fullPath } }
     }
-    if (requiresAuth && !can(to.meta.permission)) {
+    if (!can(to.meta.permission)) {
       return { name: 'admin-no-access' }
-    }
-    if (isLogin && me) {
-      return safeAdminPath(to.query.redirect) ?? { name: 'admin-dashboard' }
     }
     return true
   })

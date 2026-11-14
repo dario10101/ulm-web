@@ -1,18 +1,27 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
+import { resetAuthState } from '../src/composables/useAuth'
 import LoginPage from '../src/views/auth/LoginPage.vue'
+import { ME, mockApi } from './helpers/fetchMock'
+
+const Empty = defineComponent({ render: () => null })
 
 async function mountAt(path: string) {
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/login', name: 'auth-login', component: LoginPage }],
+    routes: [
+      { path: '/login', name: 'auth-login', component: LoginPage },
+      { path: '/admin/dashboard', name: 'admin-dashboard', component: Empty },
+      { path: '/admin/records/:type?', name: 'admin-records', component: Empty },
+    ],
   })
   await router.push(path)
   const wrapper = mount(LoginPage, { global: { plugins: [router] } })
   await flushPromises()
-  return wrapper
+  return Object.assign(wrapper, { router })
 }
 
 /** Hace click en el boton y devuelve la URL a la que navegaria el navegador. */
@@ -24,6 +33,11 @@ function clickSignIn(wrapper: VueWrapper): URL {
 }
 
 describe('LoginPage', () => {
+  beforeEach(() => {
+    resetAuthState()
+    mockApi({ 'GET /me': { status: 401 } })
+  })
+
   afterEach(() => {
     vi.unstubAllGlobals()
   })
@@ -56,5 +70,38 @@ describe('LoginPage', () => {
     const url = clickSignIn(await mountAt('/login?redirect=https://evil.example'))
 
     expect(url.searchParams.has('next')).toBe(false)
+  })
+
+  it('se muestra sin esperar a /me', async () => {
+    // /me nunca responde (arranque en frio): el boton ya esta.
+    global.fetch = (() => new Promise(() => {})) as typeof fetch
+
+    const wrapper = await mountAt('/login')
+
+    expect(wrapper.find('button').text()).toContain('Continue with Google')
+  })
+
+  it('con sesion activa va directo a la pagina pedida', async () => {
+    mockApi({ 'GET /me': { status: 200, body: ME } })
+
+    const { router } = await mountAt('/login?redirect=/admin/records/meal')
+
+    expect(router.currentRoute.value.fullPath).toBe('/admin/records/meal')
+  })
+
+  it('con sesion y un redirect fuera de /admin va al dashboard', async () => {
+    mockApi({ 'GET /me': { status: 200, body: ME } })
+
+    const { router } = await mountAt('/login?redirect=https://evil.example')
+
+    expect(router.currentRoute.value.name).toBe('admin-dashboard')
+  })
+
+  it('si la API no responde se queda en el login', async () => {
+    global.fetch = (() => Promise.reject(new TypeError('Failed to fetch'))) as typeof fetch
+
+    const { router } = await mountAt('/login')
+
+    expect(router.currentRoute.value.name).toBe('auth-login')
   })
 })

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
+import { useAuth } from '@/composables/useAuth'
 import { safeAdminPath } from '@/lib/redirect'
 import { googleLoginUrl } from '@/services/authApi'
 
@@ -20,6 +21,18 @@ const ERROR_MESSAGES: Record<string, string> = {
 }
 
 const route = useRoute()
+const router = useRouter()
+const { ensureLoaded } = useAuth()
+
+// La pagina se muestra sin esperar a /me (en prod puede tardar segundos por el
+// arranque en frio de Cloud Run). Si resulta que hay sesion, directo a donde
+// iba o al dashboard. Si la API no responde, se queda en el login.
+onMounted(async () => {
+  const me = await ensureLoaded().catch(() => null)
+  if (me) {
+    router.replace(safeAdminPath(route.query.redirect) ?? { name: 'admin-dashboard' })
+  }
+})
 
 const errorMessage = computed(() => {
   const code = route.query.error
