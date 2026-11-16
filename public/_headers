@@ -7,3 +7,19 @@
   X-Frame-Options: DENY
   Content-Security-Policy: frame-ancestors 'none'
   Permissions-Policy: camera=(), geolocation=(), microphone=(self)
+
+# HTML de la app (rutas del router de Vue; el SPA fallback sirve index.html):
+# no-store para que duplicar o restaurar una pestaña no use un index.html viejo
+# que apunta a /assets/* de un deploy anterior (ya borrados -> pagina en
+# blanco). max-age=0 no alcanza: las navegaciones de historial usan la cache
+# sin revalidar.
+/
+  Cache-Control: no-store
+/index.html
+  Cache-Control: no-store
+/admin*
+  Cache-Control: no-store
+/blog*
+  Cache-Control: no-store
+/login*
+  Cache-Control: no-store

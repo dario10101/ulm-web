@@ -12,9 +12,10 @@
     // SPA: una ruta que no es un archivo (/finances, /blog/x) devuelve
     // index.html y el router de Vue resuelve.
     "not_found_handling": "single-page-application",
-    // Solo /api/* pasa por el Worker (proxy al backend); el resto lo sirve
-    // Cloudflare directo, sin consumir invocaciones del Worker.
-    "run_worker_first": ["/api/*"],
+    // /api/* pasa por el Worker (proxy al backend) y /assets/* tambien, para
+    // que un archivo que no existe de 404 y no index.html (ver worker/index.ts).
+    // El resto lo sirve Cloudflare directo, sin consumir invocaciones.
+    "run_worker_first": ["/api/*", "/assets/*"],
   },
   "observability": { "enabled": true },
 }

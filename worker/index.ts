@@ -34,12 +34,31 @@ function proxyToBackend(request: Request): Promise<Response> {
   })
 }
 
+/**
+ * Los archivos de /assets/* llevan hash en el nombre y cada deploy borra los
+ * anteriores. Si uno no existe (una pestaña con un index.html viejo), el modo
+ * SPA devolveria index.html con 200: el navegador lo rechaza como script y la
+ * pagina queda en blanco sin un error claro. Con 404 falla explicito, y el
+ * front recarga solo (ver src/lib/reloadOnStaleAssets.ts).
+ */
+async function serveAsset(request: Request, env: Env): Promise<Response> {
+  const response = await env.ASSETS.fetch(request)
+  if (response.headers.get('Content-Type')?.startsWith('text/html')) {
+    return new Response('Not found', { status: 404 })
+  }
+  return response
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    if (new URL(request.url).pathname.startsWith('/api/')) {
+    const { pathname } = new URL(request.url)
+    if (pathname.startsWith('/api/')) {
       return proxyToBackend(request)
     }
-    // Por run_worker_first solo /api/* llega aca; esto es por las dudas.
+    if (pathname.startsWith('/assets/')) {
+      return serveAsset(request, env)
+    }
+    // Por run_worker_first solo /api/* y /assets/* llegan aca; esto es por las dudas.
     return env.ASSETS.fetch(request)
   },
 }
