@@ -3,7 +3,7 @@ import { Pencil, Plus, Trash2 } from '@lucide/vue'
 import { computed, ref, shallowRef } from 'vue'
 
 import ParamDialog from '@/components/params/ParamDialog.vue'
-import BaseCard from '@/components/ui/BaseCard.vue'
+import CollapsibleCard from '@/components/ui/CollapsibleCard.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import { ApiError } from '@/lib/http'
 import { move } from '@/lib/reorder'
@@ -100,7 +100,7 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <BaseCard title="Subsections">
+  <CollapsibleCard title="Subsections" storage-key="blog-section.groups">
     <template #actions>
       <button
         type="button"
@@ -189,5 +189,5 @@ async function confirmDelete() {
     >
       Its items are kept in the section, without a subsection.
     </ConfirmDialog>
-  </BaseCard>
+  </CollapsibleCard>
 </template>

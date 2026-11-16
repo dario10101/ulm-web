@@ -70,7 +70,6 @@ describe('/admin/blog/sections/:id (editor)', () => {
       headline: 'Datos y código',
       intro: '',
       highlights: [{ kind: 'project', title: 'ULM', description: '', image_url: null, url: null }],
-      cta: null,
     })
   })
 

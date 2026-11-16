@@ -1,12 +1,25 @@
 // Blog publico (ulm-core app/schemas/blog.py). Solo datos publicos: sin ids
 // internos ni datos de la cuenta; se navega por slugs.
 
+/** Un link habilitado en la seccion (PLAN-BLOG-LINKS.md). Correo y telefono
+ * no traen `url` sino `encoded` (ofuscado): se arma al hacer clic. */
+export interface PublicLink {
+  type: string
+  category: string
+  label: string
+  url: string | null
+  encoded: string | null
+}
+
 export interface PublicSection<C = Record<string, unknown>> {
   slug: string
   label: string
   // Tipo del catalogo (ulm-core app/services/blog_section_types.py).
   type: string
   content: C
+  // En medio de la pagina y al final de la plantilla; ya agrupados por
+  // categoria y solo los habilitados.
+  links: { inline: PublicLink[]; end: PublicLink[] }
 }
 
 export interface PublicBlog {
@@ -59,7 +72,6 @@ export interface HomeContent {
     image_url: string | null
     url: string | null
   }[]
-  cta: BlogLink | null
 }
 
 export interface AboutContent {

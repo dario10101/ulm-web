@@ -10,12 +10,56 @@ export interface BlogSectionType {
   default_slug: string | null
 }
 
+/** Un tipo del catalogo de links (ulm-core app/services/blog_links.py). */
+export interface BlogLinkType {
+  type: string
+  label: string
+  category: string
+  kind: 'url' | 'email' | 'phone'
+  domains: string[]
+  requires_label: boolean
+  // Expone un dato personal: el formulario avisa.
+  sensitive: boolean
+  placeholder: string
+}
+
 export interface BlogSettings {
   enabled: boolean
   display_name: string | null
   max_enabled_sections: number
   max_sections: number
   section_types: BlogSectionType[]
+  link_types: BlogLinkType[]
+  link_categories: string[]
+  max_links_per_type: number
+}
+
+export interface AdminLink {
+  id: string
+  type: string
+  // Normalizado: https://..., mailto:... o https://wa.me/...
+  url: string
+  label: string | null
+  // Secciones donde esta habilitado.
+  used_in: number
+}
+
+export interface LinkWrite {
+  type: string
+  url: string
+  label: string | null
+}
+
+export interface LinkSlot {
+  id: string
+  enabled: boolean
+}
+
+/** Por ubicacion, en orden; trae todos los links (los nunca ubicados, al
+ * final y deshabilitados). */
+export interface SectionLinks {
+  inline: LinkSlot[]
+  end: LinkSlot[]
 }
 
 export interface BlogSettingsWrite {
@@ -32,6 +76,7 @@ export interface AdminSection {
   enabled: boolean
   // Forma segun el tipo: HomeContent, AboutContent... (src/types/blog.ts).
   content: Record<string, unknown>
+  links: SectionLinks
   created_at: string
   updated_at: string
 }

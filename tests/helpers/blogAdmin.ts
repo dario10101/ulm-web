@@ -39,6 +39,40 @@ export const SETTINGS: BlogSettings = {
       default_slug: null,
     },
   ],
+  link_types: [
+    {
+      type: 'email',
+      label: 'Email',
+      category: 'contact',
+      kind: 'email',
+      domains: [],
+      requires_label: false,
+      sensitive: true,
+      placeholder: 'you@example.com',
+    },
+    {
+      type: 'github',
+      label: 'GitHub',
+      category: 'professional',
+      kind: 'url',
+      domains: ['github.com'],
+      requires_label: false,
+      sensitive: false,
+      placeholder: 'https://github.com/username',
+    },
+    {
+      type: 'website',
+      label: 'Sitio web',
+      category: 'web',
+      kind: 'url',
+      domains: [],
+      requires_label: true,
+      sensitive: false,
+      placeholder: 'https://mysite.com',
+    },
+  ],
+  link_categories: ['contact', 'professional', 'social', 'shop', 'support', 'web'],
+  max_links_per_type: 5,
 }
 
 const stamp = { created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z' }
@@ -50,7 +84,8 @@ export const HOME: AdminSection = {
   slug: 'inicio',
   position: 0,
   enabled: true,
-  content: { headline: 'Hola', intro: '', highlights: [], cta: null },
+  content: { headline: 'Hola', intro: '', highlights: [] },
+  links: { inline: [], end: [] },
   ...stamp,
 }
 
@@ -62,6 +97,7 @@ export const ABOUT: AdminSection = {
   position: 1,
   enabled: true,
   content: { photo_url: null, bio: 'Soy yo', interests: [], links: [] },
+  links: { inline: [], end: [] },
   ...stamp,
 }
 
@@ -73,6 +109,7 @@ export const BOOKS: AdminSection = {
   position: 2,
   enabled: false,
   content: { intro: '', layout: 'list', sort: 'date_desc' },
+  links: { inline: [], end: [] },
   ...stamp,
 }
 
@@ -101,6 +138,7 @@ const Empty = defineComponent({ render: () => null })
 /** Las rutas reales de /admin (y los links al blog publico) en `path`. */
 export async function mountAdmin(path: string, me: Me = OWNER) {
   resetAuthState(me)
+  expandBlocks()
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -114,6 +152,23 @@ export async function mountAdmin(path: string, me: Me = OWNER) {
   const wrapper = mount(RouterView, { global: { plugins: [router] }, attachTo: document.body })
   await settle()
   return { wrapper, router }
+}
+
+/** Los bloques del admin arrancan contraidos (useCollapsed): los tests los
+ * abren para llegar a sus campos. */
+export const BLOCK_KEYS = [
+  'blog.settings',
+  'blog.sections',
+  'blog.links',
+  'blog-section.menu',
+  'blog-section.content',
+  'blog-section.links',
+  'blog-section.groups',
+  'blog-section.items',
+]
+
+export function expandBlocks() {
+  for (const key of BLOCK_KEYS) localStorage.setItem(`ulm.collapsed.${key}`, 'false')
 }
 
 /** Rutas y formularios se cargan con import() diferido. */

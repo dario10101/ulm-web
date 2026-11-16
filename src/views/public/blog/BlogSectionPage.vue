@@ -2,6 +2,7 @@
 import { FileQuestion } from '@lucide/vue'
 import { computed } from 'vue'
 
+import BlogLinkList from '@/components/blog/BlogLinkList.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useBlogOwner } from '@/composables/useBlogOwner'
 import { BLOG_SECTION_VIEWS } from '@/config/blogSectionTypes'
@@ -19,12 +20,13 @@ const current = computed(() =>
 </script>
 
 <template>
-  <component
-    :is="BLOG_SECTION_VIEWS[current.type]"
-    v-if="current"
-    :key="current.slug"
-    :section="current"
-  />
+  <!-- Un solo nodo raiz: la ruta pasa `username` como atributo. -->
+  <div v-if="current">
+    <component :is="BLOG_SECTION_VIEWS[current.type]" :key="current.slug" :section="current" />
+    <!-- Links "al final" de la plantilla (antes del pie global): igual en
+         todos los tipos, por eso van aca y no en cada vista. -->
+    <BlogLinkList :links="current.links.end" variant="end" class="mt-16" />
+  </div>
   <EmptyState
     v-else-if="owner"
     :icon="FileQuestion"

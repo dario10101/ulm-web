@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import BlogLinkList from '@/components/blog/BlogLinkList.vue'
 import MarkdownContent from '@/components/blog/MarkdownContent.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import type { HomeContent, PublicSection } from '@/types/blog'
@@ -32,15 +33,7 @@ const kindLabels: Record<HomeContent['highlights'][number]['kind'], string> = {
         :source="content.intro"
         class="mt-4 max-w-2xl text-muted"
       />
-      <a
-        v-if="content.cta"
-        :href="content.cta.url"
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        class="mt-6 inline-flex rounded-lg bg-cta px-4 py-2 text-sm font-medium text-white hover:bg-cta-hover"
-      >
-        {{ content.cta.label }}
-      </a>
+      <BlogLinkList :links="section.links.inline" variant="inline" class="mt-8" />
     </section>
 
     <section v-if="content.highlights.length">

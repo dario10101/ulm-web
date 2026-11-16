@@ -3,7 +3,7 @@ import { Download, Trash2, Upload } from '@lucide/vue'
 import { computed, ref, shallowRef, watch } from 'vue'
 
 import BaseBadge from '@/components/ui/BaseBadge.vue'
-import BaseCard from '@/components/ui/BaseCard.vue'
+import CollapsibleCard from '@/components/ui/CollapsibleCard.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import { ApiError } from '@/lib/http'
 import { move } from '@/lib/reorder'
@@ -174,7 +174,7 @@ cover_url: https://...     # https only
 </script>
 
 <template>
-  <BaseCard title="Items (.md)">
+  <CollapsibleCard title="Items (.md)" storage-key="blog-section.items">
     <template #actions>
       <div class="flex items-center gap-2">
         <select
@@ -319,5 +319,5 @@ cover_url: https://...     # https only
     >
       The file is removed from your blog. Download it first if you want to keep a copy.
     </ConfirmDialog>
-  </BaseCard>
+  </CollapsibleCard>
 </template>

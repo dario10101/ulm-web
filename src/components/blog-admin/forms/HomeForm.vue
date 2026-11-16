@@ -37,10 +37,6 @@ const newHighlight = (): HomeContent['highlights'][number] => ({
   image_url: null,
   url: null,
 })
-
-function toggleCta(on: boolean) {
-  draft.value.cta = on ? { label: '', url: 'https://' } : null
-}
 </script>
 
 <template>
@@ -101,33 +97,10 @@ function toggleCta(on: boolean) {
       </template>
     </RepeatableList>
 
-    <fieldset class="space-y-2">
-      <label class="flex items-center gap-2 text-sm text-foreground">
-        <input
-          type="checkbox"
-          class="h-4 w-4 accent-cta"
-          :checked="draft.cta !== null"
-          @change="toggleCta(($event.target as HTMLInputElement).checked)"
-        />
-        Call-to-action button
-      </label>
-      <div v-if="draft.cta" class="grid gap-2 sm:grid-cols-[12rem_1fr]">
-        <input
-          v-model="draft.cta.label"
-          :class="INPUT"
-          placeholder="Button text"
-          aria-label="Button text"
-          maxlength="60"
-        />
-        <input
-          v-model="draft.cta.url"
-          :class="INPUT"
-          type="url"
-          placeholder="https://..."
-          aria-label="Button URL"
-        />
-      </div>
-    </fieldset>
+    <p class="text-xs text-muted">
+      Buttons such as "Write to me" are links now: add them in Blog → Links and enable them in this
+      section's Links block.
+    </p>
 
     <FormFooter :dirty="dirty" :saving="saving" :error="error" :saved="saved" />
   </form>

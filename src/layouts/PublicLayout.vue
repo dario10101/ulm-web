@@ -92,7 +92,10 @@ watch(
     <!-- Encabezado a todo el ancho: marca a la izquierda, acciones a la
          derecha y el menu en el medio. Desde `lg` todo en una fila; antes, el
          menu (hasta 6 secciones) no cabe y pasa a un desplegable debajo. -->
-    <header class="border-b border-subtle">
+    <!-- Fijo arriba al hacer scroll (sticky): las secciones largas, como el
+         perfil profesional, no pierden el menu. Fondo opaco para tapar lo
+         que pasa por debajo. -->
+    <header class="sticky top-0 z-30 border-b border-subtle bg-background">
       <!-- La marca usa basis-0 + truncate en movil: asi flex-wrap no la manda
            a otra linea y comparte fila con las acciones, cortandose si no cabe. -->
       <div class="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 sm:gap-x-8 sm:px-6 sm:py-4">
@@ -179,7 +182,7 @@ watch(
       <RouterView v-else-if="state === 'ready'" />
     </main>
 
-    <footer class="border-t border-subtle py-6 text-center text-sm text-muted">
+    <footer class="border-t border-subtle py-3 text-center text-xs text-muted">
       <RouterLink :to="{ name: 'public-home' }" class="hover:text-foreground">
         Unified Life Manager
       </RouterLink>

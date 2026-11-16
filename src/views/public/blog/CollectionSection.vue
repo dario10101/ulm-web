@@ -2,6 +2,7 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 
 import BlogItemCard from '@/components/blog/BlogItemCard.vue'
+import BlogLinkList from '@/components/blog/BlogLinkList.vue'
 import BlogNoContent from '@/components/blog/BlogNoContent.vue'
 import MarkdownContent from '@/components/blog/MarkdownContent.vue'
 import { useBlogOwner } from '@/composables/useBlogOwner'
@@ -48,6 +49,7 @@ const listClass = computed(() =>
     <div>
       <h1 class="text-2xl font-semibold text-foreground">{{ section.label }}</h1>
       <MarkdownContent v-if="content.intro" :source="content.intro" class="mt-2 text-muted" />
+      <BlogLinkList :links="section.links.inline" variant="inline" class="mt-6" />
     </div>
 
     <p v-if="error" class="text-sm text-ruby-text">No se pudo cargar esta sección.</p>

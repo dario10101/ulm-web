@@ -10,6 +10,7 @@ import type { PublicBlog, PublicCollection, PublicItem } from '../src/types/blog
 import { mockApi } from './helpers/fetchMock'
 
 const Empty = defineComponent({ render: () => null })
+const NO_LINKS = { inline: [], end: [] }
 
 const BLOG: PublicBlog = {
   username: 'ruben',
@@ -17,6 +18,7 @@ const BLOG: PublicBlog = {
   sections: [
     {
       slug: 'inicio',
+      links: NO_LINKS,
       label: 'Bienvenida',
       type: 'home',
       content: {
@@ -31,17 +33,18 @@ const BLOG: PublicBlog = {
             url: null,
           },
         ],
-        cta: null,
       },
     },
     {
       slug: 'sobre-mi',
+      links: NO_LINKS,
       label: 'Sobre mí',
       type: 'about',
       content: { photo_url: null, bio: 'Soy Data Engineer.', interests: ['Kickboxing'], links: [] },
     },
     {
       slug: 'perfil',
+      links: NO_LINKS,
       label: 'Perfil profesional',
       type: 'professional',
       content: {
@@ -56,12 +59,13 @@ const BLOG: PublicBlog = {
     },
     {
       slug: 'escritos',
+      links: NO_LINKS,
       label: 'Escritos',
       type: 'collection',
       content: { intro: 'Notas.', layout: 'list', sort: 'date_desc' },
     },
     // Un tipo que el front no conoce no sale en el menu.
-    { slug: 'galeria', label: 'Galería', type: 'gallery', content: {} },
+    { slug: 'galeria', label: 'Galería', type: 'gallery', content: {}, links: NO_LINKS },
   ],
 }
 

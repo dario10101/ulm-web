@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import BlogLinkList from '@/components/blog/BlogLinkList.vue'
 import BlogLinks from '@/components/blog/BlogLinks.vue'
 import MarkdownContent from '@/components/blog/MarkdownContent.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
@@ -33,6 +34,8 @@ function period(start: string | null, end: string | null): string {
       <p v-if="content.headline" class="mt-2 text-lg text-muted">{{ content.headline }}</p>
       <MarkdownContent v-if="content.summary" :source="content.summary" class="mt-4 text-muted" />
     </div>
+
+    <BlogLinkList :links="section.links.inline" variant="inline" />
 
     <section v-if="content.experience.length">
       <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-muted">Experiencia</h2>

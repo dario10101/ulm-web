@@ -4,10 +4,11 @@ import { computed, ref, shallowRef, watch } from 'vue'
 
 import GroupsPanel from '@/components/blog-admin/GroupsPanel.vue'
 import ItemsPanel from '@/components/blog-admin/ItemsPanel.vue'
+import SectionLinksPanel from '@/components/blog-admin/SectionLinksPanel.vue'
 import { INPUT, LABEL } from '@/components/blog-admin/styles'
 import UsernameRequired from '@/components/blog-admin/UsernameRequired.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
-import BaseCard from '@/components/ui/BaseCard.vue'
+import CollapsibleCard from '@/components/ui/CollapsibleCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useAuth } from '@/composables/useAuth'
 import { BLOG_SECTION_EDITORS, SECTION_TYPE_LABELS } from '@/config/blogSectionEditors'
@@ -137,7 +138,7 @@ async function saveHeader() {
         </RouterLink>
       </div>
 
-      <BaseCard title="Menu">
+      <CollapsibleCard title="Menu" storage-key="blog-section.menu">
         <form class="space-y-4" @submit.prevent="saveHeader">
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="block">
@@ -176,11 +177,13 @@ async function saveHeader() {
             </span>
           </div>
         </form>
-      </BaseCard>
+      </CollapsibleCard>
 
-      <BaseCard title="Content">
+      <CollapsibleCard title="Content" storage-key="blog-section.content">
         <component :is="editor.form" :key="section.id" :section="section" @saved="setSection" />
-      </BaseCard>
+      </CollapsibleCard>
+
+      <SectionLinksPanel :section="section" @saved="setSection" />
 
       <template v-if="editor.hasItems">
         <GroupsPanel :section-id="section.id" :groups="groups" @changed="groups = $event" />

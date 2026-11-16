@@ -14,7 +14,7 @@ Frontend de ULM (gestion personal: habitos, finanzas, contenido). Consume la API
 
 **Blog publico**: `/blog` = landing; `/blog/:username/:section/:item?` con slugs dinamicos (`PublicLayout` resuelve el blog en un request y lo provee con `useBlogOwner`). Cada tipo de seccion tiene su vista en `views/public/blog/`, registrada en `config/blogSectionTypes.ts` (tipo nuevo = componente + 1 linea). Markdown: solo con `MarkdownContent.vue` (unico `v-html`, sobre `lib/markdown.ts`: markdown-it sin HTML + DOMPurify). `users.username` se crea en Settings -> General (inmutable).
 
-**Admin del blog**: `/admin/blog` (resumen) y `/admin/blog/sections/:id` (editor). Formulario por tipo de seccion en `components/blog-admin/forms/`, registrado en `config/blogSectionEditors.ts` (tipo nuevo = formulario + 1 linea); estado comun en `useSectionContentForm`. Subidas multipart con `postForm` (`lib/http`).
+**Admin del blog**: `/admin/blog` (resumen) y `/admin/blog/sections/:id` (editor). Formulario por tipo de seccion en `components/blog-admin/forms/`, registrado en `config/blogSectionEditors.ts` (tipo nuevo = formulario + 1 linea); estado comun en `useSectionContentForm`. Subidas multipart con `postForm` (`lib/http`). Bloques del admin con `CollapsibleCard` (estado por navegador, `useCollapsed`). Links del blog (PLAN-BLOG-LINKS.md): reglas en ulm-core `blog_links.py` (llegan en `/blog/settings`), iconos y categorias en `config/blogLinks.ts`, render publico con `BlogLinkList`.
 
 **Idioma de UI**: `/blog/**` (sitio publico) esta en espanol. `/admin/**` y `/login/**` estan en ingles. El `lang` del `<html>` se actualiza por layout (`PublicLayout` pone `es`, `AppShellLayout`/`AuthLayout` ponen `en`).
 

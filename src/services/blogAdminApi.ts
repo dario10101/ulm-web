@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '@/config/env'
 import { deleteJson, getJson, patchJson, postForm, postJson, putJson } from '@/lib/http'
 import type {
+  AdminLink,
   AdminSection,
   BlogGroup,
   BlogItem,
@@ -8,7 +9,9 @@ import type {
   BlogSettingsWrite,
   GroupWrite,
   ItemUpdate,
+  LinkWrite,
   SectionCreate,
+  SectionLinks,
   SectionUpdate,
 } from '@/types/blogAdmin'
 
@@ -26,6 +29,30 @@ export function getBlogSettings(): Promise<BlogSettings> {
 
 export function updateBlogSettings(payload: BlogSettingsWrite): Promise<BlogSettings> {
   return putJson<BlogSettings>('/blog/settings', payload)
+}
+
+// --- Links ---
+
+export function listLinks(): Promise<AdminLink[]> {
+  return getJson<AdminLink[]>('/blog/links')
+}
+
+export function createLink(payload: LinkWrite): Promise<AdminLink> {
+  return postJson<AdminLink>('/blog/links', payload)
+}
+
+export function updateLink(id: string, payload: LinkWrite): Promise<AdminLink> {
+  return putJson<AdminLink>(`/blog/links/${encodeURIComponent(id)}`, payload)
+}
+
+/** Tambien lo quita de las secciones donde estaba. */
+export function deleteLink(id: string): Promise<void> {
+  return deleteJson(`/blog/links/${encodeURIComponent(id)}`)
+}
+
+/** Orden y habilitados de los links de la seccion, en medio y al final. */
+export function setSectionLinks(id: string, links: SectionLinks): Promise<AdminSection> {
+  return putJson<AdminSection>(`${section(id)}/links`, links)
 }
 
 // --- Secciones ---

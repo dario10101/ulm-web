@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import BlogLinkList from '@/components/blog/BlogLinkList.vue'
 import BlogLinks from '@/components/blog/BlogLinks.vue'
 import MarkdownContent from '@/components/blog/MarkdownContent.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
@@ -28,6 +29,8 @@ const content = computed(() => props.section.content as unknown as AboutContent)
         <MarkdownContent v-if="content.bio" :source="content.bio" class="mt-4 text-muted" />
       </div>
     </div>
+
+    <BlogLinkList :links="section.links.inline" variant="inline" />
 
     <div v-if="content.interests.length">
       <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Intereses</h2>

@@ -3,13 +3,14 @@ import { ExternalLink, Pencil, Plus, Trash2 } from '@lucide/vue'
 import { computed, onMounted, ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
+import LinksPanel from '@/components/blog-admin/LinksPanel.vue'
 import MoveButtons from '@/components/blog-admin/MoveButtons.vue'
 import { INPUT, LABEL } from '@/components/blog-admin/styles'
 import UsernameRequired from '@/components/blog-admin/UsernameRequired.vue'
 import ParamDialog from '@/components/params/ParamDialog.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
-import BaseCard from '@/components/ui/BaseCard.vue'
+import CollapsibleCard from '@/components/ui/CollapsibleCard.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { SECTION_TYPE_LABELS } from '@/config/blogSectionEditors'
@@ -193,7 +194,7 @@ async function confirmDelete() {
     <p v-else-if="loadError" class="text-sm text-ruby-text">{{ loadError }}</p>
 
     <template v-else-if="settings">
-      <BaseCard title="Blog settings">
+      <CollapsibleCard title="Blog settings" storage-key="blog.settings">
         <form class="space-y-4" @submit.prevent="saveSettings">
           <label class="flex items-center gap-2 text-sm text-foreground">
             <input v-model="enabled" type="checkbox" class="h-4 w-4 accent-cta" />
@@ -216,9 +217,12 @@ async function confirmDelete() {
             </span>
           </div>
         </form>
-      </BaseCard>
+      </CollapsibleCard>
 
-      <BaseCard :title="`Sections · ${enabledCount}/${maxEnabled} enabled`">
+      <CollapsibleCard
+        :title="`Sections · ${enabledCount}/${maxEnabled} enabled`"
+        storage-key="blog.sections"
+      >
         <template #actions>
           <button
             type="button"
@@ -304,7 +308,9 @@ async function confirmDelete() {
             </div>
           </li>
         </ul>
-      </BaseCard>
+      </CollapsibleCard>
+
+      <LinksPanel :settings="settings" />
     </template>
 
     <ParamDialog
