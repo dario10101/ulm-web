@@ -2,6 +2,7 @@
 import { Menu, Newspaper } from '@lucide/vue'
 import { computed } from 'vue'
 
+import AppLogo from '@/components/layout/AppLogo.vue'
 import UserMenu from '@/components/layout/UserMenu.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useLayoutState } from '@/composables/useLayoutState'
@@ -30,8 +31,8 @@ const blogLink = computed(() =>
       >
         <Menu class="h-5 w-5" />
       </button>
-      <RouterLink :to="{ name: 'admin-dashboard' }" class="font-semibold text-foreground">
-        Unified Life Manager
+      <RouterLink :to="{ name: 'admin-dashboard' }">
+        <AppLogo tagline />
       </RouterLink>
     </div>
 

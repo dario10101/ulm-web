@@ -3,6 +3,7 @@ import { FileQuestion, Menu, X } from '@lucide/vue'
 import { computed, onMounted, provide, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import AppLogo from '@/components/layout/AppLogo.vue'
 import UserMenu from '@/components/layout/UserMenu.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useAuth } from '@/composables/useAuth'
@@ -105,9 +106,9 @@ watch(
         <RouterLink
           v-else
           :to="{ name: 'public-home' }"
-          class="min-w-0 flex-1 basis-0 truncate font-semibold text-foreground lg:flex-none lg:basis-auto"
+          class="min-w-0 flex-1 basis-0 lg:flex-none lg:basis-auto"
         >
-          Unified Life Manager
+          <AppLogo tagline />
         </RouterLink>
 
         <div class="ml-auto flex shrink-0 items-center gap-3 lg:order-last">
