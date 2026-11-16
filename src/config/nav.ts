@@ -4,13 +4,13 @@ import {
   GraduationCap,
   HelpCircle,
   Languages,
-  LayoutDashboard,
   ListChecks,
   Newspaper,
   PlusCircle,
   Search,
   Settings,
   Sparkles,
+  Zap,
 } from '@lucide/vue'
 
 import { ANALYTICS_PERMISSIONS } from '@/config/analyticsTypes'
@@ -19,7 +19,7 @@ import type { NavItem } from '@/types/nav'
 
 // Seccion principal del sidebar (fija, arriba).
 export const mainNavItems: NavItem[] = [
-  { label: 'Dashboard', to: { name: 'admin-dashboard' }, icon: LayoutDashboard },
+  { label: 'Quick access', to: { name: 'admin-dashboard' }, icon: Zap },
   {
     label: 'Add record',
     to: { name: 'admin-quick-add' },

@@ -23,13 +23,14 @@ export interface RecordType {
 }
 
 // Compartido entre "Add record" y "View records": mismo set de categorias en ambos lados.
+// Los no implementados van al final (botones deshabilitados).
 export const recordTypes: RecordType[] = [
   { id: 'expense', label: 'Expense', icon: ReceiptText, implemented: true, permission: 'finances' },
   { id: 'income', label: 'Income', icon: TrendingUp, implemented: true, permission: 'finances' },
   { id: 'weight', label: 'Weight', icon: Scale, implemented: true, permission: 'weight' },
   { id: 'meal', label: 'Meal', icon: Salad, implemented: true, permission: 'meals' },
-  { id: 'workout', label: 'Workout', icon: Dumbbell, implemented: false },
   { id: 'task', label: 'Task', icon: ListChecks, implemented: true, permission: 'planning' },
+  { id: 'workout', label: 'Workout', icon: Dumbbell, implemented: false },
   { id: 'note', label: 'Note', icon: NotebookPen, implemented: false },
 ]
 

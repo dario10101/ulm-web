@@ -72,6 +72,12 @@ export function clockFromDate(date: Date): Clock12 {
   return { hour, minute: date.getMinutes(), ampm }
 }
 
+/** Hora de un Date como texto de 12 horas: "7:05 PM". */
+export function formatClock(date: Date): string {
+  const clock = clockFromDate(date)
+  return `${clock.hour}:${String(clock.minute).padStart(2, '0')} ${clock.ampm}`
+}
+
 /**
  * Inverso de `minutesOfDay`: minutos desde medianoche -> reloj de 12 horas.
  * Normaliza fuera del rango 0-1439 para tolerar sumas que se pasan del dia.

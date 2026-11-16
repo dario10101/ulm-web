@@ -114,7 +114,7 @@ describe('menu lateral', () => {
   it('sin permisos solo muestra lo que no es de un modulo', async () => {
     const labels = await navLabels()
 
-    expect(labels).toContain('Dashboard')
+    expect(labels).toContain('Quick access')
     expect(labels).toContain('Settings')
     expect(labels).not.toContain('Calendar')
     expect(labels).not.toContain('Add record')

@@ -3,6 +3,7 @@ import { Mic, Square } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 
 import WordDiff from '@/components/english/WordDiff.vue'
+import AiCostMark from '@/components/ui/AiCostMark.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import type { PracticeTexts } from '@/lib/englishPractice'
 import { ApiError } from '@/lib/http'
@@ -176,16 +177,24 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-else class="flex flex-col items-center gap-2">
+      <!-- Grabar termina siempre en una transcripcion (OpenAI): gasta tokens.
+           Boton de solo icono, asi que la marca va de insignia en la esquina. -->
       <button
         v-if="status !== 'recording'"
         type="button"
-        class="flex h-16 w-16 items-center justify-center rounded-full bg-cta text-white transition-colors hover:bg-cta-hover disabled:opacity-50"
+        class="relative flex h-16 w-16 items-center justify-center rounded-full bg-cta text-white transition-colors hover:bg-cta-hover disabled:opacity-50"
         :disabled="status === 'uploading'"
         :aria-label="current ? texts.recordAgain : texts.record"
+        title="Uses AI tokens"
         data-test="record"
         @click="record"
       >
         <Mic class="h-7 w-7" />
+        <span
+          class="ai-shimmer absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-subtle bg-surface text-foreground"
+        >
+          <AiCostMark class="h-3 w-3" />
+        </span>
       </button>
       <button
         v-else

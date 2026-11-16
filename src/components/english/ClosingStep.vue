@@ -56,6 +56,7 @@ const emit = defineEmits<{
       </BaseButton>
       <BaseButton
         v-if="feedbackEnabled"
+        ai-cost
         :disabled="saving"
         data-test="feedback"
         @click="emit('feedback')"

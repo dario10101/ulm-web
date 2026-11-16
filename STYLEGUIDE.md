@@ -18,6 +18,7 @@
 - Evitar logica de negocio dentro de componentes; extraer a composables cuando crezca.
 - Manejar siempre el estado de carga y error al consumir la API (`loading`, `error`).
 - No hardcodear URLs de API fuera de una constante o variable de entorno.
+- Todo boton cuya accion gasta tokens de IA lleva la marca: `ai-cost` en `BaseButton` (o `confirm-ai-cost` en `ConfirmDialog`); en un boton de solo icono, `AiCostMark` como insignia en la esquina.
 
 ## Comentarios y logs
 

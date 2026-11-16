@@ -88,7 +88,7 @@ async function ask(): Promise<void> {
         />
         <div class="flex items-center justify-between gap-2">
           <span class="text-xs text-muted">{{ question.length }}/{{ MAX_LENGTH }}</span>
-          <BaseButton type="submit" :disabled="!canAsk">
+          <BaseButton type="submit" ai-cost :disabled="!canAsk">
             {{ loading ? 'Thinking…' : 'Ask' }}
           </BaseButton>
         </div>

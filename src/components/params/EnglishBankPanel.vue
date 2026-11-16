@@ -226,6 +226,7 @@ onMounted(async () => {
           <BaseBadge v-if="row.full" tone="accent">Full</BaseBadge>
           <BaseButton
             variant="secondary"
+            ai-cost
             :disabled="filling !== null"
             :data-test="`fill-${row.level}`"
             @click="requestFill(row)"
@@ -339,6 +340,7 @@ onMounted(async () => {
       :open="confirmLevel !== null"
       title="This bank is already full"
       confirm-label="Fill again"
+      confirm-ai-cost
       @close="confirmLevel = null"
       @confirm="confirmFill"
     >

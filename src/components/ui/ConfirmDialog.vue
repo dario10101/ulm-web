@@ -13,8 +13,10 @@ withDefaults(
     confirmLabel?: string
     saving?: boolean
     error?: string | null
+    /** Confirmar gasta tokens de IA (ver BaseButton `aiCost`). */
+    confirmAiCost?: boolean
   }>(),
-  { confirmLabel: 'Delete', saving: false, error: null },
+  { confirmLabel: 'Delete', saving: false, error: null, confirmAiCost: false },
 )
 
 const emit = defineEmits<{ close: []; confirm: [] }>()
@@ -36,7 +38,12 @@ const emit = defineEmits<{ close: []; confirm: [] }>()
       <p v-if="error" class="text-sm text-ruby-text">{{ error }}</p>
       <div class="flex justify-end gap-2">
         <BaseButton variant="ghost" @click="emit('close')">Cancel</BaseButton>
-        <BaseButton :disabled="saving" data-test="confirm" @click="emit('confirm')">
+        <BaseButton
+          :disabled="saving"
+          :ai-cost="confirmAiCost"
+          data-test="confirm"
+          @click="emit('confirm')"
+        >
           {{ saving ? 'Working...' : confirmLabel }}
         </BaseButton>
       </div>

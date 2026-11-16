@@ -9,7 +9,9 @@ import { RECORD_PERMISSIONS } from '@/config/recordTypes'
 export const adminRoutes: RouteRecordRaw[] = [
   { path: '', redirect: { name: 'admin-dashboard' } },
   {
-    path: 'dashboard',
+    // "Quick access": vistas today (por defecto) y pulse, cada una con su URL
+    // (/admin/dashboard/pulse), igual que records/:type.
+    path: 'dashboard/:view?',
     name: 'admin-dashboard',
     component: () => import('@/views/admin/DashboardPage.vue'),
   },

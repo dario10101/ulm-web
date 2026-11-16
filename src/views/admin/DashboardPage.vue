@@ -1,108 +1,77 @@
 <script setup lang="ts">
-import { Activity, CheckCircle2, Circle, PiggyBank, Target } from '@lucide/vue'
+import { Activity, Sun } from '@lucide/vue'
+import { computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-import BaseBadge from '@/components/ui/BaseBadge.vue'
-import BaseCard from '@/components/ui/BaseCard.vue'
+import PulseView from '@/components/dashboard/PulseView.vue'
+import TodayView from '@/components/dashboard/TodayView.vue'
 
-const todayTasks = [
-  { label: 'Gym — push day', done: true },
-  { label: 'Finish PySpark chapter 4', done: false },
-  { label: "Log today's expenses", done: false },
-  { label: 'Kickboxing 7pm', done: false },
-]
+// "Quick access": pagina de aterrizaje con dos vistas. Ver
+// ulm-doc/plans/PLAN-DASHBOARD.md.
+const VIEWS = [
+  { id: 'today', label: 'Today', icon: Sun },
+  { id: 'pulse', label: 'Weekly pulse', icon: Activity },
+] as const
 
-const habits = [
-  { label: 'Read 20 min', streak: 6 },
-  { label: 'No sugar', streak: 3 },
-  { label: 'Sleep before midnight', streak: 1 },
-]
+type ViewId = (typeof VIEWS)[number]['id']
 
-const goals = [
-  { label: 'Deadlift 140kg', progress: 70 },
-  { label: 'Finish AWS certification', progress: 35 },
-  { label: 'Save 20% of income', progress: 55 },
-]
+const route = useRoute()
+const router = useRouter()
+
+// La vista activa vive en la URL, como en View records: sin param (o con uno
+// invalido) se muestra "today" y se corrige la URL, asi cada vista tiene una
+// sola direccion y recargar no la pierde.
+const activeView = computed<ViewId>(
+  () => VIEWS.find((view) => view.id === route.params.view)?.id ?? 'today',
+)
+
+watch(
+  () => route.params.view,
+  (view) => {
+    if (view !== activeView.value) {
+      router.replace({ name: 'admin-dashboard', params: { view: activeView.value } })
+    }
+  },
+  { immediate: true },
+)
+
+function selectView(view: ViewId) {
+  router.push({ name: 'admin-dashboard', params: { view } })
+}
 </script>
 
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-xl font-semibold text-foreground">Good to see you back</h1>
-      <p class="text-sm text-muted">Here's what matters today.</p>
+      <h1 class="text-xl font-semibold text-foreground">Quick access</h1>
+      <p class="text-sm text-muted">
+        {{
+          activeView === 'today'
+            ? "What's on today, and quick ways to log it."
+            : 'How this week compares with the previous ones.'
+        }}
+      </p>
     </div>
 
-    <div class="grid gap-4 lg:grid-cols-3">
-      <BaseCard title="Today">
-        <ul class="space-y-2">
-          <li v-for="task in todayTasks" :key="task.label" class="flex items-center gap-2 text-sm">
-            <CheckCircle2 v-if="task.done" class="h-4 w-4 shrink-0 text-accent-text" />
-            <Circle v-else class="h-4 w-4 shrink-0 text-muted" />
-            <span :class="task.done ? 'text-muted line-through' : 'text-foreground'">
-              {{ task.label }}
-            </span>
-          </li>
-        </ul>
-      </BaseCard>
-
-      <BaseCard title="Habit streaks">
-        <ul class="space-y-2">
-          <li
-            v-for="habit in habits"
-            :key="habit.label"
-            class="flex items-center justify-between text-sm"
-          >
-            <span class="text-foreground">{{ habit.label }}</span>
-            <BaseBadge tone="accent">{{ habit.streak }}d</BaseBadge>
-          </li>
-        </ul>
-      </BaseCard>
-
-      <BaseCard title="Active goals">
-        <ul class="space-y-3">
-          <li v-for="goal in goals" :key="goal.label">
-            <div class="mb-1 flex justify-between text-sm">
-              <span class="text-foreground">{{ goal.label }}</span>
-              <span class="text-muted">{{ goal.progress }}%</span>
-            </div>
-            <div class="h-1.5 rounded-full bg-surface-hover">
-              <div
-                class="h-1.5 rounded-full bg-accent-text"
-                :style="{ width: `${goal.progress}%` }"
-              />
-            </div>
-          </li>
-        </ul>
-      </BaseCard>
+    <div class="flex flex-wrap gap-2 border-b border-subtle pb-4">
+      <button
+        v-for="view in VIEWS"
+        :key="view.id"
+        type="button"
+        class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+        :class="
+          activeView === view.id
+            ? 'bg-accent/10 text-accent-text'
+            : 'text-muted hover:bg-surface hover:text-foreground'
+        "
+        @click="selectView(view.id)"
+      >
+        <component :is="view.icon" class="h-4 w-4" />
+        {{ view.label }}
+      </button>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-3">
-      <BaseCard>
-        <div class="flex items-center gap-3">
-          <PiggyBank class="h-5 w-5 text-accent-text" />
-          <div>
-            <p class="text-xs text-muted">Spent this month</p>
-            <p class="text-lg font-semibold text-foreground">$842</p>
-          </div>
-        </div>
-      </BaseCard>
-      <BaseCard>
-        <div class="flex items-center gap-3">
-          <Activity class="h-5 w-5 text-accent-text" />
-          <div>
-            <p class="text-xs text-muted">Workouts this week</p>
-            <p class="text-lg font-semibold text-foreground">3</p>
-          </div>
-        </div>
-      </BaseCard>
-      <BaseCard>
-        <div class="flex items-center gap-3">
-          <Target class="h-5 w-5 text-accent-text" />
-          <div>
-            <p class="text-xs text-muted">Study time this week</p>
-            <p class="text-lg font-semibold text-foreground">4.5h</p>
-          </div>
-        </div>
-      </BaseCard>
-    </div>
+    <TodayView v-if="activeView === 'today'" />
+    <PulseView v-else />
   </div>
 </template>
