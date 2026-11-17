@@ -5,7 +5,8 @@ import { computed, ref } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { allEventTypes, EVENT_TYPE_OPTIONS, type EventTypeValue } from '@/lib/eventTypes'
 
-// Multi-seleccion con checks; "All" marca/desmarca todos los demas a la vez.
+// Multi-seleccion con checks; "All" marca/desmarca todos los demas a la vez y
+// "Only" deja solo uno (mismo boton que MultiSelectMenu).
 const selected = defineModel<Set<EventTypeValue>>({ required: true })
 
 const menuOpen = ref(false)
@@ -20,6 +21,10 @@ const summaryLabel = computed(() => {
 
 function toggleAll() {
   selected.value = allSelected.value ? new Set() : allEventTypes()
+}
+
+function only(value: EventTypeValue) {
+  selected.value = new Set([value])
 }
 
 function toggle(value: EventTypeValue) {
@@ -49,18 +54,31 @@ function toggle(value: EventTypeValue) {
         <input type="checkbox" :checked="allSelected" @change="toggleAll" />
         All
       </label>
-      <label
+      <div
         v-for="option in EVENT_TYPE_OPTIONS"
         :key="option.value"
-        class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-surface-hover"
+        class="group flex items-center pr-2 hover:bg-surface-hover"
       >
-        <input
-          type="checkbox"
-          :checked="selected.has(option.value)"
-          @change="toggle(option.value)"
-        />
-        {{ option.label }}
-      </label>
+        <label class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 px-3 py-2 text-sm">
+          <input
+            type="checkbox"
+            :checked="selected.has(option.value)"
+            @change="toggle(option.value)"
+          />
+          {{ option.label }}
+        </label>
+        <!-- Visible con hover o foco; en pantallas tactiles, siempre. -->
+        <button
+          v-if="!(selected.size === 1 && selected.has(option.value))"
+          type="button"
+          :data-test="`only-${option.value}`"
+          class="shrink-0 rounded px-1.5 py-1 text-[10px] font-medium text-accent-text opacity-0 hover:underline focus:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+          :aria-label="`Only ${option.label}`"
+          @click="only(option.value)"
+        >
+          Only
+        </button>
+      </div>
     </div>
   </div>
 </template>
