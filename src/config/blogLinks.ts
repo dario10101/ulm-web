@@ -57,6 +57,30 @@ export function linkIcon(type: string): LinkIcon {
   return LINK_ICONS[type] ?? generic(Link)
 }
 
+// Color de los que no traen el de su marca (iconos genericos) o cuyo color
+// no se ve bien: el amarillo de Buy Me a Coffee y Mercado Libre casi
+// desaparece sobre fondo claro.
+const COLOR_OVERRIDES: Record<string, string> = {
+  email: 'EA4335',
+  linkedin: '0A66C2',
+  mercadolibre: '3483FA',
+  amazon: 'FF9900',
+  buymeacoffee: 'E8A317',
+}
+
+/**
+ * Color de marca del icono (#rrggbb), o null para usar el del texto. Las
+ * marcas negras (GitHub, X, TikTok, Patreon) van con el color del texto: en
+ * tema oscuro serian invisibles.
+ */
+export function linkIconColor(type: string): string | null {
+  const icon = LINK_ICONS[type]
+  const hex = COLOR_OVERRIDES[type] ?? (icon?.kind === 'brand' ? icon.icon.hex : null)
+  if (!hex) return null
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16))
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 40 ? null : `#${hex}`
+}
+
 // Sitio publico en espanol; admin en ingles.
 export const LINK_CATEGORY_LABELS_ES: Record<string, string> = {
   contact: 'Contacto',

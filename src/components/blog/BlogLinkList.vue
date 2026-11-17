@@ -37,56 +37,74 @@ function open(link: PublicLink) {
 const isInline = computed(() => props.variant === 'inline')
 const linkClass = computed(() =>
   isInline.value
-    ? 'inline-flex items-center gap-2 rounded-lg border border-subtle bg-surface px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-accent-text/50 hover:text-accent-text'
+    ? 'inline-flex items-center gap-2 rounded-md px-1.5 py-1 text-sm font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground'
     : 'inline-flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-hover hover:text-foreground',
 )
 const iconClass = computed(() => (isInline.value ? 'h-4 w-4 shrink-0' : 'h-5 w-5'))
 </script>
 
 <template>
-  <nav
-    v-if="groups.length"
-    :aria-label="isInline ? 'Enlaces' : 'Contacto y redes'"
-    :class="
-      isInline
-        ? 'flex flex-wrap gap-x-10 gap-y-5'
-        : 'flex flex-wrap justify-center gap-x-8 gap-y-4 border-t border-subtle pt-8'
-    "
-  >
-    <div v-for="group in groups" :key="group.category" :class="{ 'text-center': !isInline }">
-      <p
-        class="mb-2 font-semibold uppercase tracking-wide text-muted"
-        :class="isInline ? 'text-xs' : 'text-[0.65rem]'"
+  <!-- Una linea vertical separa cada grupo. Cada grupo lleva su linea a la
+       izquierda; en medio de la pagina, la lista se corre a la izquierda
+       (-ml) dentro de un contenedor que recorta (overflow-hidden), asi la
+       linea del primer grupo de cada fila queda fuera de la vista aunque la
+       fila se parta en varias lineas. Al final (centrado) no se puede recortar:
+       la lleva todo grupo menos el primero. -->
+  <div v-if="groups.length" :class="{ 'overflow-hidden': isInline }">
+    <nav
+      :aria-label="isInline ? 'Enlaces' : 'Contacto y redes'"
+      :class="
+        isInline
+          ? '-ml-[25px] flex flex-wrap gap-y-5'
+          : 'flex flex-wrap justify-center gap-y-4 border-t border-subtle pt-8'
+      "
+    >
+      <div
+        v-for="(group, groupIndex) in groups"
+        :key="group.category"
+        :class="
+          isInline
+            ? 'border-l border-muted/40 px-6'
+            : ['px-4 text-center', { 'border-l border-muted/40': groupIndex > 0 }]
+        "
       >
-        {{ LINK_CATEGORY_LABELS_ES[group.category] ?? 'Enlaces' }}
-      </p>
-      <ul class="flex flex-wrap" :class="isInline ? 'gap-2' : 'justify-center gap-1'">
-        <li v-for="(link, index) in group.items" :key="`${link.type}-${index}`">
-          <a
-            v-if="link.url"
-            :href="link.url"
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            :class="linkClass"
-            :aria-label="isInline ? undefined : link.label"
-            :title="isInline ? undefined : link.label"
-          >
-            <LinkTypeIcon :type="link.type" :class="iconClass" />
-            <span v-if="isInline">{{ link.label }}</span>
-          </a>
-          <button
-            v-else-if="link.encoded"
-            type="button"
-            :class="linkClass"
-            :aria-label="isInline ? undefined : link.label"
-            :title="isInline ? undefined : link.label"
-            @click="open(link)"
-          >
-            <LinkTypeIcon :type="link.type" :class="iconClass" />
-            <span v-if="isInline">{{ link.label }}</span>
-          </button>
-        </li>
-      </ul>
-    </div>
-  </nav>
+        <p
+          class="mb-2 font-semibold uppercase tracking-wide text-muted"
+          :class="isInline ? 'text-xs' : 'text-[0.65rem]'"
+        >
+          {{ LINK_CATEGORY_LABELS_ES[group.category] ?? 'Enlaces' }}
+        </p>
+        <ul
+          class="flex flex-wrap"
+          :class="isInline ? '-mx-1.5 gap-x-3 gap-y-1' : 'justify-center gap-1'"
+        >
+          <li v-for="(link, index) in group.items" :key="`${link.type}-${index}`">
+            <a
+              v-if="link.url"
+              :href="link.url"
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              :class="linkClass"
+              :aria-label="isInline ? undefined : link.label"
+              :title="isInline ? undefined : link.label"
+            >
+              <LinkTypeIcon :type="link.type" :class="iconClass" />
+              <span v-if="isInline">{{ link.label }}</span>
+            </a>
+            <button
+              v-else-if="link.encoded"
+              type="button"
+              :class="linkClass"
+              :aria-label="isInline ? undefined : link.label"
+              :title="isInline ? undefined : link.label"
+              @click="open(link)"
+            >
+              <LinkTypeIcon :type="link.type" :class="iconClass" />
+              <span v-if="isInline">{{ link.label }}</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
 </template>
