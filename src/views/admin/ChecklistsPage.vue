@@ -119,6 +119,14 @@ function totalFor(categoryId: number): number {
     .reduce((sum, t) => sum + t.points, 0)
 }
 
+// Todas las HIGH de la categoria en el dia activo quedaron COMPLETE (y hay al
+// menos una). Solo visual: el bono real lo decide el back al cerrar la semana
+// (WeekService.close_week), y exige ademas que se cumpla en todas las categorias.
+function allHighDone(categoryId: number): boolean {
+  const high = tasksFor(categoryId, 'HIGH')
+  return high.length > 0 && high.every((t) => t.status === 'COMPLETE')
+}
+
 const pendingCount = computed(() => tasks.value.filter((t) => t.status === 'PENDING').length)
 
 async function load() {
@@ -279,23 +287,35 @@ async function copyDetail() {
   }
 }
 
-async function handleCloseWeek() {
+// --- Confirmacion de cierre de semana ---
+
+const closeModalOpen = ref(false)
+const applyHighPriorityBonus = ref(true)
+
+function openCloseModal() {
   if (!week.value) return
   if (pendingCount.value > 0) {
     error.value = `You still have ${pendingCount.value} pending task(s). Mark them completed or not achieved before closing the week.`
     return
   }
-  if (
-    !window.confirm('Close this week? Its score will be locked in and tasks can no longer change.')
-  ) {
-    return
-  }
+  applyHighPriorityBonus.value = true
+  closeModalOpen.value = true
+}
+
+function closeCloseModal() {
+  closeModalOpen.value = false
+}
+
+async function confirmCloseWeek() {
+  if (!week.value) return
   closing.value = true
   error.value = null
   try {
-    await closeWeek(week.value.id)
+    await closeWeek(week.value.id, applyHighPriorityBonus.value)
+    closeCloseModal()
     await load()
   } catch (err) {
+    closeCloseModal()
     error.value = err instanceof ApiError ? err.message : 'Could not close the week.'
   } finally {
     closing.value = false
@@ -423,7 +443,7 @@ onMounted(load)
           type="button"
           :disabled="closing || pendingCount > 0"
           :title="pendingCount > 0 ? `${pendingCount} task(s) still pending` : undefined"
-          @click="handleCloseWeek"
+          @click="openCloseModal"
         >
           <Lock class="h-4 w-4" />
           {{ closing ? 'Closing...' : 'Close week' }}
@@ -529,8 +549,15 @@ onMounted(load)
 
             <div class="space-y-3 sm:min-h-0 sm:flex-1 sm:overflow-y-auto">
               <div v-for="importance in ['HIGH', 'STANDARD'] as Importance[]" :key="importance">
-                <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-accent-text">
+                <p
+                  class="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-accent-text"
+                >
                   {{ importance === 'HIGH' ? 'High priority (2 pts)' : 'Standard (1 pt)' }}
+                  <Check
+                    v-if="importance === 'HIGH' && allHighDone(category.id)"
+                    class="h-3.5 w-3.5 text-success-text"
+                    aria-label="All high priority tasks done"
+                  />
                 </p>
 
                 <p v-if="!tasksFor(category.id, importance).length" class="text-xs text-muted">
@@ -744,6 +771,47 @@ onMounted(load)
           <BaseButton variant="success" type="button" @click="closeDetailModal">
             <Check class="h-4 w-4" />
             OK
+          </BaseButton>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmacion de cierre de semana -->
+    <div
+      v-if="closeModalOpen"
+      class="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4"
+      @click.self="closeCloseModal"
+    >
+      <div class="w-full max-w-sm rounded-xl border border-subtle bg-surface p-5">
+        <h3 class="mb-2 text-sm font-semibold text-foreground">Close this week?</h3>
+        <p class="text-sm text-muted">
+          Its score will be locked in and tasks can no longer change.
+        </p>
+
+        <label class="mt-3 flex items-start gap-2 text-sm text-muted">
+          <input
+            v-model="applyHighPriorityBonus"
+            type="checkbox"
+            class="mt-0.5 h-4 w-4 shrink-0 rounded border-subtle"
+          />
+          <span>
+            High priority bonus: on days where every high priority task was completed, each category
+            with high priority tasks gets +2 pts.
+          </span>
+        </label>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <BaseButton
+            variant="secondary"
+            type="button"
+            :disabled="closing"
+            @click="closeCloseModal"
+          >
+            Cancel
+          </BaseButton>
+          <BaseButton variant="primary" type="button" :disabled="closing" @click="confirmCloseWeek">
+            <Lock class="h-4 w-4" />
+            {{ closing ? 'Closing...' : 'Close week' }}
           </BaseButton>
         </div>
       </div>

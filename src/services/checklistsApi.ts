@@ -62,8 +62,10 @@ export function createWeek(payload: WeekPayload): Promise<Week> {
   return postJson<Week>('/checklists/weeks', payload)
 }
 
-export function closeWeek(weekId: number): Promise<Week> {
-  return postJson<Week>(`/checklists/weeks/${weekId}/close`, {})
+export function closeWeek(weekId: number, applyHighPriorityBonus: boolean): Promise<Week> {
+  return postJson<Week>(`/checklists/weeks/${weekId}/close`, {
+    apply_high_priority_bonus: applyHighPriorityBonus,
+  })
 }
 
 export function listWeekTasks(weekId: number): Promise<Task[]> {
